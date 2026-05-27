@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { CheckCircle, MapPin, Clock, Shield, Users, Trophy, Sparkles, Heart } from 'lucide-react'
 import Link from 'next/link'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 const reasons = [
   {
@@ -48,6 +49,8 @@ const reasons = [
 ]
 
 export default function WhyChooseUs() {
+  const { isMobile } = useMobilePerformance()
+
   return (
     <section className="py-24 bg-[#F8FAFB]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,8 +80,20 @@ export default function WhyChooseUs() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-white p-6 rounded-2xl border border-[#0A0A0C]/5 hover:border-[#2BA84A]/20 hover:shadow-lg hover:shadow-[#2BA84A]/5 transition-all group"
+              transition={{ delay: index * 0.05, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={
+                isMobile
+                  ? {}
+                  : {
+                      y: -6,
+                      scale: 1.015,
+                      rotateX: 2,
+                      rotateY: -2,
+                      boxShadow: '0 18px 40px rgba(10,10,12,0.10)',
+                    }
+              }
+              whileTap={isMobile ? { scale: 0.98 } : { scale: 0.99 }}
+              className="bg-white p-6 rounded-2xl border border-[#0A0A0C]/5 hover:border-[#2BA84A]/20 hover:shadow-[#2BA84A]/5 transition-all group transform-gpu will-change-transform"
             >
               <div className="w-12 h-12 rounded-xl bg-[#E8F5EC] flex items-center justify-center mb-4 group-hover:bg-[#2BA84A] transition-colors">
                 <reason.icon className="text-[#2BA84A] group-hover:text-white transition-colors" size={24} />

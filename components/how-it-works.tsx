@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Globe, Calendar, CreditCard } from 'lucide-react'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 const steps = [
   {
@@ -25,6 +26,8 @@ const steps = [
 ]
 
 export default function HowItWorks() {
+  const { isMobile } = useMobilePerformance()
+
   return (
     <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,15 +57,26 @@ export default function HowItWorks() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.15 }}
-              className="relative"
+              transition={{ delay: index * 0.12, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={
+                isMobile
+                  ? {}
+                  : {
+                      y: -6,
+                      scale: 1.02,
+                      rotateX: 2,
+                      rotateY: index % 2 === 0 ? -2 : 2,
+                    }
+              }
+              whileTap={isMobile ? { scale: 0.98 } : { scale: 0.99 }}
+              className="relative transform-gpu will-change-transform"
             >
               {/* Connector line */}
               {index < steps.length - 1 && (
                 <div className="hidden md:block absolute top-16 left-[60%] w-[calc(100%-20%)] h-px bg-gradient-to-r from-[#2BA84A]/30 to-[#2BA84A]/5" />
               )}
               
-              <div className="text-center">
+              <div className="text-center bg-white rounded-2xl p-6 border border-[#0A0A0C]/5 hover:border-[#2BA84A]/20 transition-colors">
                 {/* Number badge */}
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2BA84A] text-white mb-6 relative">
                   <step.icon size={28} />

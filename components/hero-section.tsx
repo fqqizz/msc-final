@@ -30,12 +30,13 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       return
     }
     
+    // Slightly longer, more cinematic timing (still lightweight on mobile)
     const base = 1
-    const speed = prefersReducedMotion ? 0.6 : 0.85
-    const t1 = 180 * base * speed
-    const t2 = 650 * base * speed
-    const t3 = 1300 * base * speed
-    const tDone = 2050 * base * speed
+    const speed = prefersReducedMotion ? 0.6 : 1
+    const t1 = 240 * base * speed
+    const t2 = 880 * base * speed
+    const t3 = 1750 * base * speed
+    const tDone = 2850 * base * speed
 
     const timers = [
       setTimeout(() => setPhase(1), t1),
@@ -88,7 +89,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
             rotateX: phase >= 1 ? 0 : -10,
           }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-20 h-20 sm:w-24 sm:h-24 mb-5 transform-gpu"
+          className="relative w-24 h-24 sm:w-28 sm:h-28 mb-6 transform-gpu"
         >
           <Image
             src={LOGO_URL}
@@ -112,7 +113,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="transform-gpu drop-shadow-[0_0_18px_rgba(43,168,74,0.35)]"
           >
-            <span className="font-[family-name:var(--font-anton)] text-2xl sm:text-3xl md:text-4xl text-white tracking-wide">
+            <span className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl text-white tracking-wide">
               LET THE GAME
             </span>
           </motion.div>
@@ -126,7 +127,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
             transition={{ duration: 0.6, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
             className="transform-gpu"
           >
-            <span className="font-[family-name:var(--font-anton)] text-2xl sm:text-3xl md:text-4xl text-[#2BA84A] tracking-wide">
+            <span className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl text-[#2BA84A] tracking-wide">
               BEGIN
             </span>
           </motion.div>
@@ -284,10 +285,10 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
         custom={0.1}
         className="text-center transform-gpu"
       >
-        <h1 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-white leading-[0.9]">
+        <h1 className="font-[family-name:var(--font-anton)] text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-white leading-[0.9]">
           MAQBOOL
         </h1>
-        <h2 className="font-[family-name:var(--font-anton)] text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-[#2BA84A] leading-[0.9] mt-1 sm:mt-2">
+        <h2 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-[#2BA84A] leading-[0.9] mt-1 sm:mt-2">
           SPORTS COMPLEX
         </h2>
       </motion.div>
