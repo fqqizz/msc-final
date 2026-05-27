@@ -30,11 +30,18 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       return
     }
     
+    const base = 1
+    const speed = prefersReducedMotion ? 0.6 : 0.85
+    const t1 = 180 * base * speed
+    const t2 = 650 * base * speed
+    const t3 = 1300 * base * speed
+    const tDone = 2050 * base * speed
+
     const timers = [
-      setTimeout(() => setPhase(1), 200),
-      setTimeout(() => setPhase(2), 800),
-      setTimeout(() => setPhase(3), 1500),
-      setTimeout(() => onComplete(), 2200),
+      setTimeout(() => setPhase(1), t1),
+      setTimeout(() => setPhase(2), t2),
+      setTimeout(() => setPhase(3), t3),
+      setTimeout(() => onComplete(), tDone),
     ]
     return () => timers.forEach(clearTimeout)
   }, [onComplete, prefersReducedMotion])
@@ -64,9 +71,13 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       <div className="relative z-10 flex flex-col items-center transform-gpu" style={GPU_ACCELERATED}>
         {/* Logo */}
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: phase >= 1 ? 1 : 0.95, opacity: phase >= 1 ? 1 : 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ scale: 0.9, opacity: 0, rotateX: -10 }}
+          animate={{
+            scale: phase >= 1 ? 1 : 0.9,
+            opacity: phase >= 1 ? 1 : 0,
+            rotateX: phase >= 1 ? 0 : -10,
+          }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="relative w-20 h-20 sm:w-24 sm:h-24 mb-5 transform-gpu"
         >
           <Image
@@ -82,19 +93,27 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
         {/* Text - staggered reveal */}
         <div className="text-center overflow-hidden">
           <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: phase >= 2 ? 0 : 40, opacity: phase >= 2 ? 1 : 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="transform-gpu"
+            initial={{ y: 40, opacity: 0, letterSpacing: '0.25em' }}
+            animate={{
+              y: phase >= 2 ? 0 : 40,
+              opacity: phase >= 2 ? 1 : 0,
+              letterSpacing: phase >= 2 ? '0.35em' : '0.25em',
+            }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="transform-gpu drop-shadow-[0_0_18px_rgba(43,168,74,0.35)]"
           >
             <span className="font-[family-name:var(--font-anton)] text-2xl sm:text-3xl md:text-4xl text-white tracking-wide">
               LET THE GAME
             </span>
           </motion.div>
           <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: phase >= 2 ? 0 : 40, opacity: phase >= 2 ? 1 : 0 }}
-            transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ y: 40, opacity: 0, letterSpacing: '0.25em' }}
+            animate={{
+              y: phase >= 2 ? 0 : 40,
+              opacity: phase >= 2 ? 1 : 0,
+              letterSpacing: phase >= 2 ? '0.4em' : '0.25em',
+            }}
+            transition={{ duration: 0.6, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
             className="transform-gpu"
           >
             <span className="font-[family-name:var(--font-anton)] text-2xl sm:text-3xl md:text-4xl text-[#2BA84A] tracking-wide">

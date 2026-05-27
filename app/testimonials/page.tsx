@@ -78,18 +78,34 @@ export default function TestimonialsPage() {
       
       {/* Hero Section */}
       <section className="pt-32 pb-16 bg-gradient-to-b from-[#F8FAFB] to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+        >
           <span className="inline-block px-4 py-2 bg-[#E8F5EC] text-[#2BA84A] text-sm font-medium rounded-full mb-6">
             Testimonials
           </span>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#0A0A0C] tracking-tight">
+          <motion.h1
+            initial={{ scale: 0.96, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+            className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#0A0A0C] tracking-tight"
+          >
             What Our
             <span className="text-[#2BA84A]"> Players Say</span>
-          </h1>
-          <p className="mt-6 text-[#0A0A0C]/60 text-lg max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.12 }}
+            className="mt-6 text-[#0A0A0C]/60 text-lg max-w-2xl mx-auto"
+          >
             Glowing testimonials from passionate local cricket and football players, showcasing our exceptional turf and ground booking services.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </section>
 
       {/* Marquee Section */}

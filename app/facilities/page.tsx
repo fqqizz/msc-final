@@ -4,6 +4,8 @@ import Footer from '@/components/footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Check, Sun, Shield, Users, Zap } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 export const metadata: Metadata = {
   title: 'Our Facilities | Maqbool Sports Complex',
@@ -82,6 +84,13 @@ const highlights = [
 ]
 
 export default function FacilitiesPage() {
+  const { isMobile } = useMobilePerformance()
+
+  const sectionFade = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0 },
+  }
+
   return (
     <main className="min-h-screen bg-white">
       <Navigation />
@@ -98,19 +107,35 @@ export default function FacilitiesPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/50 via-[#050505]/80 to-[#050505]" />
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+        >
           <span className="inline-block px-4 py-2 bg-[#2BA84A]/20 border border-[#2BA84A]/30 text-[#2BA84A] text-sm font-medium rounded-full mb-6">
             Our Facilities
           </span>
-          <h1 className="font-[family-name:var(--font-anton)] text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white tracking-tight">
+          <motion.h1
+            initial={{ scale: 0.96, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+            className="font-[family-name:var(--font-anton)] text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white tracking-tight"
+          >
             WORLD-CLASS
             <br />
             <span className="text-[#2BA84A]">SPORTS FACILITIES</span>
-          </h1>
-          <p className="mt-6 text-white/70 text-lg max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="mt-6 text-white/70 text-lg max-w-2xl mx-auto"
+          >
             Premium turfs and grounds designed for cricket and football, offering top-class facilities and dynamic environments for an unmatched playing experience.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
       </section>
 
       {/* Facilities List */}
@@ -118,22 +143,35 @@ export default function FacilitiesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-24">
             {facilities.map((facility, index) => (
-              <div
+              <motion.div
                 key={facility.id}
                 className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${
                   index % 2 === 1 ? 'lg:flex-row-reverse' : ''
                 }`}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-120px' }}
+                transition={{ duration: 0.7, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                variants={sectionFade}
               >
                 {/* Image */}
                 <div className={`relative ${index % 2 === 1 ? 'lg:order-2' : ''}`}>
-                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+                  <motion.div
+                    whileHover={
+                      isMobile
+                        ? {}
+                        : { scale: 1.03, rotateX: 4, rotateY: index % 2 === 0 ? -3 : 3 }
+                    }
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative aspect-[4/3] rounded-2xl overflow-hidden transform-gpu will-change-transform"
+                  >
                     <Image
                       src={facility.image}
                       alt={facility.name}
                       fill
                       className="object-cover"
                     />
-                  </div>
+                  </motion.div>
                   {/* Price badge */}
                   <div className="absolute -bottom-4 -right-4 px-6 py-3 bg-[#2BA84A] text-white font-bold text-lg rounded-xl shadow-lg">
                     {facility.price}
@@ -169,7 +207,7 @@ export default function FacilitiesPage() {
                     <ArrowRight size={16} />
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

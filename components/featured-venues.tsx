@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Clock, Users, Zap } from 'lucide-react'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 const venues = [
   {
@@ -37,8 +38,20 @@ const venues = [
 ]
 
 export default function FeaturedVenues() {
+  const { isMobile } = useMobilePerformance()
+
+  const cardHover = isMobile
+    ? {}
+    : {
+        y: -8,
+        scale: 1.02,
+        rotateX: 3,
+        rotateY: -2,
+        boxShadow: '0 22px 45px rgba(10,10,12,0.16)',
+      }
+
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -66,8 +79,10 @@ export default function FeaturedVenues() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="group relative"
+              transition={{ delay: index * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={cardHover}
+              whileTap={isMobile ? { scale: 0.98 } : { scale: 0.99 }}
+              className="group relative transform-gpu will-change-transform"
             >
               <div className="card-premium rounded-2xl overflow-hidden h-full flex flex-col">
                 {/* Image */}
