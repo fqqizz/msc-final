@@ -50,11 +50,21 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] bg-[#030303] flex items-center justify-center transform-gpu"
+      className="fixed inset-0 z-[100] bg-[#030303] flex items-center justify-center transform-gpu noise-overlay"
       style={GPU_ACCELERATED}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
+      {/* Vignette (static, cheap) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(70% 60% at 50% 40%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%)',
+          opacity: 0.9,
+          ...GPU_ACCELERATED,
+        }}
+      />
       {/* Ambient glow - GPU accelerated */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -138,7 +148,7 @@ const VideoBackground = memo(function VideoBackground({
   const [shouldSourceVideo, setShouldSourceVideo] = useState(false)
   const { isMobile, performanceMode } = useMobilePerformance()
 
-  const handleCanPlayThrough = useCallback(() => {
+  const handleLoadedData = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.playbackRate = 0.75
       videoRef.current.play().then(() => {
@@ -153,7 +163,8 @@ const VideoBackground = memo(function VideoBackground({
 
   // Lazy load video source after mount to keep initial page paint completely free of media blocking
   useEffect(() => {
-    const delay = isMobile ? 800 : 150
+    // Start earlier so the video is ready behind the intro (reduces post-intro stutter)
+    const delay = isMobile ? 120 : 60
     const timer = setTimeout(() => {
       setShouldSourceVideo(true)
     }, delay)
@@ -166,8 +177,13 @@ const VideoBackground = memo(function VideoBackground({
     const video = videoRef.current
     if (!video) return
 
-    video.preload = isMobile ? 'metadata' : 'auto'
-    video.load()
+    // Prefer smooth start over late start: load enough data to start playback quickly.
+    video.preload = 'auto'
+    try {
+      video.load()
+    } catch {
+      // ignore
+    }
     
     const handleMetadata = () => {
       video.playbackRate = 0.75
@@ -219,8 +235,10 @@ const VideoBackground = memo(function VideoBackground({
             muted
             loop
             playsInline
+            disablePictureInPicture
+            controlsList="nodownload noplaybackrate noremoteplayback"
             poster={POSTER_IMAGE}
-            onCanPlayThrough={handleCanPlayThrough}
+            onLoadedData={handleLoadedData}
             onError={() => setHasError(true)}
             className="absolute inset-0 w-full h-full object-cover"
             style={{
@@ -361,6 +379,11 @@ export default function HeroSection() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // If reduced motion is enabled, skip intro so content doesn't stay hidden.
+  useEffect(() => {
+    if (prefersReducedMotion) setShowIntro(false)
+  }, [prefersReducedMotion])
   
   // Optimized scroll tracking
   const { scrollYProgress } = useScroll({

@@ -93,7 +93,8 @@
   
   body {
     @apply antialiased;
-    background: var(--background);
+    /* Prevent white flash before hero/intro paints */
+    background: var(--background-dark);
     color: var(--foreground);
   }
   
