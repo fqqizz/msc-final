@@ -46,7 +46,7 @@ export default function Navigation() {
           <div 
             className={`flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 transition-all duration-300 border border-emerald-500/20 shadow-lg
               ${performanceMode 
-                ? 'bg-[#041a0e] shadow-[#041a0e]/20' // Solid optimized green background on mobile to prevent layout lag from backdrop filters
+                ? 'bg-emerald-900/90 shadow-emerald-900/20' // Beautiful emerald green back on mobile (high-opacity to keep performance fast)
                 : 'bg-emerald-900/70 backdrop-blur-xl shadow-emerald-900/20'
               }
             `}
@@ -132,7 +132,7 @@ export default function Navigation() {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className={`absolute right-0 top-0 bottom-0 w-[280px] shadow-2xl border-l border-emerald-500/20 transform-gpu
                 ${performanceMode
-                  ? 'bg-[#051c0f]' // Solid optimized green background on mobile drawer
+                  ? 'bg-emerald-900/95' // Original emerald green styling on mobile drawer (solid to avoid blur performance hit)
                   : 'bg-emerald-900/95 backdrop-blur-xl'
                 }
               `}

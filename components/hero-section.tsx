@@ -343,13 +343,6 @@ export default function HeroSection() {
     setMounted(true)
   }, [])
   
-  // Skip intro immediately for performance mode/mobile users
-  useEffect(() => {
-    if (mounted && performanceMode) {
-      setShowIntro(false)
-    }
-  }, [mounted, performanceMode])
-  
   // Optimized scroll tracking
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -374,12 +367,12 @@ export default function HeroSection() {
     setVideoReady(true)
   }, [])
 
-  const contentVisible = !showIntro || performanceMode
+  const contentVisible = !showIntro
 
   return (
     <>
-      {/* Intro Animation - Conditionally rendered only on desktop when not in reduced motion */}
-      {mounted && showIntro && !performanceMode && (
+      {/* Intro Animation - Conditionally rendered only when not in reduced motion */}
+      {mounted && showIntro && !prefersReducedMotion && (
         <IntroAnimation onComplete={handleIntroComplete} />
       )}
 
