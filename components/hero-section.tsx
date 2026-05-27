@@ -5,10 +5,12 @@ import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion
 import { ChevronDown, Play } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 // New optimized video URL
 const VIDEO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0525%282%29-pUzzUSjX4PhlTrZBiXyQf40jenLSbJ.mp4'
 const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png'
+const POSTER_IMAGE = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp'
 
 // GPU-accelerated styles
 const GPU_ACCELERATED = {
@@ -105,7 +107,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   )
 })
 
-// Memoized video background component
+// Memoized video background component with lazy load for mobile
 const VideoBackground = memo(function VideoBackground({ 
   onReady 
 }: { 
@@ -114,6 +116,8 @@ const VideoBackground = memo(function VideoBackground({
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasError, setHasError] = useState(false)
+  const [shouldSourceVideo, setShouldSourceVideo] = useState(false)
+  const { isMobile, performanceMode } = useMobilePerformance()
 
   const handleCanPlayThrough = useCallback(() => {
     if (videoRef.current) {
@@ -128,22 +132,31 @@ const VideoBackground = memo(function VideoBackground({
     }
   }, [onReady])
 
-  // Preload video with high priority
+  // Lazy load video source after mount to keep initial page paint completely free of media blocking
   useEffect(() => {
+    const delay = isMobile ? 800 : 150
+    const timer = setTimeout(() => {
+      setShouldSourceVideo(true)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [isMobile])
+
+  // Configure video playback
+  useEffect(() => {
+    if (!shouldSourceVideo) return
     const video = videoRef.current
     if (!video) return
 
-    video.preload = 'auto'
+    video.preload = isMobile ? 'metadata' : 'auto'
     video.load()
     
-    // Set playback rate as soon as metadata loads
     const handleMetadata = () => {
       video.playbackRate = 0.75
     }
     
     video.addEventListener('loadedmetadata', handleMetadata)
     return () => video.removeEventListener('loadedmetadata', handleMetadata)
-  }, [])
+  }, [shouldSourceVideo, isMobile])
 
   if (hasError) {
     return (
@@ -156,11 +169,20 @@ const VideoBackground = memo(function VideoBackground({
 
   return (
     <>
-      {/* Static gradient background - always visible underneath */}
+      {/* Static image poster background underneath - seamless visual layout */}
       <div 
-        className="absolute inset-0 bg-gradient-to-br from-[#0a1a0f] via-[#030303] to-[#0a0f1a]"
+        className="absolute inset-0 bg-gradient-to-br from-[#0a1a0f] via-[#030303] to-[#0a0f1a] overflow-hidden"
         style={{ ...GPU_ACCELERATED, zIndex: 0 }}
-      />
+      >
+        <Image
+          src={POSTER_IMAGE}
+          alt="MSC Stadium Turf Poster"
+          fill
+          priority
+          className="object-cover opacity-35 filter blur-[1px]"
+          sizes="100vw"
+        />
+      </div>
       
       {/* Video with GPU-accelerated fade */}
       <div 
@@ -171,40 +193,42 @@ const VideoBackground = memo(function VideoBackground({
           zIndex: 1,
         }}
       >
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onCanPlayThrough={handleCanPlayThrough}
-          onError={() => setHasError(true)}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            ...GPU_ACCELERATED,
-            willChange: 'transform',
-          }}
-        >
-          <source src={VIDEO_URL} type="video/mp4" />
-        </video>
+        {shouldSourceVideo && (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster={POSTER_IMAGE}
+            onCanPlayThrough={handleCanPlayThrough}
+            onError={() => setHasError(true)}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              ...GPU_ACCELERATED,
+              willChange: 'transform',
+            }}
+          >
+            <source src={VIDEO_URL} type="video/mp4" />
+          </video>
+        )}
       </div>
     </>
   )
 })
 
-// Memoized hero content
+// Memoized hero content with responsive motion settings
 const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolean }) {
-  const prefersReducedMotion = useReducedMotion()
+  const { prefersReducedMotion, isMobile } = useMobilePerformance()
   
   const fadeUpVariants = {
-    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 20 },
+    hidden: { opacity: 0, y: (prefersReducedMotion || isMobile) ? 0 : 20 },
     visible: (delay: number) => ({
       opacity: 1,
       y: 0,
       transition: {
-        duration: prefersReducedMotion ? 0.1 : 0.6,
-        delay: prefersReducedMotion ? 0 : delay,
+        duration: prefersReducedMotion ? 0.1 : (isMobile ? 0.4 : 0.6),
+        delay: prefersReducedMotion ? 0 : (isMobile ? delay * 0.5 : delay),
         ease: [0.16, 1, 0.3, 1],
       },
     }),
@@ -253,7 +277,7 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
         Baramulla&apos;s first elite 10,000+ sq. ft. synthetic turf facility
       </motion.p>
 
-      {/* CTAs */}
+      {/* CTAs - optimized background styles for mobile (no blur filter) */}
       <motion.div
         initial="hidden"
         animate={isVisible ? 'visible' : 'hidden'}
@@ -269,7 +293,7 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
         </Link>
         <Link
           href="/facilities"
-          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white/5 backdrop-blur-sm border border-white/10 text-white font-medium rounded-lg hover:bg-white/10 transition-colors duration-200 flex items-center justify-center gap-2"
+          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white/10 md:bg-white/5 md:backdrop-blur-sm border border-white/10 text-white font-medium rounded-lg hover:bg-white/15 transition-colors duration-200 flex items-center justify-center gap-2"
         >
           <Play size={16} className="fill-current" />
           Explore Arena
@@ -281,7 +305,7 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
 
 // Memoized scroll indicator
 const ScrollIndicator = memo(function ScrollIndicator({ isVisible }: { isVisible: boolean }) {
-  const prefersReducedMotion = useReducedMotion()
+  const { prefersReducedMotion } = useMobilePerformance()
   
   return (
     <motion.div
@@ -312,22 +336,35 @@ export default function HeroSection() {
   const [videoReady, setVideoReady] = useState(false)
   const [mounted, setMounted] = useState(false)
   const prefersReducedMotion = useReducedMotion()
+  const { isMobile, performanceMode } = useMobilePerformance()
   
   // Ensure component is mounted before showing intro
   useEffect(() => {
     setMounted(true)
   }, [])
   
-  // Optimized scroll tracking with throttling built-in
+  // Skip intro immediately for performance mode/mobile users
+  useEffect(() => {
+    if (mounted && performanceMode) {
+      setShowIntro(false)
+    }
+  }, [mounted, performanceMode])
+  
+  // Optimized scroll tracking
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end start'],
   })
 
-  // GPU-optimized transforms with reduced calculation frequency
-  const opacity = useTransform(scrollYProgress, [0, 0.35], [1, 0])
-  const y = useTransform(scrollYProgress, [0, 0.35], [0, -50])
-  const scale = useTransform(scrollYProgress, [0, 0.35], [1, 0.97])
+  // Scroll transforms
+  const scrollOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0])
+  const scrollY = useTransform(scrollYProgress, [0, 0.35], [0, -50])
+  const scrollScale = useTransform(scrollYProgress, [0, 0.35], [1, 0.97])
+
+  // Conditionally apply transforms: on mobile bypass scroll computations entirely to boost scrolling FPS
+  const opacity = performanceMode ? 1 : scrollOpacity
+  const y = performanceMode ? 0 : scrollY
+  const scale = performanceMode ? 1 : scrollScale
 
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false)
@@ -337,25 +374,18 @@ export default function HeroSection() {
     setVideoReady(true)
   }, [])
 
-  // For reduced motion users, skip intro immediately after mount
-  useEffect(() => {
-    if (mounted && prefersReducedMotion) {
-      setShowIntro(false)
-    }
-  }, [mounted, prefersReducedMotion])
-
-  const contentVisible = !showIntro
+  const contentVisible = !showIntro || performanceMode
 
   return (
     <>
-      {/* Intro Animation - conditionally rendered */}
-      {mounted && showIntro && !prefersReducedMotion && (
+      {/* Intro Animation - Conditionally rendered only on desktop when not in reduced motion */}
+      {mounted && showIntro && !performanceMode && (
         <IntroAnimation onComplete={handleIntroComplete} />
       )}
 
       <section 
         ref={containerRef}
-        className="relative min-h-[120vh] bg-[#030303]"
+        className="relative min-h-[110vh] bg-[#030303]"
         style={GPU_ACCELERATED}
       >
         {/* Sticky container with GPU acceleration */}
@@ -378,28 +408,30 @@ export default function HeroSection() {
             />
           </div>
           
-          {/* Ambient glow - static positioning */}
-          <div 
-            className="absolute inset-0 overflow-hidden pointer-events-none"
-            style={{ ...GPU_ACCELERATED, zIndex: 3 }}
-          >
+          {/* Ambient glow - hidden or extremely simplified on mobile */}
+          {!isMobile && (
             <div 
-              className="absolute top-1/4 left-1/2 w-[500px] h-[350px] bg-[#2BA84A]/5 rounded-full blur-[80px]"
-              style={{ 
-                ...GPU_ACCELERATED,
-                transform: 'translateX(-50%) translateZ(0)',
-              }}
-            />
-          </div>
+              className="absolute inset-0 overflow-hidden pointer-events-none"
+              style={{ ...GPU_ACCELERATED, zIndex: 3 }}
+            >
+              <div 
+                className="absolute top-1/4 left-1/2 w-[500px] h-[350px] bg-[#2BA84A]/5 rounded-full blur-[80px]"
+                style={{ 
+                  ...GPU_ACCELERATED,
+                  transform: 'translateX(-50%) translateZ(0)',
+                }}
+              />
+            </div>
+          )}
 
           {/* Scrollable content wrapper with GPU transforms */}
           <motion.div 
             className="absolute inset-0 transform-gpu"
             style={{ 
               ...GPU_ACCELERATED,
-              opacity: prefersReducedMotion ? 1 : opacity, 
-              y: prefersReducedMotion ? 0 : y, 
-              scale: prefersReducedMotion ? 1 : scale,
+              opacity, 
+              y, 
+              scale,
             }}
           >
             <HeroContent isVisible={contentVisible} />

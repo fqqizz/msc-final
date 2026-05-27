@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, Send, Bot, User, Sparkles, Calendar, Clock, MapPin, Phone, IndianRupee, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 // MSC Knowledge Base
 const MSC_KNOWLEDGE = {
@@ -193,6 +194,7 @@ const quickActions = [
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false)
+  const { isMobile, performanceMode } = useMobilePerformance()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -261,18 +263,20 @@ export default function Chatbot() {
 
   return (
     <>
-      {/* Floating Chat Button */}
+      {/* Floating Chat Button - optimized blurs and shadows on mobile */}
       <motion.button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 transform-gpu ${
           isOpen ? 'opacity-0 pointer-events-none scale-90' : 'opacity-100'
         }`}
         style={{
-          background: 'linear-gradient(135deg, rgba(43, 168, 74, 0.9) 0%, rgba(16, 185, 129, 0.9) 100%)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 0 30px rgba(43, 168, 74, 0.4), 0 4px 20px rgba(0, 0, 0, 0.15)'
+          background: 'linear-gradient(135deg, rgba(43, 168, 74, 0.95) 0%, rgba(16, 185, 129, 0.95) 100%)',
+          backdropFilter: performanceMode ? 'none' : 'blur(10px)',
+          boxShadow: performanceMode 
+            ? '0 4px 12px rgba(0, 0, 0, 0.15)'
+            : '0 0 30px rgba(43, 168, 74, 0.4), 0 4px 20px rgba(0, 0, 0, 0.15)'
         }}
-        whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(43, 168, 74, 0.5), 0 6px 25px rgba(0, 0, 0, 0.2)' }}
+        whileHover={performanceMode ? {} : { scale: 1.05, boxShadow: '0 0 40px rgba(43, 168, 74, 0.5), 0 6px 25px rgba(0, 0, 0, 0.2)' }}
         whileTap={{ scale: 0.95 }}
         aria-label="Open chat assistant"
       >
@@ -280,20 +284,24 @@ export default function Chatbot() {
         <span className="absolute -top-1 -right-1 w-3 h-3 bg-sky-400 rounded-full animate-pulse" />
       </motion.button>
 
-      {/* Chat Panel */}
+      {/* Chat Panel - optimized animations, blurs, and shadows on mobile */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: performanceMode ? 10 : 20, scale: performanceMode ? 1 : 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-6 right-6 z-50 w-[calc(100vw-48px)] sm:w-96 h-[600px] max-h-[calc(100vh-120px)] rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            exit={{ opacity: 0, y: performanceMode ? 10 : 20, scale: performanceMode ? 1 : 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="fixed bottom-6 right-6 z-50 w-[calc(100vw-48px)] sm:w-96 h-[600px] max-h-[calc(100vh-120px)] rounded-2xl overflow-hidden shadow-2xl flex flex-col transform-gpu"
             style={{
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,251,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
+              background: performanceMode 
+                ? '#fcfdfd' 
+                : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,251,0.98) 100%)',
+              backdropFilter: performanceMode ? 'none' : 'blur(20px)',
               border: '1px solid rgba(43, 168, 74, 0.15)',
-              boxShadow: '0 0 60px rgba(43, 168, 74, 0.15), 0 25px 50px rgba(0, 0, 0, 0.15)'
+              boxShadow: performanceMode
+                ? '0 8px 30px rgba(0, 0, 0, 0.15)'
+                : '0 0 60px rgba(43, 168, 74, 0.15), 0 25px 50px rgba(0, 0, 0, 0.15)'
             }}
           >
             {/* Header */}

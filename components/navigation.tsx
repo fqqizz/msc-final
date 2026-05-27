@@ -6,6 +6,7 @@ import { Menu, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 const navItems = [
   { name: 'Home', href: '/' },
@@ -20,6 +21,7 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { isMobile, performanceMode } = useMobilePerformance()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,18 +36,22 @@ export default function Navigation() {
       <motion.nav
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform-gpu ${
           scrolled ? 'py-2' : 'py-4'
         }`}
+        style={{ willChange: 'transform' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div 
-            className={`flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 transition-all duration-300
-              bg-emerald-900/70 backdrop-blur-xl border border-emerald-500/20 shadow-lg shadow-emerald-900/20
+            className={`flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 transition-all duration-300 border border-emerald-500/20 shadow-lg
+              ${performanceMode 
+                ? 'bg-[#041a0e] shadow-[#041a0e]/20' // Solid optimized green background on mobile to prevent layout lag from backdrop filters
+                : 'bg-emerald-900/70 backdrop-blur-xl shadow-emerald-900/20'
+              }
             `}
           >
-            {/* Logo - No MSC text */}
+            {/* Logo */}
             <Link href="/" className="flex items-center group">
               <div className="relative w-11 h-11 overflow-hidden transition-transform duration-200 group-hover:scale-105">
                 <Image
@@ -81,7 +87,7 @@ export default function Navigation() {
               })}
             </div>
 
-            {/* CTA Button - Sky Blue */}
+            {/* CTA Button */}
             <div className="flex items-center gap-3">
               <Link
                 href="/book-now"
@@ -103,37 +109,41 @@ export default function Navigation() {
         </div>
       </motion.nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - optimized animation timing and styles */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 md:hidden"
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-40 md:hidden transform-gpu"
+            style={{ willChange: 'opacity' }}
           >
+            {/* Overlay without backdrop blur on mobile to avoid GPU composite redraws */}
             <div 
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              className={`absolute inset-0 bg-black/60`}
               onClick={() => setMobileMenuOpen(false)}
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 top-0 bottom-0 w-[280px] bg-emerald-900/95 backdrop-blur-xl shadow-2xl border-l border-emerald-500/20"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className={`absolute right-0 top-0 bottom-0 w-[280px] shadow-2xl border-l border-emerald-500/20 transform-gpu
+                ${performanceMode
+                  ? 'bg-[#051c0f]' // Solid optimized green background on mobile drawer
+                  : 'bg-emerald-900/95 backdrop-blur-xl'
+                }
+              `}
+              style={{ willChange: 'transform' }}
             >
-              <div className="flex flex-col pt-24 px-6">
-                {navItems.map((item, index) => {
+              <div className="flex flex-col pt-24 px-6 h-full overflow-y-auto">
+                {/* Navigation items - rendered statically on mobile to avoid staggered animation stacking */}
+                {navItems.map((item) => {
                   const isActive = pathname === item.href
                   return (
-                    <motion.div
-                      key={item.name}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05, duration: 0.2 }}
-                    >
+                    <div key={item.name}>
                       <Link
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
@@ -145,14 +155,10 @@ export default function Navigation() {
                       >
                         {item.name}
                       </Link>
-                    </motion.div>
+                    </div>
                   )
                 })}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: navItems.length * 0.05, duration: 0.2 }}
-                >
+                <div>
                   <Link
                     href="/book-now"
                     onClick={() => setMobileMenuOpen(false)}
@@ -160,7 +166,7 @@ export default function Navigation() {
                   >
                     Book Now
                   </Link>
-                </motion.div>
+                </div>
               </div>
             </motion.div>
           </motion.div>

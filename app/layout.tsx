@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Anton } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import Chatbot from '@/components/chatbot'
 import Preloader from '@/components/preloader'
 import ScrollProgress from '@/components/scroll-progress'
+import ChatbotWrapper from '@/components/chatbot-wrapper'
 import './globals.css'
 
 const inter = Inter({ 
@@ -60,7 +60,7 @@ export default function RootLayout({
         <Preloader />
         <ScrollProgress />
         {children}
-        <Chatbot />
+        <ChatbotWrapper />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
