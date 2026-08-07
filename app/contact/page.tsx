@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
-import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { MapPin, Phone, Mail, Clock, Send, Instagram, Facebook } from 'lucide-react'
+import { MapPin, Phone, Mail, Clock, Send, Instagram, Facebook, Loader2, AlertCircle } from 'lucide-react'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,11 +15,27 @@ export default function ContactPage() {
     message: ''
   })
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    setSubmitted(true)
+    setSubmitting(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Failed to send message')
+      setSubmitted(true)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -228,12 +243,23 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {error && (
+                    <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+                      <AlertCircle size={16} className="text-red-500 flex-shrink-0" />
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full px-8 py-4 bg-[#2BA84A] text-white font-semibold rounded-xl hover:bg-[#146B3A] transition-colors flex items-center justify-center gap-2"
+                    disabled={submitting}
+                    className="w-full px-8 py-4 bg-[#2BA84A] text-white font-semibold rounded-xl hover:bg-[#146B3A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
-                    Send Message
-                    <Send size={18} />
+                    {submitting ? (
+                      <><Loader2 size={18} className="animate-spin" /> Sending...</>
+                    ) : (
+                      <>Send Message <Send size={18} /></>
+                    )}
                   </button>
                 </form>
               )}

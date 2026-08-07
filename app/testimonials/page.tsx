@@ -1,77 +1,54 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { motion } from 'framer-motion'
 import { Star, Quote } from 'lucide-react'
 
-const testimonials = [
-  {
-    name: 'Arshad Zargar',
-    role: 'Local Guide',
-    reviews: '22 reviews',
-    photos: '69 photos',
-    rating: 5,
-    text: 'Maqbool Sports Complex in Baramulla is an excellent destination for football enthusiasts. The ground is well-maintained, spacious, and provides a safe and vibrant atmosphere for players. It\'s a great place for practice sessions and friendly matches or tournaments. With a few more amenities, it could become one of the best football facilities in the area.',
-    date: '9 months ago'
-  },
-  {
-    name: 'Junaid Rashid',
-    role: 'Football Enthusiast',
-    reviews: '10 Reviews',
-    photos: '9 photos',
-    rating: 4.5,
-    text: 'Really a great experience Playing Here at Maqbool Sports Complex Baramulla. Especially the Environment over here is totally the best you could see anywhere',
-    date: '13 days ago'
-  },
-  {
-    name: 'Danish Mir',
-    role: 'Local Guide',
-    reviews: '15 reviews',
-    photos: '42 photos',
-    rating: 5,
-    text: 'Best turf facility in Baramulla! The synthetic grass is of excellent quality and the floodlights make evening games possible. Booking is hassle-free and the staff is very cooperative. Highly recommended for anyone looking to play football or cricket.',
-    date: '6 months ago'
-  },
-  {
-    name: 'Aaqib Lone',
-    role: 'Football Enthusiast',
-    reviews: '8 reviews',
-    photos: '23 photos',
-    rating: 5,
-    text: 'Finally a proper sports facility in our area! The mountain views while playing are absolutely stunning. I come here every weekend with my friends for football. The turf quality is on par with any city facility.',
-    date: '4 months ago'
-  },
-  {
-    name: 'Faizan Bhat',
-    role: 'Cricket Player',
-    reviews: '12 reviews',
-    photos: '31 photos',
-    rating: 4,
-    text: 'Great cricket nets for practice sessions. The surface is well-maintained and perfect for both batting and bowling practice. The pricing is reasonable and the location amidst mountains adds to the experience.',
-    date: '5 months ago'
-  },
-  {
-    name: 'Umer Rather',
-    role: 'Sports Coach',
-    reviews: '18 reviews',
-    photos: '55 photos',
-    rating: 5,
-    text: 'As a coach, I appreciate the professional setup at MSC. The turf quality is excellent for training young athletes. The management is supportive and the facility is well-maintained. Looking forward to the upcoming sports academy!',
-    date: '3 months ago'
-  },
-  {
-    name: 'Waseem Shah',
-    role: 'Local Guide',
-    reviews: '25 reviews',
-    photos: '78 photos',
-    rating: 5,
-    text: 'This place has transformed the sports scene in Baramulla. Clean facilities, proper maintenance, and a professional environment. The night games under floodlights are an amazing experience. Must visit for all sports lovers!',
-    date: '7 months ago'
-  },
+interface DBTestimonial {
+  id: string
+  customer_name: string
+  designation: string | null
+  rating: number
+  quote: string
+  avatar_url: string | null
+  display_order: number
+}
+
+// Static Google review testimonials — shown as supplement to DB records
+const staticTestimonials = [
+  { name: 'Arshad Zargar',  role: 'Local Guide',        rating: 5,   text: 'Maqbool Sports Complex in Baramulla is an excellent destination for football enthusiasts. The ground is well-maintained, spacious, and provides a safe and vibrant atmosphere for players.', date: '9 months ago' },
+  { name: 'Junaid Rashid',  role: 'Football Enthusiast', rating: 4.5, text: 'Really a great experience playing here at Maqbool Sports Complex Baramulla. Especially the environment over here is totally the best you could see anywhere.', date: '13 days ago' },
+  { name: 'Danish Mir',     role: 'Local Guide',        rating: 5,   text: 'Best turf facility in Baramulla! The synthetic grass is of excellent quality and the floodlights make evening games possible. Booking is hassle-free and the staff is very cooperative.', date: '6 months ago' },
+  { name: 'Aaqib Lone',     role: 'Football Enthusiast', rating: 5,   text: 'Finally a proper sports facility in our area! The mountain views while playing are absolutely stunning. I come here every weekend with my friends for football.', date: '4 months ago' },
+  { name: 'Faizan Bhat',    role: 'Cricket Player',     rating: 4,   text: 'Great cricket nets for practice sessions. The surface is well-maintained and perfect for both batting and bowling practice. The pricing is reasonable.', date: '5 months ago' },
+  { name: 'Umer Rather',    role: 'Sports Coach',       rating: 5,   text: 'As a coach, I appreciate the professional setup at MSC. The turf quality is excellent for training young athletes. The management is supportive and the facility is well-maintained.', date: '3 months ago' },
+  { name: 'Waseem Shah',    role: 'Local Guide',        rating: 5,   text: 'This place has transformed the sports scene in Baramulla. Clean facilities, proper maintenance, and a professional environment. The night games under floodlights are an amazing experience.', date: '7 months ago' },
 ]
 
 export default function TestimonialsPage() {
+  const [dbTestimonials, setDbTestimonials] = useState<DBTestimonial[]>([])
+
+  useEffect(() => {
+    fetch('/api/testimonials')
+      .then(r => r.json())
+      .then(json => setDbTestimonials(json.testimonials ?? []))
+      .catch(() => {})
+  }, [])
+
+  // Merge DB records with static ones (DB records shown first in static grid)
+  const allStatic = [
+    ...dbTestimonials.map(t => ({
+      name: t.customer_name,
+      role: t.designation ?? 'Verified Customer',
+      rating: t.rating,
+      text: t.quote,
+      date: 'Verified',
+    })),
+    ...staticTestimonials,
+  ]
+
   return (
     <main className="min-h-screen bg-white">
       <Navigation />
@@ -113,14 +90,14 @@ export default function TestimonialsPage() {
         <div className="relative">
           {/* Row 1 - Left to Right */}
           <div className="flex gap-6 mb-6 animate-marquee">
-            {[...testimonials, ...testimonials].map((testimonial, index) => (
+            {[...allStatic, ...allStatic].map((testimonial, index) => (
               <TestimonialCard key={`row1-${index}`} testimonial={testimonial} />
             ))}
           </div>
           
           {/* Row 2 - Right to Left */}
           <div className="flex gap-6 animate-marquee-reverse">
-            {[...testimonials.slice().reverse(), ...testimonials.slice().reverse()].map((testimonial, index) => (
+            {[...allStatic.slice().reverse(), ...allStatic.slice().reverse()].map((testimonial, index) => (
               <TestimonialCard key={`row2-${index}`} testimonial={testimonial} />
             ))}
           </div>
@@ -140,7 +117,7 @@ export default function TestimonialsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
+            {allStatic.map((testimonial, index) => (
               <motion.div
                 key={testimonial.name}
                 initial={{ opacity: 0, y: 20 }}

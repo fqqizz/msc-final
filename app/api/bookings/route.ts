@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         full_name: data.customer_name,
         phone: data.customer_phone,
         email: data.customer_email || null,
-        role: 'guest',
+        role: 'customer',
         status: 'active',
         is_guest: true,
         is_phone_verified: false,
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     // Also create a customer record
     await supabase.from('customers').insert({
       id: customerId,
-      tier: 'bronze',
+      tier: 'new',
       hours_played: 0,
       total_bookings: 0,
       total_spend: 0,
@@ -154,8 +154,8 @@ export async function POST(req: NextRequest) {
       end_time: endTime,
       duration_hours: durationHours,
       booking_status: 'confirmed',
-      payment_status: data.payment_type === 'full' ? 'paid' : 'partial',
-      booking_source: 'online',
+      payment_status: data.payment_type === 'full' ? 'paid' : 'partially_paid',
+      booking_source: 'online_customer',
       base_amount: totalAmount,
       extra_charges: 0,
       discount_amount: 0,

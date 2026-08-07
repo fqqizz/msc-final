@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
           full_name: data.name,
           phone: data.phone || null,
           email: data.email || null,
-          role: 'guest',
-          status: 'active',
-          is_guest: true,
+        role: 'customer',
+        status: 'active',
+        is_guest: true,
           is_phone_verified: false,
           is_email_verified: false,
           metadata: {},
@@ -64,11 +64,10 @@ export async function POST(req: NextRequest) {
 
   if (customerId) {
     await supabase.from('support_tickets').insert({
-      ticket_number: `TKT-${Date.now()}`,
       customer_id: customerId,
       subject: data.subject || 'General Inquiry',
-      category: 'general',
-      priority: 'normal',
+      category: 'General',
+      priority: 'medium',
       status: 'open',
     })
   }
