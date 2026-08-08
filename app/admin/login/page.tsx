@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Shield, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Shield, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 function AdminLoginForm() {
@@ -14,6 +14,8 @@ function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isResetMode, setIsResetMode] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -24,6 +26,7 @@ function AdminLoginForm() {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)
+    setSuccessMessage(null)
 
     if (!email || !password) {
       setErrorMessage('Please enter your owner / staff credentials.')
@@ -39,7 +42,7 @@ function AdminLoginForm() {
       })
 
       if (error) {
-        setErrorMessage(error.message)
+        setErrorMessage(error.message === 'Invalid login credentials' ? 'Incorrect email or password. Please try again.' : error.message)
         setIsLoading(false)
         return
       }
@@ -54,17 +57,46 @@ function AdminLoginForm() {
 
         const userRole = profile?.role || 'customer'
         if (userRole === 'customer') {
-          setErrorMessage('Access Denied: This account does not have owner administration permissions.')
+          setErrorMessage('Your account does not have access to MSC OS.')
           await supabase.auth.signOut()
           setIsLoading(false)
           return
         }
 
-        router.push(redirectUrl)
+        router.replace(redirectUrl)
         router.refresh()
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'An error occurred during authentication.')
+      setErrorMessage(err.message || 'We couldn’t sign you in right now. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorMessage(null)
+    setSuccessMessage(null)
+
+    if (!email) {
+      setErrorMessage('Please enter your administrator email address.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/reset-password?redirect=/admin`
+      })
+
+      if (error) {
+        setErrorMessage(error.message)
+      } else {
+        setSuccessMessage('Password reset link sent. Please check your email inbox.')
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Unable to send password recovery email.')
     } finally {
       setIsLoading(false)
     }
@@ -84,69 +116,139 @@ function AdminLoginForm() {
         </div>
       )}
 
-      <form className="space-y-4" onSubmit={handleAdminLogin}>
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-            Owner / Staff Email
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Mail size={18} />
-            </div>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="owner@maqboolsports.in"
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
-            />
-          </div>
+      {successMessage && (
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 text-emerald-800 text-xs">
+          <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+          <span>{successMessage}</span>
         </div>
+      )}
 
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-              Password
+      {isResetMode ? (
+        <form className="space-y-4" onSubmit={handleForgotPassword}>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              Owner / Staff Email
             </label>
-          </div>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Lock size={18} />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Mail size={18} />
+              </div>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="owner@maqboolsports.in"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+              />
             </div>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
-            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full mt-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Sending Recovery Link...
+              </>
+            ) : (
+              'Send Password Reset Link'
+            )}
+          </button>
+
+          <div className="text-center pt-2">
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
+              onClick={() => {
+                setIsResetMode(false)
+                setErrorMessage(null)
+                setSuccessMessage(null)
+              }}
+              className="text-xs text-slate-600 hover:text-slate-900 underline"
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              Back to Owner Sign In
             </button>
           </div>
-        </div>
+        </form>
+      ) : (
+        <form className="space-y-4" onSubmit={handleAdminLogin}>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              Owner / Staff Email
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Mail size={18} />
+              </div>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="owner@maqboolsports.in"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+              />
+            </div>
+          </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full mt-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Authenticating MSC OS...
-            </>
-          ) : (
-            'Sign In to MSC OS'
-          )}
-        </button>
-      </form>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsResetMode(true)
+                  setErrorMessage(null)
+                  setSuccessMessage(null)
+                }}
+                className="text-xs text-emerald-700 hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Lock size={18} />
+              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full mt-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Authenticating MSC OS...
+              </>
+            ) : (
+              'Sign In to MSC OS'
+            )}
+          </button>
+        </form>
+      )}
 
       <div className="mt-8 text-center pt-4 border-t border-slate-100">
         <Link href="/" className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">

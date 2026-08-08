@@ -51,7 +51,7 @@ export default function AdminDashboardPage() {
 
   const handleEnableNotifications = async () => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      const perm = await Notification.requestPermission()
+      await Notification.requestPermission()
       setShowNotificationPrompt(false)
     }
   }
@@ -65,7 +65,6 @@ export default function AdminDashboardPage() {
 
       let currentTodayRevenue = 0
       let currentTodayBookings = 0
-      let currentActiveBookings = 0
       let currentUpcomingBookings = 0
       let currentFailedPayments = 0
       let currentTotalCustomers = 0
@@ -142,6 +141,21 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     loadAdminMetrics()
+
+    // Realtime listener for bookings & payments
+    const channel = supabase
+      .channel('admin-dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        loadAdminMetrics()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
+        loadAdminMetrics()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const handleRefresh = () => {
@@ -152,60 +166,60 @@ export default function AdminDashboardPage() {
   const isEmptyData = metrics.todayBookings === 0 && metrics.totalCustomers === 0 && recentBookings.length === 0
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto text-slate-900">
       {/* Top Banner Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-white">
-              MSC OS Executive Dashboard
+            <h1 className="text-2xl font-bold text-slate-900">
+              Executive Dashboard
             </h1>
-            <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase rounded border border-emerald-500/30">
+            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase rounded border border-emerald-200">
               Live Backend Connected
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Real-time complex management, revenue metrics & facility operations
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-all flex items-center gap-2"
+            className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs"
           >
             <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} /> Refresh
           </button>
           <Link
-            href="/admin/bookings?action=new"
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2"
+            href="/admin/bookings"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5"
           >
-            <PlusCircle size={16} /> New Walk-In Booking
+            <PlusCircle size={15} /> New Walk-In Booking
           </Link>
         </div>
       </div>
 
-      {/* Browser Notification User Gesture Prompt per Directive 10 */}
+      {/* Browser Notification User Gesture Prompt */}
       {showNotificationPrompt && (
-        <div className="p-4 bg-emerald-950/70 border border-emerald-500/40 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xl">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
           <div className="flex items-center gap-3">
-            <Bell size={20} className="text-emerald-400 shrink-0" />
+            <Bell size={18} className="text-emerald-700 shrink-0" />
             <div>
-              <span className="font-bold text-white block">Enable MSC OS Alerts</span>
-              <span className="text-slate-300 text-[11px]">Get notified when new bookings, payments or important operational events occur.</span>
+              <span className="font-bold text-slate-900 block">Enable MSC OS Alerts</span>
+              <span className="text-slate-600 text-[11px]">Get notified when new bookings, payments or important operational events occur.</span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleEnableNotifications}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md"
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shadow-2xs"
             >
               Enable Notifications
             </button>
             <button
               onClick={() => setShowNotificationPrompt(false)}
-              className="px-3 py-2 text-slate-400 hover:text-white text-xs font-medium"
+              className="px-3 py-1.5 text-slate-500 hover:text-slate-900 text-xs font-medium"
             >
               Not Now
             </button>
@@ -213,23 +227,23 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Empty State Banner when 0 operational rows exist */}
+      {/* Empty State Ready Banner when 0 rows exist */}
       {isEmptyData && !isLoading && (
-        <div className="p-6 bg-slate-900/90 border border-emerald-500/30 rounded-3xl text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-5 bg-white border border-slate-200/80 rounded-2xl text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
           <div>
-            <span className="text-xs font-bold uppercase text-emerald-400 tracking-wider block">
+            <span className="text-[10px] font-bold uppercase text-emerald-700 tracking-wider block">
               Facility Ready for Launch
             </span>
-            <h3 className="text-lg font-bold font-display text-white mt-1">
+            <h3 className="text-sm font-bold text-slate-900 mt-0.5">
               Your MSC dashboard is ready.
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-0.5">
               Operational metrics will update in real-time as bookings, customer accounts, and payments are created.
             </p>
           </div>
           <Link
             href="/admin/bookings"
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shrink-0"
+            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shrink-0 shadow-2xs"
           >
             Manage Slots & Bookings
           </Link>
@@ -237,118 +251,118 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Metrics Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Today's Revenue</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <DollarSign size={18} />
+            <span className="text-[11px] font-semibold text-slate-500 uppercase">Today's Revenue</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <DollarSign size={16} />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
+          <p className="text-2xl font-bold text-slate-900 mt-2">
             ₹{metrics.todayRevenue}
           </p>
-          <span className="text-[10px] text-slate-500 mt-1 block">Captured online & walk-in total</span>
+          <span className="text-[10px] text-slate-400 mt-1 block">Captured online & walk-in total</span>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Today's Bookings</span>
-            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
-              <Calendar size={18} />
+            <span className="text-[11px] font-semibold text-slate-500 uppercase">Today's Bookings</span>
+            <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
+              <Calendar size={16} />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
+          <p className="text-2xl font-bold text-slate-900 mt-2">
             {metrics.todayBookings}
           </p>
-          <span className="text-[10px] text-slate-500 mt-1 block">New reservations today</span>
+          <span className="text-[10px] text-slate-400 mt-1 block">New reservations today</span>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Upcoming Slots</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-              <Clock size={18} />
+            <span className="text-[11px] font-semibold text-slate-500 uppercase">Upcoming Slots</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Clock size={16} />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
+          <p className="text-2xl font-bold text-slate-900 mt-2">
             {metrics.upcomingBookings}
           </p>
-          <span className="text-[10px] text-slate-500 mt-1 block">Confirmed future sessions</span>
+          <span className="text-[10px] text-slate-400 mt-1 block">Confirmed future sessions</span>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Total Players</span>
-            <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
-              <Users size={18} />
+            <span className="text-[11px] font-semibold text-slate-500 uppercase">Total Players</span>
+            <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+              <Users size={16} />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
+          <p className="text-2xl font-bold text-slate-900 mt-2">
             {metrics.totalCustomers}
           </p>
-          <span className="text-[10px] text-slate-500 mt-1 block">Registered customer accounts</span>
+          <span className="text-[10px] text-slate-400 mt-1 block">Registered customer accounts</span>
         </div>
       </div>
 
       {/* Two Column Layout: Recent Bookings & Audit Trail */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
+        <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold font-display text-white">Recent Operations</h3>
-            <Link href="/admin/bookings" className="text-xs text-emerald-400 hover:underline">
+            <h3 className="text-sm font-bold text-slate-900">Recent Operations</h3>
+            <Link href="/admin/bookings" className="text-xs text-emerald-700 font-semibold hover:underline">
               View All Bookings →
             </Link>
           </div>
 
           {recentBookings.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {recentBookings.map((b) => (
-                <div key={b.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-950/60 border border-slate-800 rounded-xl gap-3 text-xs">
+                <div key={b.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-slate-50 border border-slate-200/60 rounded-xl gap-3 text-xs">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-white">{b.venues?.name || 'Football Turf'}</span>
+                      <span className="font-bold text-slate-900">{b.venues?.name || 'Football Turf'}</span>
                       <span className="text-slate-400">#{b.booking_number}</span>
                     </div>
-                    <p className="text-slate-400 text-xs mt-0.5">
-                      Customer: {b.user_profiles?.full_name || 'Guest'} • {format(new Date(b.start_time), 'MMM d @ h:mm a')}
+                    <p className="text-slate-500 text-[11px] mt-0.5">
+                      Customer: {b.user_profiles?.full_name || 'Walk-In'} • {format(new Date(b.start_time), 'MMM d @ h:mm a')}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                      b.booking_status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      b.booking_status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
                     }`}>
                       {b.booking_status}
                     </span>
-                    <span className="font-extrabold text-white text-sm">₹{b.total_amount}</span>
+                    <span className="font-bold text-slate-900 text-xs">₹{b.total_amount}</span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl text-slate-400 text-xs">
+            <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl text-slate-500 text-xs">
               0 bookings recorded today.
             </div>
           )}
         </div>
 
-        <div className="lg:col-span-1 bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-base font-bold font-display text-white mb-4">Audit Activity Stream</h3>
+        <div className="lg:col-span-1 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 mb-4">Audit Activity Stream</h3>
           {recentActivity.length > 0 ? (
-            <div className="space-y-3 text-xs">
+            <div className="space-y-2.5 text-xs">
               {recentActivity.map((log) => (
-                <div key={log.id} className="p-3 bg-slate-950/60 border border-slate-800/80 rounded-xl space-y-1">
+                <div key={log.id} className="p-3 bg-slate-50 border border-slate-200/60 rounded-xl space-y-1">
                   <div className="flex justify-between items-center text-[10px] text-slate-400">
-                    <span className="font-bold uppercase text-emerald-400">{log.action_type || 'SYSTEM'}</span>
+                    <span className="font-bold uppercase text-emerald-700">{log.action_type || 'SYSTEM'}</span>
                     <span>{format(new Date(log.timestamp), 'h:mm a')}</span>
                   </div>
-                  <p className="text-slate-300 text-xs">{log.details}</p>
+                  <p className="text-slate-700 text-xs">{log.details}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl text-slate-400 text-xs">
+            <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl text-slate-500 text-xs">
               Audit log stream ready.
             </div>
           )}

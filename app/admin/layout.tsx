@@ -68,10 +68,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const router = useRouter()
 
-  // Automatic server/client redirect to /admin/login for unauthenticated visitors per Directive 1 & 2
+  // 1. If we are on /admin/login, render children immediately (No layout interception, no blocking)
+  if (pathname === '/admin/login') {
+    return <>{children}</>
+  }
+
+  // 2. Automatic redirect to /admin/login for unauthenticated users on protected admin routes
   useEffect(() => {
     if (!isLoading && !user && pathname !== '/admin/login') {
-      router.push('/admin/login')
+      router.replace('/admin/login')
     }
   }, [user, isLoading, pathname, router])
 
@@ -83,26 +88,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // Unauthenticated -> Instant redirect component to /admin/login
+  // 3. Unauthenticated on a protected admin route -> Render minimal redirect loader
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center px-4">
-        <div className="text-center max-w-md bg-white border border-slate-200 p-8 rounded-3xl shadow-xl">
-          <Shield className="mx-auto text-emerald-600 mb-4" size={44} />
-          <h2 className="text-xl font-bold text-slate-900">Redirecting to MSC OS Login...</h2>
-          <p className="text-slate-500 mt-2 text-xs">Owner & staff credentials are required.</p>
-          <Link
-            href="/admin/login"
-            className="inline-block mt-6 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition-all shadow-sm"
-          >
-            Sign In to MSC OS
-          </Link>
-        </div>
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
+        <Loader2 className="animate-spin text-emerald-600" size={32} />
       </div>
     )
   }
 
-  // Non-staff / Non-owner -> Server-side RBAC Unauthorized Screen per Directive 6
+  // 4. Authenticated normal customer -> Access Restricted Screen
   const isAuthorized = role === 'super_admin' || role === 'owner' || role === 'reception'
   if (!isAuthorized) {
     return (
@@ -134,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleAdminSignOut = async () => {
     await logout()
-    router.push('/admin/login')
+    router.replace('/admin/login')
   }
 
   return (
