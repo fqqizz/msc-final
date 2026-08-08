@@ -5,7 +5,6 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { Play } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 const VIDEO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0525%282%29-pUzzUSjX4PhlTrZBiXyQf40jenLSbJ.mp4'
 const POSTER_IMAGE = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp'
@@ -16,109 +15,165 @@ const GPU_ACCELERATED = {
   perspective: 1000,
 } as const
 
-// Authoritative Original Intro Animation per Part 1
-const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState(0)
-  const [isVisible, setIsVisible] = useState(true)
-  const { performanceMode, isMobile } = useMobilePerformance()
+// Easing curve: cinematic deceleration (cubic-bezier)
+const CINEMATIC_EASE = [0.22, 1, 0.36, 1] as const
+
+// Module-level guard to guarantee the intro runs strictly ONCE per session lifecycle
+let gIntroAlreadyPlayed = false
+
+interface IntroAnimationProps {
+  onComplete?: () => void
+}
+
+const IntroAnimation = memo(function IntroAnimation({ onComplete }: IntroAnimationProps) {
+  const [phase, setPhase] = useState<number>(0)
+  const [isActive, setIsActive] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      if (gIntroAlreadyPlayed || sessionStorage.getItem('msc_intro_played') === 'true') {
+        return false
+      }
+    }
+    return true
+  })
+
+  const onCompleteRef = useRef(onComplete)
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  })
 
   useEffect(() => {
-    const durationMultiplier = performanceMode ? 0.6 : 0.85
-    
-    // 1. Logo entrance (200ms)
-    const t1 = setTimeout(() => setPhase(1), Math.round(200 * durationMultiplier))
-    // 2. "LET THE GAME BEGIN" typography entrance (700ms)
-    const t2 = setTimeout(() => setPhase(2), Math.round(750 * durationMultiplier))
-    // 3. Smooth exit transition to reveal Hero website (1800ms)
-    const t3 = setTimeout(() => {
-      setPhase(3)
-      onComplete()
-    }, Math.round(1900 * durationMultiplier))
-    const t4 = setTimeout(() => {
-      setIsVisible(false)
-    }, Math.round(2500 * durationMultiplier))
+    // Check if previously played in session
+    if (!isActive) {
+      onCompleteRef.current?.()
+      return
+    }
+
+    // Check reduced motion preference
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (prefersReducedMotion) {
+      const timer = setTimeout(() => {
+        gIntroAlreadyPlayed = true
+        sessionStorage.setItem('msc_intro_played', 'true')
+        setIsActive(false)
+        onCompleteRef.current?.()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+
+    // Deterministic 2.0–2.4s cinematic timeline
+    // 0.05s: Logo arrives smoothly
+    // 0.40s: "LET THE GAME" glides up in White
+    // 0.85s: "BEGIN" glides up in MSC Green
+    // 1.85s: Final composition settles with generous negative space
+    // 2.10s: Smooth fade-out exit transition
+    // 2.45s: Complete & unmount
+    const t1 = setTimeout(() => setPhase(1), 50)
+    const t2 = setTimeout(() => setPhase(2), 400)
+    const t3 = setTimeout(() => setPhase(3), 850)
+    const t4 = setTimeout(() => setPhase(4), 2100)
+    const t5 = setTimeout(() => {
+      gIntroAlreadyPlayed = true
+      try {
+        sessionStorage.setItem('msc_intro_played', 'true')
+      } catch {}
+      setIsActive(false)
+      onCompleteRef.current?.()
+    }, 2450)
 
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
       clearTimeout(t4)
+      clearTimeout(t5)
     }
-  }, [onComplete, performanceMode])
+  }, []) // Explicitly empty deps: runs once on mount, never resets on parent re-renders
 
-  if (!isVisible) return null
+  if (!isActive) return null
 
   return (
-    <AnimatePresence>
-      {phase < 3 && (
+    <AnimatePresence mode="wait">
+      {phase < 4 && (
         <motion.div
+          key="msc-intro-overlay"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: performanceMode ? 0.35 : 0.55, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#030303] text-white select-none pointer-events-none transform-gpu"
+          transition={{ duration: 0.38, ease: 'easeOut' }}
+          className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#030303] text-white select-none pointer-events-none transform-gpu overflow-hidden"
+          style={{ willChange: 'opacity' }}
         >
-          {/* Subtle ambient emerald glow */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Subtle ambient green backlight */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: phase >= 1 ? 0.2 : 0, scale: phase >= 1 ? 1 : 0.8 }}
-              transition={{ duration: 1 }}
-              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2BA84A]/30 transform-gpu
-                ${isMobile ? 'w-[280px] h-[280px] blur-[70px]' : 'w-[480px] h-[480px] blur-[140px]'}`}
+              animate={{
+                opacity: phase >= 1 ? 0.18 : 0,
+                scale: phase >= 1 ? 1 : 0.8,
+              }}
+              transition={{ duration: 0.9, ease: CINEMATIC_EASE }}
+              className="w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] rounded-full bg-[#2BA84A]/30 blur-[90px] sm:blur-[140px] transform-gpu"
             />
           </div>
 
-          {/* 1. MSC Logo */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ 
-              scale: phase >= 1 ? 1 : 0.8, 
-              opacity: phase >= 1 ? 1 : 0,
-              y: phase >= 1 ? 0 : 20
-            }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10"
-          >
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
-                alt="MSC Logo"
-                fill
-                className="object-contain"
-                priority
-              />
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ 
-                  opacity: phase >= 2 ? [0.2, 0.45, 0.2] : 0 
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
-                }}
-                className="absolute inset-0 blur-2xl bg-[#2BA84A]/40 rounded-full scale-110"
-              />
-            </div>
-          </motion.div>
-
-          {/* 2. Original Typography: LET THE GAME (White) / BEGIN (MSC Green) in Anton font */}
-          <div className="mt-8 text-center relative z-10 overflow-hidden">
+          <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 max-w-lg mx-auto">
+            {/* 1. MSC Logo */}
             <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ 
-                y: phase >= 2 ? 0 : 30, 
-                opacity: phase >= 2 ? 1 : 0 
+              initial={{ scale: 0.88, opacity: 0, y: 12 }}
+              animate={{
+                scale: phase >= 1 ? 1 : 0.88,
+                opacity: phase >= 1 ? 1 : 0,
+                y: phase >= 1 ? 0 : 12,
               }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.5, ease: CINEMATIC_EASE }}
+              className="relative mb-6 sm:mb-8"
             >
-              <h2 className="font-[family-name:var(--font-anton)] text-4xl sm:text-5xl md:text-6xl text-white tracking-wide uppercase leading-tight">
-                LET THE GAME
-              </h2>
-              <h2 className="font-[family-name:var(--font-anton)] text-4xl sm:text-5xl md:text-6xl text-[#2BA84A] tracking-wide uppercase leading-tight mt-1">
-                BEGIN
-              </h2>
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto">
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
+                  alt="MSC Logo"
+                  fill
+                  sizes="(max-width: 640px) 80px, 96px"
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </motion.div>
+
+            {/* 2. Original Typography: "LET THE GAME" (White) & "BEGIN" (MSC Green) */}
+            <div className="overflow-hidden space-y-1 sm:space-y-1.5">
+              {/* Line 1: LET THE GAME */}
+              <div className="overflow-hidden">
+                <motion.h2
+                  initial={{ y: 22, opacity: 0 }}
+                  animate={{
+                    y: phase >= 2 ? 0 : 22,
+                    opacity: phase >= 2 ? 1 : 0,
+                  }}
+                  transition={{ duration: 0.55, ease: CINEMATIC_EASE }}
+                  className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-[0.16em] sm:tracking-[0.2em] uppercase leading-tight"
+                >
+                  LET THE GAME
+                </motion.h2>
+              </div>
+
+              {/* Line 2: BEGIN */}
+              <div className="overflow-hidden">
+                <motion.h2
+                  initial={{ y: 22, opacity: 0 }}
+                  animate={{
+                    y: phase >= 3 ? 0 : 22,
+                    opacity: phase >= 3 ? 1 : 0,
+                  }}
+                  transition={{ duration: 0.55, ease: CINEMATIC_EASE }}
+                  className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2BA84A] tracking-[0.16em] sm:tracking-[0.2em] uppercase leading-tight"
+                >
+                  BEGIN
+                </motion.h2>
+              </div>
+            </div>
           </div>
         </motion.div>
       )}
@@ -272,8 +327,10 @@ const HeroContent = memo(function HeroContent() {
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [videoReady, setVideoReady] = useState(false)
-  const [introFinished, setIntroFinished] = useState(false)
-  const { performanceMode } = useMobilePerformance()
+
+  const handleVideoReady = useCallback(() => {
+    setVideoReady(true)
+  }, [])
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -284,13 +341,9 @@ export default function HeroSection() {
   const scrollY = useTransform(scrollYProgress, [0, 0.35], [0, -50])
   const scrollScale = useTransform(scrollYProgress, [0, 0.35], [1, 0.97])
 
-  const opacity = performanceMode ? 1 : scrollOpacity
-  const y = performanceMode ? 0 : scrollY
-  const scale = performanceMode ? 1 : scrollScale
-
   return (
     <>
-      <IntroAnimation onComplete={() => setIntroFinished(true)} />
+      <IntroAnimation />
       <section 
         ref={containerRef}
         className="relative min-h-[105vh] bg-[#050505]"
@@ -301,7 +354,7 @@ export default function HeroSection() {
           style={GPU_ACCELERATED}
         >
           <div className="absolute inset-0" style={GPU_ACCELERATED}>
-            <VideoBackground onReady={() => setVideoReady(true)} />
+            <VideoBackground onReady={handleVideoReady} />
             <div 
               className="absolute inset-0 bg-gradient-to-b from-[#050505]/60 via-[#050505]/40 to-[#050505]"
               style={{ ...GPU_ACCELERATED, zIndex: 2 }}
@@ -312,9 +365,9 @@ export default function HeroSection() {
             className="absolute inset-0 transform-gpu"
             style={{ 
               ...GPU_ACCELERATED,
-              opacity, 
-              y, 
-              scale,
+              opacity: scrollOpacity, 
+              y: scrollY, 
+              scale: scrollScale,
             }}
           >
             <HeroContent />
