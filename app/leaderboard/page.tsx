@@ -28,24 +28,29 @@ export default function LeaderboardPage() {
         if (data && Array.isArray(data)) {
           setLeaderboard(data)
         } else {
-          // Fallback query from customers table directly
+          // Fallback query from customers table strictly filtering role = 'customer'
           const { data: custData } = await supabase
-            .from('customers')
-            .select('*, user_profiles(full_name, avatar_url)')
-            .order('hours_played', { ascending: false })
+            .from('user_profiles')
+            .select('full_name, avatar_url, customers(*)')
+            .eq('role', 'customer')
+            .order('created_at', { ascending: false })
             .limit(50)
 
           if (custData) {
-            setLeaderboard(
-              custData.map((c, idx) => ({
-                rank: idx + 1,
-                customer_id: c.id,
-                full_name: c.user_profiles?.full_name || 'MSC Player',
-                avatar_url: c.user_profiles?.avatar_url,
-                hours_played: c.hours_played || 0,
-                total_bookings: c.total_bookings || 0
-              }))
-            )
+            const valid = custData
+              .filter((u: any) => u.customers && (Array.isArray(u.customers) ? u.customers.length > 0 : true))
+              .map((c: any, idx: number) => {
+                const cust = Array.isArray(c.customers) ? c.customers[0] : c.customers
+                return {
+                  rank: idx + 1,
+                  customer_id: c.id,
+                  full_name: c.full_name || 'MSC Player',
+                  avatar_url: c.avatar_url,
+                  hours_played: cust?.hours_played || 0,
+                  total_bookings: cust?.total_bookings || 0
+                }
+              })
+            setLeaderboard(valid)
           }
         }
       } catch (err) {

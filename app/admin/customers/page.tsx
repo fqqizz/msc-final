@@ -16,10 +16,12 @@ export default function AdminCustomersPage() {
     async function loadCustomers() {
       try {
         setIsLoading(true)
+        // Query user_profiles where role = 'customer' and join customer stats
         const { data } = await supabase
-          .from('customers')
-          .select('*, user_profiles(full_name, email, phone, avatar_url, role)')
-          .order('total_spend', { ascending: false })
+          .from('user_profiles')
+          .select('*, customers(*)')
+          .eq('role', 'customer')
+          .order('created_at', { ascending: false })
 
         if (data) setCustomers(data)
       } catch (err) {
@@ -32,8 +34,7 @@ export default function AdminCustomersPage() {
     loadCustomers()
   }, [])
 
-  const filtered = customers.filter((c) => {
-    const p = c.user_profiles || {}
+  const filtered = customers.filter((p) => {
     return (
       (p.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -88,31 +89,34 @@ export default function AdminCustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-3.5 font-bold text-slate-900">
-                      {c.user_profiles?.full_name || 'MSC Player'}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="text-slate-600">{c.user_profiles?.email || 'N/A'}</div>
-                      <div className="text-[11px] text-slate-400">{c.user_profiles?.phone || ''}</div>
-                    </td>
-                    <td className="px-5 py-3.5 font-semibold text-emerald-700">
-                      {c.hours_played || 0} hrs
-                    </td>
-                    <td className="px-5 py-3.5 font-semibold text-slate-900">
-                      {c.total_bookings || 0}
-                    </td>
-                    <td className="px-5 py-3.5 font-bold text-slate-900">
-                      ₹{c.total_spend || 0}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
-                        {c.user_profiles?.role || 'customer'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((p) => {
+                  const cust = Array.isArray(p.customers) ? p.customers[0] : p.customers
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-5 py-3.5 font-bold text-slate-900">
+                        {p.full_name || 'MSC Player'}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="text-slate-600">{p.email || 'N/A'}</div>
+                        <div className="text-[11px] text-slate-400">{p.phone || ''}</div>
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-emerald-700">
+                        {cust?.hours_played || 0} hrs
+                      </td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-900">
+                        {cust?.total_bookings || 0}
+                      </td>
+                      <td className="px-5 py-3.5 font-bold text-slate-900">
+                        ₹{cust?.total_spend || 0}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                          {p.role}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

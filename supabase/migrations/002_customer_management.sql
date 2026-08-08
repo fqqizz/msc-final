@@ -114,7 +114,7 @@ SELECT
     ROW_NUMBER() OVER (ORDER BY c.total_spend DESC, c.hours_played DESC) AS rank
 FROM public.customers c
 JOIN public.user_profiles p ON c.id = p.id
-WHERE c.deleted_at IS NULL AND p.deleted_at IS NULL AND c.is_blacklisted = FALSE;
+WHERE c.deleted_at IS NULL AND p.deleted_at IS NULL AND c.is_blacklisted = FALSE AND p.role = 'customer';
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_idx_mv_customer_leaderboard ON public.mv_customer_leaderboard(customer_id);
 
@@ -242,13 +242,18 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 -- 6. TRIGGERS & AUTOMATION
 -- ----------------------------------------------------------------------------
 
--- Trigger to auto-create customer entry when a user profile is created
+-- Trigger to auto-create customer entry when a user profile is created with role = 'customer'
 CREATE OR REPLACE FUNCTION public.handle_new_customer_entry()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.customers (id, created_by)
-    VALUES (NEW.id, NEW.id)
-    ON CONFLICT (id) DO NOTHING;
+    IF NEW.role = 'customer' THEN
+        INSERT INTO public.customers (id, created_by)
+        VALUES (NEW.id, NEW.id)
+        ON CONFLICT (id) DO NOTHING;
+    ELSE
+        -- If user is staff/owner/super_admin, ensure they are NOT in customers table
+        DELETE FROM public.customers WHERE id = NEW.id;
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
