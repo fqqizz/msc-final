@@ -100,8 +100,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-[#0A0A0C] mb-1">Email Address</h3>
-                    <a href="mailto:info@maqboolsportscomplex.com" className="text-[#2BA84A] hover:underline">
-                      info@maqboolsportscomplex.com
+                    <a href="mailto:info@maqboolsports.in" className="text-[#2BA84A] hover:underline">
+                      info@maqboolsports.in
                     </a>
                   </div>
                 </motion.div>

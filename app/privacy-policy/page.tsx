@@ -138,7 +138,7 @@ export default function PrivacyPolicyPage() {
               <p>Maqbool Sports Complex</p>
               <p>Sangri Colony, Baramulla, Jammu and Kashmir, 193101</p>
               <p>Phone: +91 9682558775</p>
-              <p>Email: info@maqboolsportscomplex.com</p>
+              <p>Email: info@maqboolsports.in</p>
             </div>
           </motion.div>
         </div>

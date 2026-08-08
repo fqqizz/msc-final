@@ -19,7 +19,7 @@ const MSC_KNOWLEDGE = {
   },
   contact: {
     phone: '+91 9682558775',
-    email: 'info@maqboolsportscomplex.com',
+    email: 'info@maqboolsports.in',
     social: '@msc_baramulla on Instagram'
   },
   pricing: {

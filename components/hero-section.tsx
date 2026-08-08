@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect, useCallback, memo } from 'react'
+import { useRef, useState, useEffect, memo } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { Play } from 'lucide-react'
 import Link from 'next/link'
@@ -15,39 +15,15 @@ const GPU_ACCELERATED = {
   perspective: 1000,
 } as const
 
-// Easing curve: cinematic deceleration (cubic-bezier)
+// Easing curve: smooth cinematic deceleration
 const CINEMATIC_EASE = [0.22, 1, 0.36, 1] as const
 
-// Module-level guard to guarantee the intro runs strictly ONCE per session lifecycle
-let gIntroAlreadyPlayed = false
-
-interface IntroAnimationProps {
-  onComplete?: () => void
-}
-
-const IntroAnimation = memo(function IntroAnimation({ onComplete }: IntroAnimationProps) {
+// Authoritative MSC Intro Animation
+const IntroAnimation = memo(function IntroAnimation() {
   const [phase, setPhase] = useState<number>(0)
-  const [isActive, setIsActive] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      if (gIntroAlreadyPlayed || sessionStorage.getItem('msc_intro_played') === 'true') {
-        return false
-      }
-    }
-    return true
-  })
-
-  const onCompleteRef = useRef(onComplete)
-  useEffect(() => {
-    onCompleteRef.current = onComplete
-  })
+  const [isCompleted, setIsCompleted] = useState<boolean>(false)
 
   useEffect(() => {
-    // Check if previously played in session
-    if (!isActive) {
-      onCompleteRef.current?.()
-      return
-    }
-
     // Check reduced motion preference
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
@@ -55,32 +31,24 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: IntroAnimati
 
     if (prefersReducedMotion) {
       const timer = setTimeout(() => {
-        gIntroAlreadyPlayed = true
-        sessionStorage.setItem('msc_intro_played', 'true')
-        setIsActive(false)
-        onCompleteRef.current?.()
-      }, 500)
+        setIsCompleted(true)
+      }, 400)
       return () => clearTimeout(timer)
     }
 
-    // Deterministic 2.0–2.4s cinematic timeline
+    // Deterministic ~2.2s cinematic timeline:
     // 0.05s: Logo arrives smoothly
-    // 0.40s: "LET THE GAME" glides up in White
-    // 0.85s: "BEGIN" glides up in MSC Green
+    // 0.40s: "LET THE GAME" glides up in pure White
+    // 0.85s: "BEGIN" glides up in MSC Green (#2BA84A)
     // 1.85s: Final composition settles with generous negative space
     // 2.10s: Smooth fade-out exit transition
-    // 2.45s: Complete & unmount
+    // 2.45s: Complete & cleanly unmount from DOM
     const t1 = setTimeout(() => setPhase(1), 50)
     const t2 = setTimeout(() => setPhase(2), 400)
     const t3 = setTimeout(() => setPhase(3), 850)
     const t4 = setTimeout(() => setPhase(4), 2100)
     const t5 = setTimeout(() => {
-      gIntroAlreadyPlayed = true
-      try {
-        sessionStorage.setItem('msc_intro_played', 'true')
-      } catch {}
-      setIsActive(false)
-      onCompleteRef.current?.()
+      setIsCompleted(true)
     }, 2450)
 
     return () => {
@@ -90,9 +58,9 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: IntroAnimati
       clearTimeout(t4)
       clearTimeout(t5)
     }
-  }, []) // Explicitly empty deps: runs once on mount, never resets on parent re-renders
+  }, []) // Empty deps: mounts once per page load and never restarts on parent re-renders
 
-  if (!isActive) return null
+  if (isCompleted) return null
 
   return (
     <AnimatePresence mode="wait">
@@ -105,12 +73,12 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: IntroAnimati
           className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#030303] text-white select-none pointer-events-none transform-gpu overflow-hidden"
           style={{ willChange: 'opacity' }}
         >
-          {/* Subtle ambient green backlight */}
+          {/* Ambient emerald backlight pulse */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{
-                opacity: phase >= 1 ? 0.18 : 0,
+                opacity: phase >= 1 ? 0.22 : 0,
                 scale: phase >= 1 ? 1 : 0.8,
               }}
               transition={{ duration: 0.9, ease: CINEMATIC_EASE }}
@@ -142,7 +110,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: IntroAnimati
               </div>
             </motion.div>
 
-            {/* 2. Original Typography: "LET THE GAME" (White) & "BEGIN" (MSC Green) */}
+            {/* 2. Authentic Typography: "LET THE GAME" (White) & "BEGIN" (MSC Green) in Anton font */}
             <div className="overflow-hidden space-y-1 sm:space-y-1.5">
               {/* Line 1: LET THE GAME */}
               <div className="overflow-hidden">
@@ -181,49 +149,23 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: IntroAnimati
   )
 })
 
-const VideoBackground = memo(function VideoBackground({ onReady }: { onReady: () => void }) {
+// Highly optimized background video that prepares & plays immediately underneath the intro
+const VideoBackground = memo(function VideoBackground() {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [hasError, setHasError] = useState(false)
-  const [shouldSourceVideo, setShouldSourceVideo] = useState(false)
-
-  const handleLoadedData = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = 0.75
-      videoRef.current.play().then(() => {
-        setIsPlaying(true)
-        onReady()
-      }).catch(() => {
-        setIsPlaying(true)
-        onReady()
-      })
-    }
-  }, [onReady])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShouldSourceVideo(true)
-    }, 60)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    if (!shouldSourceVideo) return
     const video = videoRef.current
     if (!video) return
 
-    video.preload = 'auto'
-    try {
-      video.load()
-    } catch {}
-
-    const handleMetadata = () => {
-      video.playbackRate = 0.75
+    // Attempt to start playing immediately on mount
+    const playPromise = video.play()
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Autoplay policy prevented playback, poster remains cleanly visible
+      })
     }
-
-    video.addEventListener('loadedmetadata', handleMetadata)
-    return () => video.removeEventListener('loadedmetadata', handleMetadata)
-  }, [shouldSourceVideo])
+  }, [])
 
   if (hasError) {
     return (
@@ -236,6 +178,7 @@ const VideoBackground = memo(function VideoBackground({ onReady }: { onReady: ()
 
   return (
     <>
+      {/* 1. Instant Poster underlay - immediate first visual frame with zero delay */}
       <div 
         className="absolute inset-0 bg-gradient-to-br from-[#0a1a0f] via-[#030303] to-[#0a0f1a] overflow-hidden"
         style={{ ...GPU_ACCELERATED, zIndex: 0 }}
@@ -245,38 +188,28 @@ const VideoBackground = memo(function VideoBackground({ onReady }: { onReady: ()
           alt="MSC Stadium Turf Poster"
           fill
           priority
-          className="object-cover opacity-40 filter blur-[1px]"
+          className="object-cover opacity-45 filter blur-[0.5px]"
           sizes="100vw"
         />
       </div>
 
-      <div 
-        className="absolute inset-0 transform-gpu transition-opacity duration-1000 ease-out"
-        style={{ 
-          ...GPU_ACCELERATED,
-          opacity: isPlaying ? 1 : 0,
-          zIndex: 1,
-        }}
+      {/* 2. Video element mounts immediately, preloads and plays smoothly underneath the intro */}
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disablePictureInPicture
+        controlsList="nodownload noplaybackrate noremoteplayback"
+        poster={POSTER_IMAGE}
+        onError={() => setHasError(true)}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ ...GPU_ACCELERATED, zIndex: 1 }}
       >
-        {shouldSourceVideo && (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            loop
-            playsInline
-            disablePictureInPicture
-            controlsList="nodownload noplaybackrate noremoteplayback"
-            poster={POSTER_IMAGE}
-            onLoadedData={handleLoadedData}
-            onError={() => setHasError(true)}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={GPU_ACCELERATED}
-          >
-            <source src={VIDEO_URL} type="video/mp4" />
-          </video>
-        )}
-      </div>
+        <source src={VIDEO_URL} type="video/mp4" />
+      </video>
     </>
   )
 })
@@ -326,11 +259,6 @@ const HeroContent = memo(function HeroContent() {
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [videoReady, setVideoReady] = useState(false)
-
-  const handleVideoReady = useCallback(() => {
-    setVideoReady(true)
-  }, [])
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -354,7 +282,7 @@ export default function HeroSection() {
           style={GPU_ACCELERATED}
         >
           <div className="absolute inset-0" style={GPU_ACCELERATED}>
-            <VideoBackground onReady={handleVideoReady} />
+            <VideoBackground />
             <div 
               className="absolute inset-0 bg-gradient-to-b from-[#050505]/60 via-[#050505]/40 to-[#050505]"
               style={{ ...GPU_ACCELERATED, zIndex: 2 }}
