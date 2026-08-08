@@ -113,7 +113,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="transform-gpu drop-shadow-[0_0_18px_rgba(43,168,74,0.35)]"
           >
-            <span className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl text-white tracking-wide">
+            <span className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-white tracking-wider">
               LET THE GAME
             </span>
           </motion.div>
@@ -127,7 +127,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
             transition={{ duration: 0.6, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
             className="transform-gpu"
           >
-            <span className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl text-[#2BA84A] tracking-wide">
+            <span className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-[#2BA84A] tracking-wider">
               BEGIN
             </span>
           </motion.div>
@@ -285,10 +285,10 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
         custom={0.1}
         className="text-center transform-gpu"
       >
-        <h1 className="font-[family-name:var(--font-anton)] text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-white leading-[0.9]">
+        <h1 className="font-display font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white leading-[1.05]">
           MAQBOOL
         </h1>
-        <h2 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-[#2BA84A] leading-[0.9] mt-1 sm:mt-2">
+        <h2 className="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-[#2BA84A] leading-[1.05] mt-1 sm:mt-2">
           SPORTS COMPLEX
         </h2>
       </motion.div>

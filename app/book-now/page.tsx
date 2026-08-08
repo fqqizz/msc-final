@@ -10,7 +10,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/auth-provider'
-import { format } from 'date-fns'
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isBefore, startOfToday } from 'date-fns'
+import { TwoColorHeading } from '@/components/ui/two-color-heading'
 
 type VenueRecord = {
   id: string
@@ -23,6 +24,7 @@ type VenueRecord = {
   max_capacity: number
   surface_type: string | null
   amenities: string[]
+  base_price?: number
 }
 
 type SlotItem = {
@@ -31,10 +33,6 @@ type SlotItem = {
   startTimeStr: string
   endTimeStr: string
   price: number
-  isBooked: boolean
-  isLocked: boolean
-  isPast: boolean
-  bowlingAvailable: boolean
 }
 
 export default function BookNowPage() {
@@ -42,32 +40,35 @@ export default function BookNowPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  // State
+  // Booking Flow State
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [venues, setVenues] = useState<VenueRecord[]>([])
   const [selectedVenue, setSelectedVenue] = useState<VenueRecord | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [availableSlots, setAvailableSlots] = useState<SlotItem[]>([])
   const [selectedSlots, setSelectedSlots] = useState<SlotItem[]>([])
+  
+  // Add-ons & Pricing
   const [addBowlingMachine, setAddBowlingMachine] = useState<boolean>(false)
   const [bowlingRate, setBowlingRate] = useState<number>(299)
-  
-  // Checkout & Customer Details
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const [paymentType, setPaymentType] = useState<'full' | 'half'>('full')
+
+  // Customer Details
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [acceptCancellation, setAcceptCancellation] = useState(false)
   const [acceptRefundPolicy, setAcceptRefundPolicy] = useState(false)
-  const [paymentType, setPaymentType] = useState<'full' | 'half'>('full')
 
   // Status & Lock
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1) // 1: Date & Venue, 2: Slots, 3: Add-ons & Details, 4: Checkout
   const [isLoadingVenues, setIsLoadingVenues] = useState(true)
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
   const [isLocking, setIsLocking] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Populate guest form from profile if user logged in
+  // Prefill details for logged in user
   useEffect(() => {
     if (user && profile) {
       if (!customerName) setCustomerName(profile.full_name || '')
@@ -76,7 +77,7 @@ export default function BookNowPage() {
     }
   }, [user, profile])
 
-  // 1. Fetch Venues & Bowling Machine pricing from Supabase
+  // 1. Fetch Venues & Base Rates from Supabase
   useEffect(() => {
     async function loadVenues() {
       try {
@@ -112,7 +113,7 @@ export default function BookNowPage() {
     loadVenues()
   }, [])
 
-  // 2. Fetch Availability Slots whenever selectedVenue or selectedDate changes
+  // 2. Fetch Availability Slots (REAL SLOT DISAPPEARANCE RULE)
   useEffect(() => {
     async function calculateSlots() {
       if (!selectedVenue) return
@@ -141,17 +142,11 @@ export default function BookNowPage() {
           .eq('venue_id', selectedVenue.id)
           .gt('expires_at', new Date().toISOString())
 
-        // Fetch bowling machine locks across ALL cricket nets
-        const { data: bowlingBookings } = await supabase
-          .from('booking_resources')
-          .select('booking_id, bookings(start_time, end_time)')
-          .gte('created_at', dayStart)
-
         const now = new Date()
         const isToday = format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')
         const currentHour = now.getHours()
 
-        const baseHourlyRate = selectedVenue.sport_type === 'football' ? 1200 : 600
+        const baseHourlyRate = selectedVenue.sport_type === 'football' ? 999 : 299
         const computed: SlotItem[] = []
 
         // Operating hours: 6 AM (06:00) to 11 PM (23:00)
@@ -159,37 +154,32 @@ export default function BookNowPage() {
           const startTime = new Date(`${dateStr}T${hour.toString().padStart(2, '0')}:00:00Z`)
           const endTime = new Date(`${dateStr}T${(hour + 1).toString().padStart(2, '0')}:00:00Z`)
 
-          // Check if slot has already passed
+          // Past hours check
           const isPast = isToday && hour <= currentHour
 
-          // Check if slot is already booked
+          // Booked check
           const isBooked = existingBookings?.some((b) => {
             const bStart = new Date(b.start_time).getHours()
             return bStart === hour
           }) || false
 
-          // Check if slot is locked
+          // Locked check
           const isLocked = activeLocks?.some((l) => {
             const lStart = new Date(l.start_time).getHours()
             return lStart === hour
           }) || false
 
-          // Strict rule: DO NOT SHOW past, booked, or locked slots at all
+          // DISAPPEARANCE RULE: ONLY ADD SLOTS THAT ARE GENUINELY AVAILABLE
           if (!isPast && !isBooked && !isLocked) {
             const startLabel = hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`
             const endLabel = (hour + 1) > 12 ? `${(hour + 1) - 12} PM` : (hour + 1) === 12 ? '12 PM' : `${hour + 1} AM`
-            const isPeak = hour >= 17 && hour <= 22
 
             computed.push({
               hour,
               label: `${startLabel} - ${endLabel}`,
               startTimeStr: startTime.toISOString(),
               endTimeStr: endTime.toISOString(),
-              price: isPeak ? Math.round(baseHourlyRate * 1.25) : baseHourlyRate,
-              isBooked: false,
-              isLocked: false,
-              isPast: false,
-              bowlingAvailable: true
+              price: baseHourlyRate,
             })
           }
         }
@@ -205,6 +195,12 @@ export default function BookNowPage() {
 
     calculateSlots()
   }, [selectedVenue, selectedDate])
+
+  // Custom Light Calendar Generation
+  const monthStart = startOfMonth(currentMonth)
+  const monthEnd = endOfMonth(monthStart)
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
+  const today = startOfToday()
 
   const handleSlotToggle = (slot: SlotItem) => {
     if (selectedSlots.some((s) => s.hour === slot.hour)) {
@@ -225,7 +221,7 @@ export default function BookNowPage() {
     return paymentType === 'half' ? Math.ceil(total / 2) : total
   }
 
-  // Handle slot lock & payment initiation
+  // Handle Slot Lock & Razorpay Payment Initiation
   const handleProceedToPayment = async () => {
     if (!selectedVenue || selectedSlots.length === 0) return
     if (!customerName || !customerPhone || !customerEmail) {
@@ -298,20 +294,7 @@ export default function BookNowPage() {
         return
       }
 
-      // Record verified payment attempt
-      await supabase.from('payments').insert({
-        booking_id: newBooking.id,
-        customer_id: user?.id || '00000000-0000-0000-0000-000000000000',
-        gateway: 'razorpay',
-        razorpay_payment_id: `pay_live_${Date.now().toString().slice(-8)}`,
-        amount: amountPaid,
-        currency: 'INR',
-        status: 'captured',
-        payment_method: 'upi',
-        raw_response: { method: 'upi', verified: true }
-      })
-
-      // Redirect to cinematic booking receipt confirmation page
+      // Redirect to booking receipt confirmation page
       router.push(`/booking/success/${newBooking.id}`)
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred while locking your slot.')
@@ -321,406 +304,366 @@ export default function BookNowPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col pt-24">
+    <main className="min-h-screen bg-white text-slate-900 flex flex-col pt-20">
       <Navigation />
 
       <section className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Header */}
-        <div className="mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors mb-3">
-            <ArrowLeft size={14} /> Back to MSC
-          </Link>
-          <h1 className="text-3xl sm:text-4xl font-extrabold font-display text-white tracking-tight">
-            Book Your Facility Slot
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Real-time availability, instant 5-minute slot locking & guest checkout
+        <div className="mb-8 text-center max-w-2xl mx-auto">
+          <TwoColorHeading
+            primaryText="BOOK YOUR"
+            accentText="SESSION"
+            tag="h1"
+            className="text-3xl sm:text-4xl text-center"
+          />
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Baramulla's premier sports complex — Calendar date selection, real slot availability & guest checkout
           </p>
         </div>
 
         {errorMessage && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-start gap-3 text-red-400 text-xs">
+          <div className="mb-6 max-w-3xl mx-auto p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3 text-red-700 text-xs">
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* 4-Step Booking Engine Container */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Step Indicators */}
-            <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
-              {[
-                { num: 1, label: 'Venue' },
-                { num: 2, label: 'Date & Time' },
-                { num: 3, label: 'Add-Ons' },
-                { num: 4, label: 'Checkout' },
-              ].map((s) => (
-                <button
-                  key={s.num}
-                  onClick={() => setStep(s.num as any)}
-                  className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all ${
-                    step === s.num
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px]">
-                    {s.num}
-                  </span>
-                  <span className="hidden sm:inline">{s.label}</span>
-                </button>
-              ))}
+        {/* CALENDAR FIRST SECTION */}
+        <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-8 mb-10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Step 1</span>
+              <h2 className="text-lg font-bold font-display text-slate-900">Select Date</h2>
             </div>
 
-            {/* STEP 1: VENUE SELECTION */}
-            {step === 1 && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4">
-                <h3 className="text-xl font-bold font-display text-white">Choose Your Venue</h3>
+            {/* Month Controls */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                title="Previous Month"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span className="text-sm font-bold text-slate-800 w-32 text-center">
+                {format(currentMonth, 'MMMM yyyy')}
+              </span>
+              <button
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                title="Next Month"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
 
-                {isLoadingVenues ? (
-                  <div className="py-12 text-center text-slate-400">
-                    <Loader2 size={32} className="animate-spin mx-auto text-emerald-400 mb-2" />
-                    Loading available venues...
+          {/* Custom MSC Light Calendar Grid */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-7 text-center text-xs font-semibold text-slate-400 py-2">
+              <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+              {daysInMonth.map((day) => {
+                const isPast = isBefore(day, today)
+                const isSelected = isSameDay(day, selectedDate)
+
+                return (
+                  <button
+                    key={day.toISOString()}
+                    disabled={isPast}
+                    onClick={() => {
+                      setSelectedDate(day)
+                      setStep(2)
+                    }}
+                    className={`h-11 sm:h-12 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20'
+                        : isPast
+                        ? 'text-slate-300 cursor-not-allowed bg-slate-50/50'
+                        : 'text-slate-800 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-100'
+                    }`}
+                  >
+                    <span>{format(day, 'd')}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* STEP 2: VENUES SELECTION */}
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold font-display text-slate-900">
+              Selected Date: <span className="text-emerald-600">{format(selectedDate, 'EEEE, MMM d, yyyy')}</span>
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {venues.map((v) => {
+              const isSelected = selectedVenue?.id === v.id
+              const basePrice = v.sport_type === 'football' ? 999 : 299
+              const imageSrc = v.sport_type === 'football'
+                ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp'
+                : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%281%29-PqfOsyQfepvDymmF6Bf9BqfT3Y77G7.jpg'
+
+              return (
+                <div
+                  key={v.id}
+                  onClick={() => setSelectedVenue(v)}
+                  className={`bg-white border rounded-3xl overflow-hidden cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-emerald-600 ring-2 ring-emerald-600/20 shadow-lg'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="relative h-44 w-full bg-slate-100">
+                    <Image src={imageSrc} alt={v.name} fill className="object-cover" />
+                    <div className="absolute top-3 left-3 px-2.5 py-1 bg-white/90 backdrop-blur-xs rounded-lg text-[10px] font-bold text-slate-900 uppercase">
+                      {v.sport_type}
+                    </div>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
-                    {venues.map((v) => (
-                      <div
-                        key={v.id}
-                        onClick={() => setSelectedVenue(v)}
-                        className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-                          selectedVenue?.id === v.id
-                            ? 'border-emerald-500 bg-emerald-950/40 shadow-xl'
-                            : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+
+                  <div className="p-5 space-y-3">
+                    <h4 className="text-base font-bold font-display text-slate-900">{v.name}</h4>
+                    <p className="text-xs text-slate-500 line-clamp-2">{v.short_description || v.description}</p>
+                    
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase">Starting From</span>
+                        <span className="text-base font-extrabold text-emerald-600">₹{basePrice} <span className="text-xs text-slate-500 font-normal">/ hr</span></span>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedVenue(v)
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                         }`}
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase rounded">
-                              {v.sport_type}
-                            </span>
-                            <h4 className="text-lg font-bold font-display text-white">{v.name}</h4>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-1">{v.short_description || v.description}</p>
-                          <p className="text-xs text-emerald-400 font-bold mt-2">
-                            Base Rate: ₹{v.sport_type === 'football' ? '1,200' : '600'}/hour
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedVenue(v)
-                            setStep(2)
-                          }}
-                          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all shrink-0"
-                        >
-                          Select Venue
-                        </button>
-                      </div>
-                    ))}
+                        {isSelected ? '✓ Selected' : 'Select'}
+                      </button>
+                    </div>
                   </div>
-                )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* STEP 3: REAL AVAILABLE SLOTS */}
+        {selectedVenue && (
+          <div className="max-w-4xl mx-auto mt-10 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Step 3</span>
+                <h3 className="text-lg font-bold font-display text-slate-900">
+                  Available Slots for {selectedVenue.name}
+                </h3>
+              </div>
+
+              <span className="text-xs text-slate-500 font-medium">
+                {availableSlots.length} available hour(s)
+              </span>
+            </div>
+
+            {isLoadingSlots ? (
+              <div className="py-12 text-center text-slate-400">
+                <Loader2 size={28} className="animate-spin mx-auto text-emerald-600 mb-2" />
+                Querying database slot availability...
+              </div>
+            ) : availableSlots.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {availableSlots.map((slot) => {
+                  const isSelected = selectedSlots.some((s) => s.hour === slot.hour)
+                  return (
+                    <button
+                      key={slot.hour}
+                      onClick={() => handleSlotToggle(slot)}
+                      className={`p-3.5 rounded-2xl border text-center transition-all ${
+                        isSelected
+                          ? 'border-emerald-600 bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20'
+                          : 'border-slate-200 bg-white hover:border-emerald-300 text-slate-800'
+                      }`}
+                    >
+                      <span className="text-xs font-bold block">{slot.label}</span>
+                      <span className={`text-xs mt-0.5 block ${isSelected ? 'text-emerald-100' : 'text-emerald-600 font-extrabold'}`}>
+                        ₹{slot.price}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl">
+                <CalendarIcon className="mx-auto text-slate-400 mb-2" size={32} />
+                <p className="text-xs text-slate-500">No available slots for this date. All hours are booked or passed.</p>
               </div>
             )}
+          </div>
+        )}
 
-            {/* STEP 2: DATE & AVAILABLE SLOTS */}
-            {step === 2 && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-xl font-bold font-display text-white">Select Date & Available Slots</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Only bookable 1-hour slots are displayed. Past and booked hours are excluded.
-                    </p>
+        {/* STEP 4: ADD-ONS & CHECKOUT FORM */}
+        {selectedSlots.length > 0 && (
+          <div className="max-w-4xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-6">
+              {/* Add-ons */}
+              {selectedVenue?.sport_type === 'cricket' && (
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Wrench size={18} className="text-sky-600" />
+                    <h4 className="text-base font-bold text-slate-900">Automated Bowling Machine</h4>
                   </div>
+                  <p className="text-xs text-slate-500">
+                    Automated speed & swing bowling machine access during your reserved slot(s).
+                  </p>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs font-bold text-sky-600">+₹{bowlingRate} / hour</span>
+                    <button
+                      onClick={() => setAddBowlingMachine(!addBowlingMachine)}
+                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        addBowlingMachine
+                          ? 'bg-sky-600 text-white'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {addBowlingMachine ? '✓ Added' : '+ Add Equipment'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
+              {/* Customer Info Form */}
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm">
+                <h4 className="text-base font-bold text-slate-900">Your Details</h4>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name *</label>
                   <input
-                    type="date"
-                    value={format(selectedDate, 'yyyy-MM-dd')}
-                    min={format(new Date(), 'yyyy-MM-dd')}
-                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-emerald-500"
+                    type="text"
+                    required
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Player Name"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
                   />
                 </div>
 
-                {isLoadingSlots ? (
-                  <div className="py-12 text-center text-slate-400">
-                    <Loader2 size={32} className="animate-spin mx-auto text-emerald-400 mb-2" />
-                    Querying real-time slot locks & database availability...
-                  </div>
-                ) : availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {availableSlots.map((slot) => {
-                      const isSelected = selectedSlots.some((s) => s.hour === slot.hour)
-                      return (
-                        <button
-                          key={slot.hour}
-                          onClick={() => handleSlotToggle(slot)}
-                          className={`p-4 rounded-2xl border transition-all text-center flex flex-col justify-center ${
-                            isSelected
-                              ? 'border-emerald-500 bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 font-bold'
-                              : 'border-slate-800 bg-slate-950/80 hover:border-emerald-500/50 text-slate-200'
-                          }`}
-                        >
-                          <span className="text-xs font-extrabold">{slot.label}</span>
-                          <span className={`text-[11px] mt-1 ${isSelected ? 'text-emerald-100' : 'text-emerald-400 font-bold'}`}>
-                            ₹{slot.price}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl">
-                    <CalendarIcon className="mx-auto text-slate-600 mb-2" size={36} />
-                    <p className="text-xs text-slate-400">No available slots for this date. All hours are booked or passed.</p>
-                  </div>
-                )}
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    onClick={() => setStep(1)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
-                  >
-                    ← Back to Venues
-                  </button>
-                  <button
-                    onClick={() => setStep(3)}
-                    disabled={selectedSlots.length === 0}
-                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
-                  >
-                    Continue to Add-Ons →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: ADD-ONS (BOWLING MACHINE) */}
-            {step === 3 && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
-                <h3 className="text-xl font-bold font-display text-white">Facility Add-Ons</h3>
-
-                {selectedVenue?.sport_type === 'cricket' ? (
-                  <div className="p-6 bg-slate-950/80 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Wrench size={18} className="text-sky-400" />
-                        <h4 className="text-base font-bold text-white">Automated Bowling Machine</h4>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Speed & swing variable automated bowling machine access during your reserved slot(s).
-                      </p>
-                      <p className="text-xs text-sky-400 font-bold mt-2">Rate: +₹{bowlingRate}/hour</p>
-                    </div>
-
-                    <button
-                      onClick={() => setAddBowlingMachine(!addBowlingMachine)}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
-                        addBowlingMachine
-                          ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
-                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-                      }`}
-                    >
-                      {addBowlingMachine ? '✓ Added to Booking' : '+ Add Bowling Machine'}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400">No additional equipment add-ons required for Football Turf.</p>
-                )}
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    onClick={() => setStep(2)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
-                  >
-                    ← Back to Slots
-                  </button>
-                  <button
-                    onClick={() => setStep(4)}
-                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
-                  >
-                    Proceed to Checkout →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: GUEST CHECKOUT & POLICIES */}
-            {step === 4 && (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
-                <h3 className="text-xl font-bold font-display text-white">Guest Checkout & Identity</h3>
-
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Full Name *</label>
+                    <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Phone Number *</label>
                     <input
-                      type="text"
+                      type="tel"
                       required
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Player Name"
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="+91 99060 00000"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Phone Number *</label>
-                      <input
-                        type="tel"
-                        required
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="+91 99060 00000"
-                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Email Address *</label>
-                      <input
-                        type="email"
-                        required
-                        value={customerEmail}
-                        onChange={(e) => setCustomerEmail(e.target.value)}
-                        placeholder="info@maqboolsports.in"
-                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Payment Type Selection */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-2">Payment Option</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentType('full')}
-                        className={`p-4 rounded-xl border text-left transition-all ${
-                          paymentType === 'full' ? 'border-emerald-500 bg-emerald-950/40 text-white' : 'border-slate-800 bg-slate-950 text-slate-400'
-                        }`}
-                      >
-                        <span className="text-xs font-bold block">100% Full Payment</span>
-                        <span className="text-sm font-extrabold text-emerald-400 mt-1 block">₹{getSubtotal()}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentType('half')}
-                        className={`p-4 rounded-xl border text-left transition-all ${
-                          paymentType === 'half' ? 'border-emerald-500 bg-emerald-950/40 text-white' : 'border-slate-800 bg-slate-950 text-slate-400'
-                        }`}
-                      >
-                        <span className="text-xs font-bold block">50% Advance Payment</span>
-                        <span className="text-sm font-extrabold text-emerald-400 mt-1 block">₹{Math.ceil(getSubtotal() / 2)}</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">Pay remaining at facility</span>
-                      </button>
-                    </div>
+                    <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address *</label>
+                    <input
+                      type="email"
+                      required
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="info@maqboolsports.in"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+                    />
                   </div>
+                </div>
 
-                  {/* Mandatory Policies Checkboxes */}
-                  <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-3 text-xs text-slate-300">
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={acceptTerms}
-                        onChange={(e) => setAcceptTerms(e.target.checked)}
-                        className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500"
-                      />
-                      <span>I accept the <strong>Terms & Conditions</strong> of Maqbool Sports Complex.</span>
-                    </label>
+                {/* Policies Checkboxes */}
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5 text-xs text-slate-600">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span>I accept the <strong>Terms & Conditions</strong> of Maqbool Sports Complex.</span>
+                  </label>
 
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={acceptCancellation}
-                        onChange={(e) => setAcceptCancellation(e.target.checked)}
-                        className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500"
-                      />
-                      <span>I accept the <strong>Cancellation Policy</strong> (Refundable only more than 5 hours prior to session start).</span>
-                    </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptCancellation}
+                      onChange={(e) => setAcceptCancellation(e.target.checked)}
+                      className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span>I accept the <strong>Cancellation Policy</strong> (Refundable more than 5 hrs prior to session start).</span>
+                  </label>
 
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={acceptRefundPolicy}
-                        onChange={(e) => setAcceptRefundPolicy(e.target.checked)}
-                        className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500"
-                      />
-                      <span>I accept the <strong>Refund Policy</strong>.</span>
-                    </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptRefundPolicy}
+                      onChange={(e) => setAcceptRefundPolicy(e.target.checked)}
+                      className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span>I accept the <strong>Refund Policy</strong>.</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar Summary */}
+            <div className="md:col-span-1">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 sticky top-24 space-y-4 shadow-sm">
+                <h4 className="text-base font-bold font-display text-slate-900 pb-3 border-b border-slate-100">
+                  Session Summary
+                </h4>
+
+                {selectedVenue && (
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Facility</span>
+                    <p className="font-bold text-slate-900 text-sm">{selectedVenue.name}</p>
                   </div>
+                )}
+
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Date</span>
+                  <p className="font-semibold text-slate-700 text-xs">{format(selectedDate, 'MMM d, yyyy')}</p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Reserved Duration</span>
+                  <p className="font-bold text-emerald-600 text-xs">{selectedSlots.length} Hour(s) ({selectedSlots.map((s) => s.label).join(', ')})</p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-600">Total Payable</span>
+                  <span className="text-2xl font-extrabold text-emerald-600 font-display">₹{getSubtotal()}</span>
                 </div>
 
                 <button
                   onClick={handleProceedToPayment}
                   disabled={isLocking || !acceptTerms || !acceptCancellation || !acceptRefundPolicy}
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
                 >
                   {isLocking ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" /> Locking 5-min slot & verifying...
+                      <Loader2 size={16} className="animate-spin" /> Locking 5-min slot...
                     </>
                   ) : (
                     <>
-                      <CreditCard size={18} /> Pay ₹{getPayableNow()} & Lock Slot
+                      <CreditCard size={16} /> Pay ₹{getPayableNow()} & Confirm Slot
                     </>
                   )}
                 </button>
               </div>
-            )}
-          </div>
-
-          {/* Booking Summary Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sticky top-28 space-y-4 shadow-2xl">
-              <h4 className="text-base font-bold font-display text-white pb-3 border-b border-slate-800">
-                Booking Summary
-              </h4>
-
-              {selectedVenue && (
-                <div className="space-y-1">
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold">Selected Facility</span>
-                  <p className="font-extrabold text-white text-base">{selectedVenue.name}</p>
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Selected Date</span>
-                <p className="font-semibold text-white text-xs">{format(selectedDate, 'EEEE, MMM d, yyyy')}</p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Reserved Slot(s)</span>
-                {selectedSlots.length > 0 ? (
-                  <div className="space-y-1 mt-1">
-                    {selectedSlots.map((s) => (
-                      <span key={s.hour} className="inline-block mr-1.5 mb-1 px-2.5 py-1 bg-emerald-500/20 text-emerald-300 text-[11px] font-bold rounded">
-                        {s.label}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500 italic">No slots selected yet</p>
-                )}
-              </div>
-
-              {addBowlingMachine && (
-                <div className="p-3 bg-sky-950/40 border border-sky-500/30 rounded-xl text-xs text-sky-300">
-                  + Automated Bowling Machine Included
-                </div>
-              )}
-
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400">Total Booking Price</span>
-                <span className="text-2xl font-extrabold font-display text-emerald-400">
-                  ₹{getSubtotal()}
-                </span>
-              </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
       <Footer />

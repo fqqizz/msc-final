@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Anton } from 'next/font/google'
+import { Manrope } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import Preloader from '@/components/preloader'
 import ScrollProgress from '@/components/scroll-progress'
@@ -8,16 +8,10 @@ import CookieConsent from '@/components/cookie-consent'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import './globals.css'
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const anton = Anton({ 
-  weight: '400',
-  subsets: ["latin"],
-  variable: '--font-anton',
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 })
 
@@ -57,8 +51,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${anton.variable}`}>
-      <body className="font-sans antialiased bg-background text-foreground overflow-x-hidden">
+    <html lang="en" className={`${manrope.variable}`}>
+      <body className="font-sans antialiased bg-white text-slate-900 overflow-x-hidden">
         <AuthProvider>
           <Preloader />
           <ScrollProgress />
