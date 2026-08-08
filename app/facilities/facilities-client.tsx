@@ -14,7 +14,7 @@ const facilities = [
     name: 'Football/Cricket Turf',
     description:
       '10,000+ sq. ft. premium synthetic turf perfect for football matches and box cricket. Features high-quality artificial grass that provides excellent ball roll and player comfort.',
-    price: '₹899/hour',
+    price: '₹999/hour',
     image:
       'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-9yWOKvvBNNBK6xIquOyQsdI5jRibpr.webp',
     features: [

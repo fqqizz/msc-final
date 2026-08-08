@@ -29,7 +29,7 @@ const venues = [
     id: 'football-turf',
     name: 'Football/Cricket Turf',
     description: '10,000+ sq. ft. premium synthetic turf for football and box cricket.',
-    price: '₹899',
+    price: '₹999',
     unit: '/hour',
     image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-9yWOKvvBNNBK6xIquOyQsdI5jRibpr.webp',
     features: ['10,000+ sq. ft.', 'Floodlights', 'Multi-sport'],

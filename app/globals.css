@@ -4,47 +4,49 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Premium Clean Light Theme for MSC */
+  /* Premium Clean Theme for MSC */
   --background: #FFFFFF;
-  --background-secondary: #F8FAFC;
-  --foreground: #0F172A;
-  --foreground-muted: #64748B;
+  --background-dark: #050505;
+  --background-secondary: #F8FAFB;
+  --foreground: #0A0A0C;
+  --foreground-muted: rgba(10, 10, 12, 0.6);
   
   /* Brand Colors */
   --turf-green: #2BA84A;
-  --turf-green-dark: #1E7834;
+  --turf-green-dark: #146B3A;
   --turf-green-light: #E8F5EC;
-  --sky-blue: #0284C7;
+  --sky-blue: #7DD3FC;
   --sky-blue-light: #E0F2FE;
   --emerald: #10B981;
   
-  /* UI Colors - Light Mode */
+  /* UI Colors */
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card-foreground: #0A0A0C;
   --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
+  --popover-foreground: #0A0A0C;
   --primary: #2BA84A;
   --primary-foreground: #FFFFFF;
   --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
-  --muted: #F8FAFC;
-  --muted-foreground: #64748B;
+  --secondary-foreground: #0A0A0C;
+  --muted: #F8FAFB;
+  --muted-foreground: rgba(10, 10, 12, 0.5);
   --accent: #E8F5EC;
-  --accent-foreground: #1E7834;
+  --accent-foreground: #146B3A;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
   --ring: #2BA84A;
   --radius: 0.75rem;
 }
 
 @theme inline {
-  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
-  --font-display: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Anton', Impact, sans-serif;
   --font-mono: 'Geist Mono', monospace;
   
   --color-background: var(--background);
+  --color-background-dark: var(--background-dark);
   --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
@@ -81,34 +83,21 @@
 
 @layer base {
   * {
-    @apply border-slate-200 outline-ring/50;
+    @apply border-border outline-ring/50;
   }
   
   html {
     scroll-behavior: smooth;
-    font-family: var(--font-sans);
   }
   
   body {
     @apply antialiased;
-    background: #FFFFFF;
-    color: #0F172A;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    font-weight: 600;
-  }
-
-  p {
-    line-height: 1.65;
+    background: var(--background-dark);
+    color: var(--foreground);
   }
   
   ::selection {
-    background: #2BA84A;
+    background: var(--turf-green);
     color: white;
   }
 }
@@ -131,39 +120,68 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #F8FAFC;
+  background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: rgba(0, 0, 0, 0.25);
 }
 
-/* Two-Color Typography Utility */
-.text-two-color-accent {
-  color: #2BA84A;
+/* Glassmorphism - Dark variant */
+.glass-dark {
+  background: rgba(10, 10, 12, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.text-two-color-primary {
-  color: #0F172A;
+.glass-emerald {
+  background: rgba(10, 50, 25, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(43, 168, 74, 0.3);
+}
+
+/* Glassmorphism - Light variant */
+.glass-light {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Stadium light bloom */
+.stadium-bloom {
+  box-shadow: 
+    0 0 60px rgba(125, 211, 252, 0.15),
+    0 0 120px rgba(43, 168, 74, 0.1);
 }
 
 /* Premium Card Styles */
-.card-clean-light {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.03);
-  border-radius: 1rem;
-  transition: all 0.25s ease;
+.card-premium {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
 }
 
-.card-clean-light:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 10px 24px rgba(0, 0, 0, 0.06);
-  border-color: #CBD5E1;
+.card-premium:hover {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 12px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Button glow effect */
+.btn-glow {
+  box-shadow: 
+    0 0 20px rgba(43, 168, 74, 0.3),
+    0 0 40px rgba(43, 168, 74, 0.15);
+  transition: all 0.3s ease;
 }
 
 /* Safe area padding for mobile devices */
@@ -177,6 +195,6 @@
 
 /* Focus visible for accessibility */
 :focus-visible {
-  outline: 2px solid #2BA84A;
+  outline: 2px solid var(--turf-green);
   outline-offset: 2px;
 }

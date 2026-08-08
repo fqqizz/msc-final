@@ -24,7 +24,7 @@ const MSC_KNOWLEDGE = {
   },
   pricing: {
     cricketNet: { name: 'Cricket Net', price: 299, unit: 'per hour' },
-    footballTurf: { name: 'Football/Cricket Turf', price: 899, unit: 'per hour' },
+    footballTurf: { name: 'Football/Cricket Turf', price: 999, unit: 'per hour' },
     peakHours: 'Weekend evenings (5 PM - 9 PM) are our busiest times - book early!'
   },
   facilities: [

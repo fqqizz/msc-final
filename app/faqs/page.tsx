@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     question: 'What are the pricing details?',
-    answer: 'Our pricing is as follows:\n• Cricket Net 1 & 2: ₹299/hour\n• Football/Cricket Turf: ₹899/hour\n\nPeak hour pricing may vary slightly on weekends and holidays.'
+    answer: 'Our pricing is as follows:\n• Cricket Net 1 & 2: ₹299/hour\n• Football/Cricket Turf: ₹999/hour\n\nPeak hour pricing may vary slightly on weekends and holidays.'
   },
   {
     question: 'Are there any coaching or training sessions available?',
