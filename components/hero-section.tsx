@@ -1,34 +1,201 @@
 'use client'
 
-import { useRef, useState, useEffect, memo } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
-import { Play } from 'lucide-react'
+import { useRef, useState, useEffect, useCallback, memo } from 'react'
+import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from 'framer-motion'
+import { ChevronDown, Play } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
+// Verified high-performance MSC media assets
 const VIDEO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0525%282%29-pUzzUSjX4PhlTrZBiXyQf40jenLSbJ.mp4'
+const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png'
 const POSTER_IMAGE = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp'
 
+// GPU-accelerated styles
 const GPU_ACCELERATED = {
   transform: 'translateZ(0)',
   backfaceVisibility: 'hidden' as const,
   perspective: 1000,
 } as const
 
-// Highly optimized background video that prepares & plays immediately underneath the intro
-const VideoBackground = memo(function VideoBackground() {
+// Easing curve: smooth cinematic deceleration
+const CINEMATIC_EASE = [0.16, 1, 0.3, 1] as const
+
+// Authoritative Original MSC Intro Animation from original ZIP
+const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete: () => void }) {
+  const [phase, setPhase] = useState(0)
+  const prefersReducedMotion = useReducedMotion()
+
+  const onCompleteRef = useRef(onComplete)
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  })
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      onCompleteRef.current?.()
+      return
+    }
+
+    // Deliberate ~3.6s - 3.8s cinematic timing with generous breathing room
+    // 0.30s: Full MSC Logo enters with elevation & subtle rotation easing
+    // 1.40s: Logo holds on screen, then "LET THE GAME" & "BEGIN" staggered reveal begins
+    // 2.45s: Glow & composition holds in full harmony
+    // 3.65s: Smooth exit transition into the homepage
+    const t1 = setTimeout(() => setPhase(1), 300)
+    const t2 = setTimeout(() => setPhase(2), 1400)
+    const t3 = setTimeout(() => setPhase(3), 2450)
+    const tDone = setTimeout(() => {
+      onCompleteRef.current?.()
+    }, 3650)
+
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+      clearTimeout(tDone)
+    }
+  }, [prefersReducedMotion]) // Stable deps: timers never reset on re-renders
+
+  if (prefersReducedMotion) return null
+
+  return (
+    <motion.div
+      key="msc-intro-fullscreen-overlay"
+      className="fixed inset-0 z-[99999] bg-[#030303] flex items-center justify-center transform-gpu overflow-hidden select-none pointer-events-none"
+      style={GPU_ACCELERATED}
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
+    >
+      {/* Subtle vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(70% 60% at 50% 40%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)',
+          opacity: 0.9,
+          ...GPU_ACCELERATED,
+        }}
+      />
+
+      {/* Ambient green backlight glow */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase >= 1 ? 0.16 : 0 }}
+        transition={{ duration: 1 }}
+        className="absolute top-1/2 left-1/2 w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] rounded-full bg-[#2BA84A]/30 blur-[110px] transform-gpu pointer-events-none"
+        style={{ 
+          ...GPU_ACCELERATED,
+          transform: 'translate(-50%, -50%) translateZ(0)',
+        }}
+      />
+
+      {/* Main logo and typography container */}
+      <div className="relative z-10 flex flex-col items-center px-6 max-w-xl mx-auto text-center transform-gpu" style={GPU_ACCELERATED}>
+        {/* STAGE 1: Full MSC Logo (Complete shield & crest without clipping) */}
+        <motion.div
+          initial={{ scale: 0.88, opacity: 0, rotateX: -10 }}
+          animate={{
+            scale: phase >= 1 ? 1 : 0.88,
+            opacity: phase >= 1 ? 1 : 0,
+            rotateX: phase >= 1 ? 0 : -10,
+          }}
+          transition={{ duration: 0.65, ease: CINEMATIC_EASE }}
+          className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mb-6 sm:mb-8 transform-gpu"
+        >
+          <Image
+            src={LOGO_URL}
+            alt="Maqbool Sports Complex Full Logo"
+            fill
+            className="object-contain drop-shadow-[0_10px_25px_rgba(43,168,74,0.25)]"
+            priority
+            sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
+          />
+        </motion.div>
+        
+        {/* STAGE 2: Original Staggered Typography — LET THE GAME (White) / BEGIN (MSC Green) */}
+        <div className="text-center overflow-hidden space-y-1 sm:space-y-2">
+          {/* Line 1: LET THE GAME */}
+          <div className="overflow-hidden">
+            <motion.div
+              initial={{ y: 35, opacity: 0, letterSpacing: '0.2em' }}
+              animate={{
+                y: phase >= 2 ? 0 : 35,
+                opacity: phase >= 2 ? 1 : 0,
+                letterSpacing: phase >= 2 ? '0.28em' : '0.2em',
+              }}
+              transition={{ duration: 0.6, ease: CINEMATIC_EASE }}
+              className="transform-gpu drop-shadow-[0_0_18px_rgba(43,168,74,0.35)]"
+            >
+              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-[0.16em] sm:tracking-[0.22em] uppercase leading-tight">
+                LET THE GAME
+              </h2>
+            </motion.div>
+          </div>
+
+          {/* Line 2: BEGIN */}
+          <div className="overflow-hidden">
+            <motion.div
+              initial={{ y: 35, opacity: 0, letterSpacing: '0.2em' }}
+              animate={{
+                y: phase >= 2 ? 0 : 35,
+                opacity: phase >= 2 ? 1 : 0,
+                letterSpacing: phase >= 2 ? '0.34em' : '0.2em',
+              }}
+              transition={{ duration: 0.6, delay: 0.12, ease: CINEMATIC_EASE }}
+              className="transform-gpu"
+            >
+              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2BA84A] tracking-[0.16em] sm:tracking-[0.22em] uppercase leading-tight">
+                BEGIN
+              </h2>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+})
+
+// Natural speed video background that starts preloading immediately
+const VideoBackground = memo(function VideoBackground({ 
+  onReady 
+}: { 
+  onReady: () => void 
+}) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
   const [hasError, setHasError] = useState(false)
+
+  const handleLoadedData = useCallback(() => {
+    if (videoRef.current) {
+      // Natural 1.0 original playback speed
+      videoRef.current.playbackRate = 1.0
+      videoRef.current.defaultPlaybackRate = 1.0
+      videoRef.current.play().then(() => {
+        setIsPlaying(true)
+        onReady()
+      }).catch(() => {
+        setIsPlaying(true)
+        onReady()
+      })
+    }
+  }, [onReady])
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
-    // Attempt to start playing immediately on mount
+    video.playbackRate = 1.0
+    video.defaultPlaybackRate = 1.0
+
     const playPromise = video.play()
     if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // Autoplay policy prevented playback, poster remains cleanly visible
+      playPromise.then(() => {
+        setIsPlaying(true)
+      }).catch(() => {
+        // Fallback to poster cleanly
       })
     }
   }, [])
@@ -44,7 +211,7 @@ const VideoBackground = memo(function VideoBackground() {
 
   return (
     <>
-      {/* 1. Instant Poster underlay - immediate first visual frame with zero delay */}
+      {/* Static image poster background underneath - immediate visual underlay */}
       <div 
         className="absolute inset-0 bg-gradient-to-br from-[#0a1a0f] via-[#030303] to-[#0a0f1a] overflow-hidden"
         style={{ ...GPU_ACCELERATED, zIndex: 0 }}
@@ -54,78 +221,174 @@ const VideoBackground = memo(function VideoBackground() {
           alt="MSC Stadium Turf Poster"
           fill
           priority
-          className="object-cover opacity-45 filter blur-[0.5px]"
+          className="object-cover opacity-35 filter blur-[1px]"
           sizes="100vw"
         />
       </div>
-
-      {/* 2. Video element mounts immediately, preloads and plays smoothly underneath the intro */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        disablePictureInPicture
-        controlsList="nodownload noplaybackrate noremoteplayback"
-        poster={POSTER_IMAGE}
-        onError={() => setHasError(true)}
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ ...GPU_ACCELERATED, zIndex: 1 }}
+      
+      {/* Video with GPU-accelerated fade - natural speed (1.0x) */}
+      <div 
+        className="absolute inset-0 transform-gpu transition-opacity duration-1000 ease-out"
+        style={{ 
+          ...GPU_ACCELERATED,
+          opacity: isPlaying ? 1 : 0,
+          zIndex: 1,
+        }}
       >
-        <source src={VIDEO_URL} type="video/mp4" />
-      </video>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          controlsList="nodownload noplaybackrate noremoteplayback"
+          poster={POSTER_IMAGE}
+          onLoadedData={handleLoadedData}
+          onError={() => setHasError(true)}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            ...GPU_ACCELERATED,
+            willChange: 'transform',
+          }}
+        >
+          <source src={VIDEO_URL} type="video/mp4" />
+        </video>
+      </div>
     </>
   )
 })
 
-const HeroContent = memo(function HeroContent() {
+// Memoized hero content with responsive motion settings
+const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolean }) {
+  const { prefersReducedMotion, isMobile } = useMobilePerformance()
+  
+  const fadeUpVariants = {
+    hidden: { opacity: 0, y: (prefersReducedMotion || isMobile) ? 0 : 20 },
+    visible: (delay: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: prefersReducedMotion ? 0.1 : (isMobile ? 0.4 : 0.6),
+        delay: prefersReducedMotion ? 0 : (isMobile ? delay * 0.5 : delay),
+        ease: [0.16, 1, 0.3, 1],
+      },
+    }),
+  }
+
   return (
     <div 
       className="relative z-20 h-full flex flex-col items-center justify-center px-4 sm:px-6 transform-gpu"
       style={GPU_ACCELERATED}
     >
-      {/* Hero Title using original Anton display font styling */}
-      <div className="text-center transform-gpu">
-        <h1 className="font-[family-name:var(--font-anton)] text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight text-white leading-[0.9]">
+      {/* Main heading */}
+      <motion.div
+        initial="hidden"
+        animate={isVisible ? 'visible' : 'hidden'}
+        variants={fadeUpVariants}
+        custom={0.1}
+        className="text-center transform-gpu"
+      >
+        <h1 className="font-[family-name:var(--font-anton)] text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-white leading-[0.9]">
           MAQBOOL
         </h1>
-        <h2 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-[#2BA84A] leading-[0.9] mt-1 sm:mt-2">
+        <h2 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-[#2BA84A] leading-[0.9] mt-1 sm:mt-2">
           SPORTS COMPLEX
         </h2>
-      </div>
+      </motion.div>
 
-      <p className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-white/80 font-light tracking-wide text-center max-w-xl px-4 transform-gpu">
+      {/* Subtitle */}
+      <motion.p
+        initial="hidden"
+        animate={isVisible ? 'visible' : 'hidden'}
+        variants={fadeUpVariants}
+        custom={0.2}
+        className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-white/80 font-light tracking-wide text-center max-w-xl px-4 transform-gpu"
+      >
         Community-centric premier sports hub offering facilities for football, cricket, and more.
-      </p>
+      </motion.p>
 
-      <p className="mt-3 text-sm sm:text-base text-white/50 max-w-md text-center transform-gpu">
+      {/* Supporting text */}
+      <motion.p
+        initial="hidden"
+        animate={isVisible ? 'visible' : 'hidden'}
+        variants={fadeUpVariants}
+        custom={0.25}
+        className="mt-3 text-sm sm:text-base text-white/50 max-w-md text-center transform-gpu"
+      >
         Baramulla&apos;s first elite 10,000+ sq. ft. synthetic turf facility
-      </p>
+      </motion.p>
 
-      <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0 transform-gpu">
+      {/* CTAs */}
+      <motion.div
+        initial="hidden"
+        animate={isVisible ? 'visible' : 'hidden'}
+        variants={fadeUpVariants}
+        custom={0.3}
+        className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0 transform-gpu"
+      >
         <Link
           href="/book-now"
-          className="px-8 py-4 bg-sky-500 hover:bg-sky-400 text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-sky-500/30 text-center"
+          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-[#2BA84A] text-white font-semibold rounded-lg hover:bg-[#239B40] transition-colors duration-200 text-center shadow-lg shadow-[#2BA84A]/20"
         >
           Book Your Slot
         </Link>
         <Link
           href="/facilities"
-          className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/15 text-white font-medium text-sm rounded-xl hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white/10 md:bg-white/5 md:backdrop-blur-sm border border-white/10 text-white font-medium rounded-lg hover:bg-white/15 transition-colors duration-200 flex items-center justify-center gap-2"
         >
           <Play size={16} className="fill-current" />
           Explore Arena
         </Link>
-      </div>
+      </motion.div>
     </div>
+  )
+})
+
+// Memoized scroll indicator
+const ScrollIndicator = memo(function ScrollIndicator({ isVisible }: { isVisible: boolean }) {
+  const { prefersReducedMotion } = useMobilePerformance()
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isVisible ? 0.6 : 0 }}
+      transition={{ delay: 0.8, duration: 0.4 }}
+      className="absolute bottom-6 sm:bottom-8 left-1/2 z-20 transform-gpu"
+      style={{ 
+        ...GPU_ACCELERATED,
+        transform: 'translateX(-50%) translateZ(0)',
+      }}
+    >
+      <motion.div
+        animate={prefersReducedMotion ? {} : { y: [0, 6, 0] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        className="flex flex-col items-center gap-1.5 text-white/50"
+      >
+        <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] font-medium">Scroll</span>
+        <ChevronDown size={18} strokeWidth={1.5} />
+      </motion.div>
+    </motion.div>
   )
 })
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [showIntro, setShowIntro] = useState(true)
+  const [videoReady, setVideoReady] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
+  const { isMobile, performanceMode } = useMobilePerformance()
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
+  useEffect(() => {
+    if (prefersReducedMotion) setShowIntro(false)
+  }, [prefersReducedMotion])
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end start'],
@@ -135,36 +398,84 @@ export default function HeroSection() {
   const scrollY = useTransform(scrollYProgress, [0, 0.35], [0, -50])
   const scrollScale = useTransform(scrollYProgress, [0, 0.35], [1, 0.97])
 
+  const opacity = performanceMode ? 1 : scrollOpacity
+  const y = performanceMode ? 0 : scrollY
+  const scale = performanceMode ? 1 : scrollScale
+
+  const handleIntroComplete = useCallback(() => {
+    setShowIntro(false)
+  }, [])
+
+  const handleVideoReady = useCallback(() => {
+    setVideoReady(true)
+  }, [])
+
+  const contentVisible = !showIntro
+
   return (
-    <section 
-      ref={containerRef}
-      className="relative min-h-[105vh] bg-[#050505]"
-      style={GPU_ACCELERATED}
-    >
-      <div 
-        className="sticky top-0 h-screen overflow-hidden transform-gpu"
+    <>
+      {/* Authoritative Intro Animation — mounts once on page visit */}
+      <AnimatePresence mode="wait">
+        {mounted && showIntro && !prefersReducedMotion && (
+          <IntroAnimation onComplete={handleIntroComplete} />
+        )}
+      </AnimatePresence>
+
+      <section 
+        ref={containerRef}
+        className="relative min-h-[110vh] bg-[#030303]"
         style={GPU_ACCELERATED}
       >
-        <div className="absolute inset-0" style={GPU_ACCELERATED}>
-          <VideoBackground />
-          <div 
-            className="absolute inset-0 bg-gradient-to-b from-[#050505]/60 via-[#050505]/40 to-[#050505]"
-            style={{ ...GPU_ACCELERATED, zIndex: 2 }}
-          />
-        </div>
-
-        <motion.div 
-          className="absolute inset-0 transform-gpu"
-          style={{ 
-            ...GPU_ACCELERATED,
-            opacity: scrollOpacity, 
-            y: scrollY, 
-            scale: scrollScale,
-          }}
+        <div 
+          className="sticky top-0 h-screen overflow-hidden transform-gpu"
+          style={GPU_ACCELERATED}
         >
-          <HeroContent />
-        </motion.div>
-      </div>
-    </section>
+          {/* Video background layer */}
+          <div className="absolute inset-0" style={GPU_ACCELERATED}>
+            <VideoBackground onReady={handleVideoReady} />
+            
+            <div 
+              className="absolute inset-0 bg-gradient-to-b from-[#030303]/60 via-[#030303]/40 to-[#030303]"
+              style={{ ...GPU_ACCELERATED, zIndex: 2 }}
+            />
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-[#030303]/30 via-transparent to-[#030303]/30"
+              style={{ ...GPU_ACCELERATED, zIndex: 2 }}
+            />
+          </div>
+          
+          {/* Ambient glow */}
+          {!isMobile && (
+            <div 
+              className="absolute inset-0 overflow-hidden pointer-events-none"
+              style={{ ...GPU_ACCELERATED, zIndex: 3 }}
+            >
+              <div 
+                className="absolute top-1/4 left-1/2 w-[500px] h-[350px] bg-[#2BA84A]/5 rounded-full blur-[80px]"
+                style={{ 
+                  ...GPU_ACCELERATED,
+                  transform: 'translateX(-50%) translateZ(0)',
+                }}
+              />
+            </div>
+          )}
+
+          {/* Scrollable content wrapper */}
+          <motion.div 
+            className="absolute inset-0 transform-gpu"
+            style={{ 
+              ...GPU_ACCELERATED,
+              opacity, 
+              y, 
+              scale,
+            }}
+          >
+            <HeroContent isVisible={contentVisible} />
+          </motion.div>
+
+          <ScrollIndicator isVisible={contentVisible} />
+        </div>
+      </section>
+    </>
   )
 }
