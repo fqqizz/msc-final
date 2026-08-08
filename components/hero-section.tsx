@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
-// Verified high-performance MSC media assets
+// High-performance MSC media assets
 const VIDEO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0525%282%29-pUzzUSjX4PhlTrZBiXyQf40jenLSbJ.mp4'
 const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png'
 const POSTER_IMAGE = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp'
@@ -22,9 +22,9 @@ const GPU_ACCELERATED = {
 // Easing curve: smooth cinematic deceleration
 const CINEMATIC_EASE = [0.16, 1, 0.3, 1] as const
 
-// Authoritative Original MSC Intro Animation from original ZIP
+// Authoritative Original MSC Intro Animation
 const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState(0)
+  const [phase, setPhase] = useState(1) // Start phase 1 immediately on mount for zero-delay visual presence
   const prefersReducedMotion = useReducedMotion()
 
   const onCompleteRef = useRef(onComplete)
@@ -33,32 +33,23 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   })
 
   useEffect(() => {
-    if (prefersReducedMotion) {
-      onCompleteRef.current?.()
-      return
-    }
-
     // Deliberate ~3.6s - 3.8s cinematic timing with generous breathing room
-    // 0.30s: Full MSC Logo enters with elevation & subtle rotation easing
-    // 1.40s: Logo holds on screen, then "LET THE GAME" & "BEGIN" staggered reveal begins
-    // 2.45s: Glow & composition holds in full harmony
+    // 0.0s - 1.4s: Stage 1 — Full MSC Logo visible, breathing with subtle elevation
+    // 1.35s: Stage 2 — Staggered reveal for "LET THE GAME" (White) & "BEGIN" (MSC Green)
+    // 2.45s: Full composition holds in complete harmony
     // 3.65s: Smooth exit transition into the homepage
-    const t1 = setTimeout(() => setPhase(1), 300)
-    const t2 = setTimeout(() => setPhase(2), 1400)
+    const t2 = setTimeout(() => setPhase(2), 1350)
     const t3 = setTimeout(() => setPhase(3), 2450)
     const tDone = setTimeout(() => {
       onCompleteRef.current?.()
     }, 3650)
 
     return () => {
-      clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
       clearTimeout(tDone)
     }
-  }, [prefersReducedMotion]) // Stable deps: timers never reset on re-renders
-
-  if (prefersReducedMotion) return null
+  }, []) // Empty deps: timers never reset on re-renders
 
   return (
     <motion.div
@@ -69,7 +60,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       exit={{ opacity: 0 }}
       transition={{ duration: 0.55, ease: 'easeOut' }}
     >
-      {/* Subtle vignette */}
+      {/* Subtle ambient vignette */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -80,10 +71,10 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
         }}
       />
 
-      {/* Ambient green backlight glow */}
+      {/* Ambient emerald backlight glow */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: phase >= 1 ? 0.16 : 0 }}
+        initial={{ opacity: 0.1 }}
+        animate={{ opacity: phase >= 1 ? 0.18 : 0.1 }}
         transition={{ duration: 1 }}
         className="absolute top-1/2 left-1/2 w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] rounded-full bg-[#2BA84A]/30 blur-[110px] transform-gpu pointer-events-none"
         style={{ 
@@ -96,11 +87,11 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       <div className="relative z-10 flex flex-col items-center px-6 max-w-xl mx-auto text-center transform-gpu" style={GPU_ACCELERATED}>
         {/* STAGE 1: Full MSC Logo (Complete shield & crest without clipping) */}
         <motion.div
-          initial={{ scale: 0.88, opacity: 0, rotateX: -10 }}
+          initial={{ scale: 0.9, opacity: 0.3, y: 8 }}
           animate={{
-            scale: phase >= 1 ? 1 : 0.88,
-            opacity: phase >= 1 ? 1 : 0,
-            rotateX: phase >= 1 ? 0 : -10,
+            scale: 1,
+            opacity: 1,
+            y: 0,
           }}
           transition={{ duration: 0.65, ease: CINEMATIC_EASE }}
           className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mb-6 sm:mb-8 transform-gpu"
@@ -377,17 +368,7 @@ export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [showIntro, setShowIntro] = useState(true)
   const [videoReady, setVideoReady] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const prefersReducedMotion = useReducedMotion()
   const { isMobile, performanceMode } = useMobilePerformance()
-  
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (prefersReducedMotion) setShowIntro(false)
-  }, [prefersReducedMotion])
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -414,9 +395,9 @@ export default function HeroSection() {
 
   return (
     <>
-      {/* Authoritative Intro Animation — mounts once on page visit */}
+      {/* Authoritative Intro Animation — mounts immediately on page visit */}
       <AnimatePresence mode="wait">
-        {mounted && showIntro && !prefersReducedMotion && (
+        {showIntro && (
           <IntroAnimation onComplete={handleIntroComplete} />
         )}
       </AnimatePresence>
