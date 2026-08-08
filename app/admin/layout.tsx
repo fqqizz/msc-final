@@ -73,25 +73,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <>{children}</>
   }
 
-  // 2. Automatic redirect to /admin/login for unauthenticated users on protected admin routes
+  // 2. Automatic direct redirect to /admin/login for unauthenticated users on protected admin routes
   useEffect(() => {
     if (!isLoading && !user && pathname !== '/admin/login') {
-      router.replace('/admin/login')
+      window.location.replace('/admin/login')
     }
-  }, [user, isLoading, pathname, router])
+  }, [user, isLoading, pathname])
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-center gap-3">
         <Loader2 className="animate-spin text-emerald-600" size={32} />
       </div>
     )
   }
 
-  // 3. Unauthenticated on a protected admin route -> Render minimal redirect loader
+  // 3. Unauthenticated on a protected admin route -> Render minimal transition screen
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-center gap-3">
         <Loader2 className="animate-spin text-emerald-600" size={32} />
       </div>
     )
@@ -129,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleAdminSignOut = async () => {
     await logout()
-    router.replace('/admin/login')
+    window.location.replace('/admin/login')
   }
 
   return (
@@ -147,135 +147,177 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             />
           </div>
           <div>
-            <span className="font-bold text-sm text-slate-900 tracking-wide block">
+            <div className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
               MSC OS
-            </span>
-            <span className="text-[10px] text-emerald-700 font-semibold uppercase tracking-wider block">
-              Owner Access Portal
-            </span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+                PROD
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Management Suite
+            </p>
           </div>
         </div>
 
-        {/* Grouped Navigation Sections */}
-        <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
-          {adminNavSections.map((sec) => (
-            <div key={sec.title} className="space-y-1">
-              <span className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+        {/* Sidebar Nav Items */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {adminNavSections.map((sec, idx) => (
+            <div key={idx} className="space-y-1">
+              <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
                 {sec.title}
-              </span>
-              <div className="space-y-0.5 pt-0.5">
-                {sec.items.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                        isActive
-                          ? 'bg-emerald-50 text-emerald-800 font-semibold border-l-4 border-emerald-600'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                      }`}
-                    >
-                      <Icon size={16} className={isActive ? 'text-emerald-700' : 'text-slate-400'} />
-                      <span>{item.name}</span>
-                    </Link>
-                  )
-                })}
-              </div>
+              </p>
+              {sec.items.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <Icon size={16} className={isActive ? 'text-white' : 'text-slate-500'} />
+                    <span className="flex-1">{item.name}</span>
+                    {isActive && <ChevronRight size={14} className="text-white/80" />}
+                  </Link>
+                )
+              })}
             </div>
           ))}
-        </nav>
+        </div>
 
-        {/* Back to Public Site & User Info */}
-        <div className="p-3 border-t border-slate-200 space-y-2">
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-          >
-            <ArrowLeft size={13} /> Back to Public Site
-          </Link>
-
-          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
-            <div className="truncate pr-2">
-              <p className="text-xs font-bold text-slate-900 truncate">
-                {profile?.full_name || (role === 'owner' ? 'Eihab Naseer' : 'Admin User')}
-              </p>
-              <span className="text-[10px] text-emerald-700 font-semibold uppercase">{role}</span>
+        {/* User Badge & Sign Out */}
+        <div className="p-4 border-t border-slate-200/80 bg-slate-50/50">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs">
+                {user.email?.charAt(0).toUpperCase() || 'A'}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 truncate">
+                  {profile?.full_name || 'Eihab Naseer'}
+                </p>
+                <p className="text-[10px] text-emerald-700 font-semibold capitalize truncate">
+                  {role === 'owner' ? 'Complex Owner' : role?.replace('_', ' ')}
+                </p>
+              </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="flex-1 text-center py-2 px-3 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 transition-all shadow-2xs"
+            >
+              Public Site
+            </Link>
             <button
               onClick={handleAdminSignOut}
-              className="text-slate-400 hover:text-red-600 p-1 transition-colors"
+              className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-xl transition-all"
               title="Sign Out of MSC OS"
             >
-              <LogOut size={15} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
       </aside>
 
+      {/* Mobile Drawer */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          <div className="relative flex flex-col w-72 bg-white h-full z-10 p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="relative w-7 h-7">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
+                    alt="MSC"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <span className="font-extrabold text-sm text-slate-900">MSC OS</span>
+              </div>
+              <button
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-1 rounded-lg text-slate-500 hover:bg-slate-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-4 space-y-6">
+              {adminNavSections.map((sec, idx) => (
+                <div key={idx} className="space-y-1">
+                  <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    {sec.title}
+                  </p>
+                  {sec.items.map((item) => {
+                    const Icon = item.icon
+                    const isActive = pathname === item.href
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileSidebarOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <Icon size={16} />
+                        <span>{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t border-slate-200">
+              <button
+                onClick={handleAdminSignOut}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-700 font-semibold text-xs rounded-xl hover:bg-red-100 transition-colors"
+              >
+                <LogOut size={16} />
+                Sign Out of MSC OS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header Bar */}
-        <header className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-2xs">
+        {/* Top Header Mobile */}
+        <header className="lg:hidden bg-white border-b border-slate-200/80 px-4 py-3 flex items-center justify-between shrink-0 shadow-2xs">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="p-1.5 text-slate-600 hover:text-slate-900 rounded-lg bg-slate-100"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100"
             >
-              {mobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+              <Menu size={20} />
             </button>
-            <span className="font-bold text-xs text-slate-900">
-              MSC OS ADMIN
-            </span>
+            <span className="font-extrabold text-sm text-slate-900">MSC OS</span>
           </div>
-
-          <Link href="/" className="text-xs text-emerald-700 font-semibold">
-            Public Site →
+          <Link
+            href="/"
+            className="text-xs font-semibold text-emerald-700 px-3 py-1 bg-emerald-50 rounded-lg"
+          >
+            Public Site &rarr;
           </Link>
         </header>
 
-        {/* Mobile Drawer */}
-        {mobileSidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex">
-            <div className="fixed inset-0 bg-black/60" onClick={() => setMobileSidebarOpen(false)} />
-            <div className="relative flex-1 max-w-xs w-full bg-white border-r border-slate-200 p-4 flex flex-col h-full z-10">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                <span className="font-bold text-sm text-slate-900">MSC OS Admin</span>
-                <button onClick={() => setMobileSidebarOpen(false)} className="text-slate-400">
-                  <X size={18} />
-                </button>
-              </div>
-              <nav className="flex-1 space-y-3 overflow-y-auto">
-                {adminNavSections.map((sec) => (
-                  <div key={sec.title} className="space-y-1">
-                    <span className="px-2 text-[10px] font-bold text-slate-400 uppercase">{sec.title}</span>
-                    {sec.items.map((item) => {
-                      const Icon = item.icon
-                      const isActive = pathname === item.href
-                      return (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          onClick={() => setMobileSidebarOpen(false)}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium ${
-                            isActive ? 'bg-emerald-50 text-emerald-800 font-semibold' : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          <Icon size={16} />
-                          {item.name}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                ))}
-              </nav>
-            </div>
-          </div>
-        )}
-
-        {/* Page Content - Clean Light Theme */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50 text-slate-900">
+        {/* Content Body */}
+        <main className="flex-1 overflow-y-auto bg-slate-50/80">
           {children}
         </main>
       </div>

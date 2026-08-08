@@ -22,9 +22,9 @@ const GPU_ACCELERATED = {
 // Easing curve: smooth cinematic deceleration
 const CINEMATIC_EASE = [0.16, 1, 0.3, 1] as const
 
-// Authoritative Original MSC Intro Animation
+// Authoritative Original MSC Intro Animation with tight typography and punchy ~2.6s pacing
 const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState(1) // Start phase 1 immediately on mount for zero-delay visual presence
+  const [phase, setPhase] = useState(1)
   const prefersReducedMotion = useReducedMotion()
 
   const onCompleteRef = useRef(onComplete)
@@ -33,23 +33,24 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   })
 
   useEffect(() => {
-    // Deliberate ~3.6s - 3.8s cinematic timing with generous breathing room
-    // 0.0s - 1.4s: Stage 1 — Full MSC Logo visible, breathing with subtle elevation
-    // 1.35s: Stage 2 — Staggered reveal for "LET THE GAME" (White) & "BEGIN" (MSC Green)
-    // 2.45s: Full composition holds in complete harmony
-    // 3.65s: Smooth exit transition into the homepage
-    const t2 = setTimeout(() => setPhase(2), 1350)
-    const t3 = setTimeout(() => setPhase(3), 2450)
+    // Snappy, deliberate ~2.5s - 2.7s total cinematic duration
+    // 0.0s - 0.9s: Stage 1 — Full MSC Logo visible, breathing
+    // 0.95s: Stage 2 — "LET THE GAME" (White) & "BEGIN" (MSC Green) with natural letter spacing
+    // 1.85s: Full composition holds in complete harmony
+    // 2.30s: Smooth exit fade into the homepage
+    // 2.65s: Complete & unmount
+    const t2 = setTimeout(() => setPhase(2), 950)
+    const t3 = setTimeout(() => setPhase(3), 1850)
     const tDone = setTimeout(() => {
       onCompleteRef.current?.()
-    }, 3650)
+    }, 2650)
 
     return () => {
       clearTimeout(t2)
       clearTimeout(t3)
       clearTimeout(tDone)
     }
-  }, []) // Empty deps: timers never reset on re-renders
+  }, [])
 
   return (
     <motion.div
@@ -58,7 +59,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       style={GPU_ACCELERATED}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.55, ease: 'easeOut' }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
     >
       {/* Subtle ambient vignette */}
       <div
@@ -75,8 +76,8 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       <motion.div
         initial={{ opacity: 0.1 }}
         animate={{ opacity: phase >= 1 ? 0.18 : 0.1 }}
-        transition={{ duration: 1 }}
-        className="absolute top-1/2 left-1/2 w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] rounded-full bg-[#2BA84A]/30 blur-[110px] transform-gpu pointer-events-none"
+        transition={{ duration: 0.8 }}
+        className="absolute top-1/2 left-1/2 w-[450px] h-[450px] sm:w-[600px] sm:h-[600px] rounded-full bg-[#2BA84A]/30 blur-[90px] sm:blur-[130px] transform-gpu pointer-events-none"
         style={{ 
           ...GPU_ACCELERATED,
           transform: 'translate(-50%, -50%) translateZ(0)',
@@ -87,14 +88,14 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       <div className="relative z-10 flex flex-col items-center px-6 max-w-xl mx-auto text-center transform-gpu" style={GPU_ACCELERATED}>
         {/* STAGE 1: Full MSC Logo (Complete shield & crest without clipping) */}
         <motion.div
-          initial={{ scale: 0.9, opacity: 0.3, y: 8 }}
+          initial={{ scale: 0.92, opacity: 0.4, y: 6 }}
           animate={{
             scale: 1,
             opacity: 1,
             y: 0,
           }}
-          transition={{ duration: 0.65, ease: CINEMATIC_EASE }}
-          className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mb-6 sm:mb-8 transform-gpu"
+          transition={{ duration: 0.5, ease: CINEMATIC_EASE }}
+          className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mb-4 sm:mb-6 transform-gpu"
         >
           <Image
             src={LOGO_URL}
@@ -102,25 +103,24 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
             fill
             className="object-contain drop-shadow-[0_10px_25px_rgba(43,168,74,0.25)]"
             priority
-            sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
+            sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
           />
         </motion.div>
         
-        {/* STAGE 2: Original Staggered Typography — LET THE GAME (White) / BEGIN (MSC Green) */}
-        <div className="text-center overflow-hidden space-y-1 sm:space-y-2">
+        {/* STAGE 2: Original Typography — Clean, tight Anton display letter spacing */}
+        <div className="text-center overflow-hidden space-y-0.5 sm:space-y-1">
           {/* Line 1: LET THE GAME */}
           <div className="overflow-hidden">
             <motion.div
-              initial={{ y: 35, opacity: 0, letterSpacing: '0.2em' }}
+              initial={{ y: 28, opacity: 0 }}
               animate={{
-                y: phase >= 2 ? 0 : 35,
+                y: phase >= 2 ? 0 : 28,
                 opacity: phase >= 2 ? 1 : 0,
-                letterSpacing: phase >= 2 ? '0.28em' : '0.2em',
               }}
-              transition={{ duration: 0.6, ease: CINEMATIC_EASE }}
+              transition={{ duration: 0.5, ease: CINEMATIC_EASE }}
               className="transform-gpu drop-shadow-[0_0_18px_rgba(43,168,74,0.35)]"
             >
-              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-[0.16em] sm:tracking-[0.22em] uppercase leading-tight">
+              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-normal sm:tracking-wide uppercase leading-tight">
                 LET THE GAME
               </h2>
             </motion.div>
@@ -129,16 +129,15 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
           {/* Line 2: BEGIN */}
           <div className="overflow-hidden">
             <motion.div
-              initial={{ y: 35, opacity: 0, letterSpacing: '0.2em' }}
+              initial={{ y: 28, opacity: 0 }}
               animate={{
-                y: phase >= 2 ? 0 : 35,
+                y: phase >= 2 ? 0 : 28,
                 opacity: phase >= 2 ? 1 : 0,
-                letterSpacing: phase >= 2 ? '0.34em' : '0.2em',
               }}
-              transition={{ duration: 0.6, delay: 0.12, ease: CINEMATIC_EASE }}
+              transition={{ duration: 0.5, delay: 0.1, ease: CINEMATIC_EASE }}
               className="transform-gpu"
             >
-              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2BA84A] tracking-[0.16em] sm:tracking-[0.22em] uppercase leading-tight">
+              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2BA84A] tracking-normal sm:tracking-wide uppercase leading-tight">
                 BEGIN
               </h2>
             </motion.div>
@@ -161,7 +160,6 @@ const VideoBackground = memo(function VideoBackground({
 
   const handleLoadedData = useCallback(() => {
     if (videoRef.current) {
-      // Natural 1.0 original playback speed
       videoRef.current.playbackRate = 1.0
       videoRef.current.defaultPlaybackRate = 1.0
       videoRef.current.play().then(() => {

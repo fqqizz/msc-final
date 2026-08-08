@@ -63,8 +63,7 @@ function AdminLoginForm() {
           return
         }
 
-        router.replace(redirectUrl)
-        router.refresh()
+        window.location.href = redirectUrl || '/admin'
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'We couldn’t sign you in right now. Please try again.')
