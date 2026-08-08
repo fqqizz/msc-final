@@ -60,89 +60,81 @@ export default function AdminCMSPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto text-slate-900">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-white">
-          Website CMS & Content Control
+        <h1 className="text-2xl font-bold text-slate-900">
+          Website CMS & Content Editor
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Manage homepage content, contact information, FAQs and promotional banners
+        <p className="text-xs text-slate-500 mt-1">
+          Edit public contact details, official support email, address, and live FAQs
         </p>
       </div>
 
       {saveStatus && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
           <CheckCircle2 size={16} />
           <span>{saveStatus}</span>
         </div>
       )}
 
-      {/* Website Business Settings Form */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8">
-        <h3 className="text-lg font-bold font-display text-white mb-4">
-          Core Contact & Business Identity
-        </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSaveSettings} className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <FileText className="text-emerald-600" size={16} /> Public Contact Info
+          </h3>
 
-        <form onSubmit={handleSaveSettings} className="space-y-4 max-w-2xl">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Site Title</label>
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Site Title</label>
             <input
               type="text"
               value={settings.site_name}
               onChange={(e) => setSettings({ ...settings, site_name: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Tagline</label>
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Support Email (Official)</label>
             <input
-              type="text"
-              value={settings.tagline}
-              onChange={(e) => setSettings({ ...settings, tagline: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+              type="email"
+              value="info@maqboolsports.in"
+              readOnly
+              className="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-500 cursor-not-allowed"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Official Support Email</label>
-              <input
-                type="email"
-                disabled
-                value="info@maqboolsports.in"
-                className="w-full px-3.5 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-emerald-400 font-bold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Contact Phone</label>
-              <input
-                type="text"
-                value={settings.contact_phone}
-                onChange={(e) => setSettings({ ...settings, contact_phone: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
-              />
-            </div>
-          </div>
-
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Facility Address</label>
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Facility Address</label>
             <input
               type="text"
               value={settings.address}
               onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
             />
           </div>
 
           <button
             type="submit"
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2"
+            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
           >
-            <Save size={16} /> Save CMS Settings
+            <Save size={14} /> Save CMS Settings
           </button>
         </form>
+
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <HelpCircle className="text-sky-600" size={16} /> Frequently Asked Questions
+          </h3>
+
+          <div className="space-y-2">
+            {faqs.map((faq) => (
+              <div key={faq.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs space-y-1">
+                <span className="font-bold text-slate-900">{faq.question}</span>
+                <p className="text-slate-500">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )

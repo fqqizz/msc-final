@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Shield, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
+import { Shield, Lock, Mail, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 function AdminLoginForm() {
@@ -54,7 +54,7 @@ function AdminLoginForm() {
 
         const userRole = profile?.role || 'customer'
         if (userRole === 'customer') {
-          setErrorMessage('Access Denied: This account does not have owner or staff administration permissions.')
+          setErrorMessage('Access Denied: This account does not have owner administration permissions.')
           await supabase.auth.signOut()
           setIsLoading(false)
           return
@@ -72,21 +72,21 @@ function AdminLoginForm() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="mt-8 bg-slate-900/90 backdrop-blur-2xl py-8 px-6 shadow-2xl border border-emerald-500/30 rounded-2xl sm:px-10"
+      transition={{ duration: 0.3 }}
+      className="mt-8 bg-white py-8 px-6 shadow-xl border border-slate-200/80 rounded-2xl sm:px-10 text-slate-900"
     >
       {errorMessage && (
-        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-400 text-xs">
+        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-700 text-xs">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <span>{errorMessage}</span>
         </div>
       )}
 
-      <form className="space-y-5" onSubmit={handleAdminLogin}>
+      <form className="space-y-4" onSubmit={handleAdminLogin}>
         <div>
-          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
             Owner / Staff Email
           </label>
           <div className="relative">
@@ -99,14 +99,14 @@ function AdminLoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="owner@maqboolsports.in"
-              className="w-full pl-10 pr-4 py-3 bg-slate-950/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-sm font-mono"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
             />
           </div>
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
               Password
             </label>
           </div>
@@ -120,12 +120,12 @@ function AdminLoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-10 pr-10 py-3 bg-slate-950/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-sm"
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -135,11 +135,11 @@ function AdminLoginForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
+          className="w-full mt-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" />
               Authenticating MSC OS...
             </>
           ) : (
@@ -148,8 +148,8 @@ function AdminLoginForm() {
         </button>
       </form>
 
-      <div className="mt-8 text-center pt-4 border-t border-slate-800">
-        <Link href="/" className="text-xs text-slate-400 hover:text-white transition-colors">
+      <div className="mt-8 text-center pt-4 border-t border-slate-100">
+        <Link href="/" className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">
           &larr; Return to Public MSC Website
         </Link>
       </div>
@@ -159,25 +159,33 @@ function AdminLoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="absolute top-6 left-6 z-10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 hover:text-slate-900 shadow-sm transition-all"
+        >
+          <ArrowLeft size={16} />
+          Back to MSC
+        </Link>
+      </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
         <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-4 text-emerald-400 shadow-xl">
-            <Shield size={32} />
+          <div className="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center mb-3 text-emerald-800 shadow-sm">
+            <Shield size={28} />
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight font-display text-white">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
             MSC OS
           </h2>
-          <p className="mt-1 text-sm font-semibold text-emerald-400 uppercase tracking-widest">
+          <p className="mt-1 text-xs font-semibold text-emerald-700 uppercase tracking-wider">
             Owner Access Portal
           </p>
         </div>
 
         <Suspense fallback={
           <div className="mt-8 p-12 text-center text-slate-400">
-            <Loader2 size={32} className="animate-spin mx-auto text-emerald-400 mb-2" />
+            <Loader2 size={32} className="animate-spin mx-auto text-emerald-600 mb-2" />
             Loading secure portal...
           </div>
         }>

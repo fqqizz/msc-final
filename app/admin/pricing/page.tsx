@@ -12,11 +12,6 @@ type Venue = {
   sport_type: string
 }
 
-type SlotPriceOverride = {
-  slot_hour: number
-  price: number
-}
-
 export default function AdminPricingPage() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
@@ -81,11 +76,10 @@ export default function AdminPricingPage() {
 
       setStatusMessage({
         type: 'success',
-        text: `Pricing override of ₹${newPrice}/hr successfully applied to ${selectedSlots.length} slot(s) on ${selectedDate}. Confirmed bookings remain immutable.`,
+        text: `Pricing override of ₹${newPrice}/hr successfully applied to ${selectedSlots.length} slot(s) on ${selectedDate}.`
       })
-      setSelectedSlots([])
     } catch (err: any) {
-      setStatusMessage({ type: 'error', text: err.message || 'Failed to apply pricing override.' })
+      setStatusMessage({ type: 'error', text: err.message || 'Failed to save pricing override.' })
     } finally {
       setIsLoading(false)
     }
@@ -93,77 +87,53 @@ export default function AdminPricingPage() {
 
   const handleCopyPricing = async () => {
     if (!selectedVenue) return
+
     try {
       setIsLoading(true)
+      setStatusMessage(null)
+
       await supabase.from('audit_logs').insert({
         action: 'PRICING_COPIED',
         entity_type: 'venue',
         entity_id: selectedVenue.id,
         details: {
-          source_date: selectedDate,
-          target_date: copyTargetDate,
-          venue: selectedVenue.name,
-          severity: 'INFO',
+          venue_name: selectedVenue.name,
+          from_date: selectedDate,
+          to_date: copyTargetDate,
+          copied_slots: selectedSlots,
+          copied_price: newPrice,
         },
       })
 
       setStatusMessage({
         type: 'success',
-        text: `Pricing configuration from ${selectedDate} copied to ${copyTargetDate} for ${selectedVenue.name}.`,
+        text: `Successfully cloned pricing schedule from ${selectedDate} to ${copyTargetDate}.`
       })
     } catch (err: any) {
-      setStatusMessage({ type: 'error', text: err.message })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleResetOverride = async () => {
-    if (!selectedVenue) return
-    try {
-      setIsLoading(true)
-      await supabase.from('audit_logs').insert({
-        action: 'PRICING_RESET',
-        entity_type: 'venue',
-        entity_id: selectedVenue.id,
-        details: {
-          date: selectedDate,
-          venue: selectedVenue.name,
-          severity: 'INFO',
-        },
-      })
-
-      setStatusMessage({
-        type: 'success',
-        text: `Pricing overrides reset. Slots on ${selectedDate} returned to base rates.`,
-      })
-      setSelectedSlots([])
-    } catch (err: any) {
-      setStatusMessage({ type: 'error', text: err.message })
+      setStatusMessage({ type: 'error', text: err.message || 'Error copying pricing schedule.' })
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 max-w-7xl mx-auto text-slate-900">
+      {/* Header Bar */}
       <div>
-        <div className="flex items-center gap-2">
-          <DollarSign size={24} className="text-emerald-400" />
-          <h1 className="text-2xl font-bold font-display text-white">MSC OS Pricing Control Center</h1>
-        </div>
-        <p className="text-xs text-slate-400 mt-1">
-          Precedence Hierarchy: 1. Slot-Specific Override &rarr; 2. Date + Venue Override &rarr; 3. Base Venue Rate. Confirmed bookings remain strictly price immutable.
+        <h1 className="text-2xl font-bold text-slate-900">
+          Pricing Control Center
+        </h1>
+        <p className="text-xs text-slate-500 mt-1">
+          Configure base venue rates, holiday date overrides, peak slot pricing & pricing audits
         </p>
       </div>
 
       {statusMessage && (
         <div
-          className={`p-4 rounded-2xl border text-xs flex items-start gap-3 ${
+          className={`p-4 rounded-2xl flex items-start gap-3 text-xs ${
             statusMessage.type === 'success'
-              ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
-              : 'bg-red-950/40 border-red-500/30 text-red-300'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              : 'bg-red-50 border border-red-200 text-red-700'
           }`}
         >
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
@@ -171,158 +141,159 @@ export default function AdminPricingPage() {
         </div>
       )}
 
-      {/* Main Grid */}
+      {/* Main Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Venue & Slot Selector */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <h3 className="text-base font-bold font-display text-white">1. Select Target Venue & Date</h3>
+        {/* Left Column: Venue & Target Date Selector */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Layers className="text-emerald-600" size={16} />
+            1. Select Venue & Date
+          </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Target Venue</label>
-                <select
-                  value={selectedVenue?.id || ''}
-                  onChange={(e) => {
-                    const v = venues.find((v) => v.id === e.target.value)
-                    if (v) setSelectedVenue(v)
-                  }}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
-                >
-                  {venues.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name} ({v.sport_type})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Target Date</label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold font-display text-white">2. Select Operating Time Slots</h3>
-              <button
-                onClick={handleSelectAllSlots}
-                className="text-xs font-bold text-emerald-400 hover:underline"
-              >
-                {selectedSlots.length === 17 ? 'Deselect All' : 'Select All 17 Slots'}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {Array.from({ length: 17 }, (_, i) => i + 6).map((hour) => {
-                const isSelected = selectedSlots.includes(hour)
-                const label = hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Target Facility</label>
+            <div className="space-y-1.5">
+              {venues.map((v) => {
+                const isSelected = selectedVenue?.id === v.id
                 return (
                   <button
-                    key={hour}
-                    onClick={() => {
-                      if (isSelected) setSelectedSlots(selectedSlots.filter((h) => h !== hour))
-                      else setSelectedSlots([...selectedSlots, hour])
-                    }}
-                    className={`p-3 rounded-xl border text-xs font-bold transition-all ${
+                    key={v.id}
+                    onClick={() => setSelectedVenue(v)}
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-semibold transition-all flex items-center justify-between ${
                       isSelected
-                        ? 'border-emerald-500 bg-emerald-600 text-white shadow-lg'
-                        : 'border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-2xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    {label}
+                    <span>{v.name}</span>
+                    <span className="text-[10px] text-slate-500 uppercase">
+                      {v.sport_type === 'football' ? 'Base: ₹999/hr' : 'Base: ₹299/hr'}
+                    </span>
                   </button>
                 )
               })}
             </div>
           </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Override Date</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+            />
+          </div>
         </div>
 
-        {/* Right Column: Pricing Actions & Preview Diff */}
-        <div className="space-y-6">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <h3 className="text-base font-bold font-display text-white">3. Configure Pricing Override</h3>
-
+        {/* Center Column: Interactive Slot Selector Matrix */}
+        <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">New Hourly Rate (₹)</label>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Clock className="text-sky-600" size={16} />
+                2. Select Slot Overrides
+              </h3>
+              <p className="text-[11px] text-slate-500">Pick individual or bulk hours to apply custom rate</p>
+            </div>
+
+            <button
+              onClick={handleSelectAllSlots}
+              className="text-xs text-emerald-700 font-semibold hover:underline"
+            >
+              {selectedSlots.length === 17 ? 'Deselect All' : 'Select All Day'}
+            </button>
+          </div>
+
+          {/* Slots Grid */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+            {Array.from({ length: 17 }, (_, i) => i + 6).map((hour) => {
+              const isSelected = selectedSlots.includes(hour)
+              const label = hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`
+
+              return (
+                <button
+                  key={hour}
+                  onClick={() => {
+                    if (isSelected) {
+                      setSelectedSlots(selectedSlots.filter((h) => h !== hour))
+                    } else {
+                      setSelectedSlots([...selectedSlots, hour])
+                    }
+                  }}
+                  className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all ${
+                    isSelected
+                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <span>{label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Pricing Input & Action Button */}
+          <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">New Effective Rate (₹)</label>
               <input
                 type="number"
                 value={newPrice}
                 onChange={(e) => setNewPrice(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-lg font-bold text-emerald-400"
+                placeholder="499"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Audit Reason</label>
+              <label className="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Reason / Note</label>
               <input
                 type="text"
                 value={overrideReason}
                 onChange={(e) => setOverrideReason(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+                placeholder="Weekend Holiday Peak"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
               />
-            </div>
-
-            {/* Diff Preview */}
-            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2 text-xs">
-              <span className="text-[10px] text-slate-400 uppercase font-bold">Diff Preview</span>
-              <div className="flex items-center justify-between text-slate-300">
-                <span>Selected Slots:</span>
-                <span className="font-bold text-white">{selectedSlots.length} hour(s)</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-300">
-                <span>New Hourly Rate:</span>
-                <span className="font-bold text-emerald-400">₹{newPrice}/hr</span>
-              </div>
             </div>
 
             <button
               onClick={handleApplyPricingOverride}
               disabled={isLoading || selectedSlots.length === 0}
-              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
             >
-              Apply Pricing Override
+              {isLoading ? 'Saving...' : `Apply to ${selectedSlots.length} Slots`}
             </button>
           </div>
+        </div>
+      </div>
 
-          {/* Quick Operations */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <h4 className="text-xs font-bold uppercase text-slate-400">Bulk Operational Shortcuts</h4>
+      {/* Copy Pricing Utility Card */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Copy size={16} className="text-purple-600" />
+            Clone Pricing Schedule to Another Date
+          </h4>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Quickly duplicate pricing configuration from {selectedDate} to an upcoming holiday or tournament date.
+          </p>
+        </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[10px] text-slate-400 uppercase mb-1">Copy Pricing To Date</label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={copyTargetDate}
-                    onChange={(e) => setCopyTargetDate(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
-                  />
-                  <button
-                    onClick={handleCopyPricing}
-                    className="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl flex items-center gap-1"
-                  >
-                    <Copy size={14} /> Copy
-                  </button>
-                </div>
-              </div>
-
-              <button
-                onClick={handleResetOverride}
-                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                <RotateCcw size={14} /> Reset Overrides to Base Rates
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <input
+            type="date"
+            value={copyTargetDate}
+            onChange={(e) => setCopyTargetDate(e.target.value)}
+            className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+          />
+          <button
+            onClick={handleCopyPricing}
+            disabled={isLoading}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition-all shrink-0 shadow-2xs"
+          >
+            Clone Schedule
+          </button>
         </div>
       </div>
     </div>

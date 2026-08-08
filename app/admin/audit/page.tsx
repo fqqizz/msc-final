@@ -33,51 +33,56 @@ export default function AdminAuditPage() {
   }, [])
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto text-slate-900">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-white">
+        <h1 className="text-2xl font-bold text-slate-900">
           System Audit & Domain Event Logs
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Immutable audit trail of RBAC changes, pricing updates, and booking transactions
         </p>
       </div>
 
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
         {isLoading ? (
-          <div className="py-16 text-center text-slate-400">
-            <Loader2 size={32} className="animate-spin mx-auto text-emerald-400 mb-2" />
+          <div className="py-16 text-center text-slate-400 text-xs">
+            <Loader2 size={28} className="animate-spin mx-auto text-emerald-600 mb-2" />
             Loading audit records...
           </div>
         ) : logs.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="p-4">Timestamp</th>
-                  <th className="p-4">Action</th>
-                  <th className="p-4">Table / Entity</th>
-                  <th className="p-4">Description</th>
+                  <th className="px-5 py-3.5">Timestamp</th>
+                  <th className="px-5 py-3.5">Action</th>
+                  <th className="px-5 py-3.5">Entity</th>
+                  <th className="px-5 py-3.5">Description</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100 text-slate-700">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 font-mono text-slate-400">
-                      {log.timestamp ? format(new Date(log.timestamp), 'MMM d, yyyy @ HH:mm:ss') : 'N/A'}
+                  <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-5 py-3.5 text-slate-500">
+                      {format(new Date(log.timestamp), 'MMM d @ h:mm:ss a')}
                     </td>
-                    <td className="p-4 uppercase font-bold text-emerald-400">{log.action_type}</td>
-                    <td className="p-4 text-white font-semibold">{log.table_name || 'N/A'}</td>
-                    <td className="p-4 text-slate-300">{log.description || 'System operation executed'}</td>
+                    <td className="px-5 py-3.5 font-bold text-slate-900">{log.action_type || log.action}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                        {log.entity_type || 'SYSTEM'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-600">{log.details?.reason || log.details?.message || log.details || 'Action completed'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <div className="py-16 text-center text-slate-400">
-            <Activity size={36} className="mx-auto text-slate-600 mb-2" />
-            <p className="text-xs">No audit events recorded yet.</p>
+          <div className="text-center py-16 text-xs text-slate-500">
+            <Activity className="mx-auto text-slate-400 mb-2" size={32} />
+            <p className="font-semibold text-slate-700">Audit log stream active.</p>
+            <p className="text-slate-400 mt-0.5">Administrative changes will be recorded here.</p>
           </div>
         )}
       </div>

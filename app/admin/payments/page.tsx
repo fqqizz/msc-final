@@ -37,21 +37,21 @@ export default function AdminPaymentsPage() {
   }, [])
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto text-slate-900">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-white">
+        <h1 className="text-2xl font-bold text-slate-900">
           Payments, Failures & Refund Ledger
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Razorpay transaction history, failed payment attempts & customer refund processing
+        <p className="text-xs text-slate-500 mt-1">
+          Razorpay transaction history, failed payment attempts & customer refund records
         </p>
       </div>
 
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
         <button
           onClick={() => setActiveTab('payments')}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'payments' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+            activeTab === 'payments' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Confirmed Transactions ({payments.length})
@@ -59,7 +59,7 @@ export default function AdminPaymentsPage() {
         <button
           onClick={() => setActiveTab('failures')}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'failures' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+            activeTab === 'failures' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           Payment Failures ({attempts.filter(a => a.status === 'failed').length})
@@ -67,47 +67,47 @@ export default function AdminPaymentsPage() {
         <button
           onClick={() => setActiveTab('refunds')}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'refunds' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+            activeTab === 'refunds' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Refund Requests ({refunds.length})
+          Refunds ({refunds.length})
         </button>
       </div>
 
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
         {isLoading ? (
-          <div className="py-16 text-center text-slate-400">
-            <Loader2 size={32} className="animate-spin mx-auto text-emerald-400 mb-2" />
-            Loading financial ledger...
+          <div className="py-16 text-center text-slate-400 text-xs">
+            <Loader2 size={28} className="animate-spin mx-auto text-emerald-600 mb-2" />
+            Loading transaction records...
           </div>
         ) : activeTab === 'payments' ? (
           payments.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200">
                   <tr>
-                    <th className="p-4">Payment ID</th>
-                    <th className="p-4">Booking ID</th>
-                    <th className="p-4">Gateway / Method</th>
-                    <th className="p-4">Amount</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4">Date</th>
+                    <th className="px-5 py-3.5">Payment ID</th>
+                    <th className="px-5 py-3.5">Razorpay Order</th>
+                    <th className="px-5 py-3.5">Booking</th>
+                    <th className="px-5 py-3.5">Amount</th>
+                    <th className="px-5 py-3.5">Status</th>
+                    <th className="px-5 py-3.5">Timestamp</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {payments.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="p-4 font-mono font-semibold text-white">{p.razorpay_payment_id || p.id.slice(0, 8)}</td>
-                      <td className="p-4 font-bold text-emerald-400">#{p.bookings?.booking_number || 'N/A'}</td>
-                      <td className="p-4 uppercase">{p.gateway} ({p.payment_method || 'UPI'})</td>
-                      <td className="p-4 font-bold text-white">₹{p.amount}</td>
-                      <td className="p-4">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300">
+                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-5 py-3.5 font-mono text-[11px] text-slate-900 font-bold">{p.razorpay_payment_id || p.id.slice(0, 12)}</td>
+                      <td className="px-5 py-3.5 font-mono text-[11px] text-slate-500">{p.razorpay_order_id || 'N/A'}</td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-900">#{p.bookings?.booking_number || 'Walk-in'}</td>
+                      <td className="px-5 py-3.5 font-bold text-emerald-700">₹{p.amount}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
                           {p.status}
                         </span>
                       </td>
-                      <td className="p-4 text-slate-400">
-                        {p.created_at ? format(new Date(p.created_at), 'MMM d, yyyy @ h:mm a') : 'N/A'}
+                      <td className="px-5 py-3.5 text-slate-500">
+                        {format(new Date(p.created_at), 'MMM d, yyyy @ h:mm a')}
                       </td>
                     </tr>
                   ))}
@@ -115,20 +115,15 @@ export default function AdminPaymentsPage() {
               </table>
             </div>
           ) : (
-            <div className="py-16 text-center text-slate-400">
-              <CreditCard size={36} className="mx-auto text-slate-600 mb-2" />
-              <p className="text-xs">No confirmed payment transactions on record.</p>
+            <div className="text-center py-16 text-xs text-slate-500">
+              <CreditCard className="mx-auto text-slate-400 mb-2" size={32} />
+              <p className="font-semibold text-slate-700">No payment records yet.</p>
             </div>
           )
-        ) : activeTab === 'failures' ? (
-          <div className="py-12 text-center text-slate-400">
-            <AlertCircle size={36} className="mx-auto text-slate-600 mb-2" />
-            <p className="text-xs">No payment failures logged today.</p>
-          </div>
         ) : (
-          <div className="py-12 text-center text-slate-400">
-            <RefreshCw size={36} className="mx-auto text-slate-600 mb-2" />
-            <p className="text-xs">No pending or processed refunds.</p>
+          <div className="text-center py-16 text-xs text-slate-500">
+            <CheckCircle2 className="mx-auto text-slate-400 mb-2" size={32} />
+            <p className="font-semibold text-slate-700">No entries in this view.</p>
           </div>
         )}
       </div>
