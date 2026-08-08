@@ -4,6 +4,7 @@ const resendApiKey = process.env.RESEND_API_KEY || 're_placeholder_key'
 export const resend = new Resend(resendApiKey)
 
 export const OFFICIAL_SENDER = 'Maqbool Sports Complex <info@maqboolsports.in>'
+export const ADMIN_NOTIFICATION_EMAIL = 'info@maqboolsports.in'
 
 export async function sendWelcomeEmail(email: string, name: string) {
   try {
@@ -13,7 +14,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
       subject: 'Welcome to Maqbool Sports Complex',
       html: `
         <div style="font-family: Arial, sans-serif; background-color: #050505; color: #ffffff; padding: 30px; border-radius: 16px;">
-          <h2 style="color: #2BA84A; font-size: 24px;">Welcome to MSC OS, ${name}!</h2>
+          <h2 style="color: #2BA84A; font-size: 24px;">Welcome to MSC, ${name}!</h2>
           <p style="color: #cccccc; font-size: 14px; line-height: 1.6;">
             Your player account has been successfully created. You can now book synthetic football turf & cricket net slots online instantly.
           </p>
@@ -60,5 +61,61 @@ export async function sendBookingConfirmationEmail(params: {
     })
   } catch (err) {
     console.error('Error sending booking confirmation email via Resend:', err)
+  }
+}
+
+export async function sendRefundNotificationEmail(params: {
+  email: string
+  bookingNumber: string
+  amount: number
+  status: 'requested' | 'completed' | 'failed'
+}) {
+  try {
+    const title = params.status === 'completed' 
+      ? 'Refund Processed' 
+      : params.status === 'requested' 
+      ? 'Refund Request Received' 
+      : 'Refund Processing Issue'
+
+    return await resend.emails.send({
+      from: OFFICIAL_SENDER,
+      to: params.email,
+      subject: `${title} — #${params.bookingNumber}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background-color: #050505; color: #ffffff; padding: 30px; border-radius: 16px;">
+          <h2 style="color: ${params.status === 'failed' ? '#EF4444' : '#2BA84A'};">${title}</h2>
+          <p style="color: #cccccc;">Update regarding your booking #${params.bookingNumber}.</p>
+          <p style="color: #ffffff; font-size: 16px;">Refund Amount: <strong>₹${params.amount}</strong></p>
+          <p style="color: #888888; font-size: 12px;">For assistance, contact info@maqboolsports.in</p>
+        </div>
+      `
+    })
+  } catch (err) {
+    console.error('Error sending refund email via Resend:', err)
+  }
+}
+
+export async function sendAdminOperationalAlert(params: {
+  title: string
+  details: string
+  severity: 'INFO' | 'WARNING' | 'CRITICAL'
+}) {
+  try {
+    const color = params.severity === 'CRITICAL' ? '#EF4444' : params.severity === 'WARNING' ? '#F59E0B' : '#2BA84A'
+
+    return await resend.emails.send({
+      from: OFFICIAL_SENDER,
+      to: ADMIN_NOTIFICATION_EMAIL,
+      subject: `[MSC OS Alert - ${params.severity}] ${params.title}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background-color: #050505; color: #ffffff; padding: 25px; border-radius: 12px; border-left: 6px solid ${color};">
+          <h3 style="color: ${color}; margin: 0 0 10px 0;">${params.title}</h3>
+          <p style="color: #dddddd; font-size: 14px; line-height: 1.5;">${params.details}</p>
+          <p style="color: #666666; font-size: 11px; margin-top: 15px;">MSC OS Operational Alert Engine</p>
+        </div>
+      `
+    })
+  } catch (err) {
+    console.error('Error sending admin operational alert via Resend:', err)
   }
 }

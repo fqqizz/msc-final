@@ -29,7 +29,9 @@ import { useAuth } from '@/components/providers/auth-provider'
 
 const adminNavItems = [
   { name: 'Overview', href: '/admin', icon: LayoutDashboard },
+  { name: 'Alert Center', href: '/admin/notifications', icon: Shield },
   { name: 'Bookings & Schedule', href: '/admin/bookings', icon: Calendar },
+  { name: 'Pricing Overrides', href: '/admin/pricing', icon: DollarSign },
   { name: 'Venues & Pricing', href: '/admin/venues', icon: Layers },
   { name: 'Customers & Players', href: '/admin/customers', icon: Users },
   { name: 'Payments & Refunds', href: '/admin/payments', icon: CreditCard },
@@ -61,10 +63,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <h2 className="text-2xl font-bold font-display">MSC OS Admin Authorization</h2>
           <p className="text-slate-400 mt-2 text-sm">Owner & staff credentials are required to access the complex administrative engine.</p>
           <Link
-            href="/login?redirect=/admin"
+            href="/admin/login"
             className="inline-block mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 font-semibold rounded-xl text-sm transition-all"
           >
-            Sign In as Admin
+            Sign In to MSC OS
           </Link>
         </div>
       </div>

@@ -68,7 +68,7 @@ export default function Navigation() {
                 />
               </div>
               <span className="ml-2.5 font-display font-extrabold text-lg tracking-wider text-white hidden xl:inline-block">
-                MSC OS
+                MSC
               </span>
             </Link>
 
