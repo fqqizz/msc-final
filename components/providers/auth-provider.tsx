@@ -50,10 +50,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle()
 
       if (profileData) {
+        // If profileData.full_name is missing, fallback to auth user_metadata
+        const metaName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.user_metadata?.display_name
+        if (!profileData.full_name && metaName) {
+          profileData.full_name = metaName
+        } else if (!profileData.full_name && profileData.role === 'owner') {
+          profileData.full_name = 'Eihab Naseer'
+        }
         setProfile(profileData)
         setRole(profileData.role)
       } else {
-        // Fallback role check
+        // Fallback role and profile from user_metadata
+        const metaName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.user_metadata?.display_name
+        setProfile({
+          id: currentUser.id,
+          full_name: metaName || (currentUser.email?.toLowerCase().includes('owner') || currentUser.email?.toLowerCase().includes('eihab') ? 'Eihab Naseer' : 'MSC Player'),
+          email: currentUser.email || '',
+          phone: currentUser.phone || '',
+          role: 'customer' as any,
+          avatar_url: null,
+          created_at: currentUser.created_at,
+          updated_at: currentUser.created_at,
+          is_active: true
+        } as any)
         setRole('customer')
       }
 

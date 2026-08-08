@@ -51,17 +51,31 @@ Configure these environment variables in your local `.env.local` file and in **V
    - `venues` (Facility photo assets)
    - `receipts` (PDF booking receipts, path pattern: `receipts/{booking_id}/MSC-{booking_number}.pdf`)
 
-### C. Creating the Owner Admin Account
+### C. Creating the Owner Admin Account (Eihab Naseer)
 1. Go to **Authentication** &rarr; **Users** &rarr; **Add User** &rarr; **Create User**.
-2. Enter email (e.g. `owner@maqboolsports.in`) and a secure password.
-3. Once created, copy the `UUID` of the user.
-4. Go to **SQL Editor** and execute:
+2. Enter email (e.g. `eihab@maqboolsports.in` or `owner@maqboolsports.in`) and a secure password.
+3. Run this diagnostic query in **SQL Editor** to inspect the owner identity:
+   ```sql
+   SELECT
+     u.id,
+     u.email,
+     u.raw_user_meta_data,
+     u.raw_app_meta_data,
+     up.*
+   FROM auth.users u
+   LEFT JOIN public.user_profiles up ON up.id = u.id
+   WHERE
+     lower(coalesce(u.email, '')) LIKE '%eihab%'
+     OR lower(coalesce(u.email, '')) LIKE '%owner%'
+     OR lower(coalesce(u.raw_user_meta_data->>'full_name', '')) LIKE '%eihab%';
+   ```
+4. Set the authoritative name (`Eihab Naseer`) and `owner` role:
    ```sql
    INSERT INTO public.user_profiles (id, full_name, email, role, status)
-   VALUES ('7e241e96-a2ab-469c-9076-0d1f9c10e943', 'MSC Complex Owner', 'owner@maqboolsports.in', 'owner', 'active')
-   ON CONFLICT (id) DO UPDATE SET role = 'owner';
+   VALUES ('7e241e96-a2ab-469c-9076-0d1f9c10e943', 'Eihab Naseer', 'owner@maqboolsports.in', 'owner', 'active')
+   ON CONFLICT (id) DO UPDATE SET full_name = 'Eihab Naseer', role = 'owner';
    ```
-5. Navigating to `/admin/login` will now allow owner sign-in into **MSC OS**.
+5. Navigating to `/admin/login` will now allow owner sign-in into **MSC OS**. The owner account is automatically excluded from player leaderboards, player stats, and customer counts.
 
 ---
 

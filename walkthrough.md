@@ -1,29 +1,36 @@
-# MSC OS & Maqbool Sports Complex — Production Completion Walkthrough
+# MSC OS & Maqbool Sports Complex — Production Final Verification Walkthrough
 
-## Summary of Accomplishments
+## Summary of Completed Solutions
 
-### 1. MSC OS Routing & Automatic Redirection
-- **Unauthenticated Visitors**: Visiting `/admin` automatically redirects to `/admin/login` without broken buttons or intermediate dead screens.
-- **Normal Customer Accounts**: Attempting to access `/admin` renders an Access Restricted screen with a direct link to `/dashboard`.
-- **Owner / Staff Authentication**: Logging into `/admin/login` grants access to the full **MSC OS** dashboard.
+### 1. Original MSC Intro Animation Restored ([components/preloader.tsx](file:///c:/Users/faaiz/Downloads/msc-final-main/msc-final-main/components/preloader.tsx))
+- Restored the exact original intro progression from the approved ZIP:
+  1. **MSC Emblem Logo** with glowing emerald backlight pulse.
+  2. **`LET THE GAME BEGIN`** typography in iconic wide-spaced display letters, followed by `Maqbool Sports Complex` subtitle.
+  3. **Cinematic Progress Bar** and seamless exit into the website.
 
-### 2. Clean Light Visual Language Across All Admin Pages
-- Converted all 11 admin views to a **clean white / off-white light theme** (`bg-slate-50`, `bg-white`, `border-slate-200`, charcoal `#0F172A` text, MSC emerald `#2BA84A` accents):
-  - `/admin` (Executive Overview with real-time metrics and browser notification prompt)
-  - `/admin/login` (Owner Access Portal with zero customer signup links)
-  - `/admin/bookings` (Operational booking manager, slot conflict protection, cancellation and inspect modal)
-  - `/admin/pricing` (Base venue rates, date overrides, slot-specific pricing, clone schedule)
-  - `/admin/venues` (Facility statuses, operating hours, shared bowling machine resource conflict settings)
-  - `/admin/customers` (Player directory, verified hours played, leaderboard tiers)
-  - `/admin/payments` (Razorpay transactions, payment failures, refund ledger)
-  - `/admin/notifications` (Real-time alert feed with severity filters)
-  - `/admin/analytics` (Demand heatmap and revenue aggregation)
-  - `/admin/audit` (Immutable audit log trail)
-  - `/admin/cms` (Public contact info and FAQs editor)
+---
 
-### 3. Typography & Hierarchy Calibration
-- Admin typography strictly calibrated with calm font weights (`font-normal` body text, `font-medium` navigation, `font-bold` for key metrics). Removed condensed sports poster fonts from the admin portal.
+### 2. Resolved `/admin` First-Load & Session Initialization
+- **Layout Interception Bug**: Eliminated nested layout auth blocking on `/admin/login` so that unauthenticated visitors are directly presented with the real email/password login form without requiring manual page reloads or encountering broken intermediate screens.
+- **Session Flow**:
+  - `Unauthenticated` &rarr; `/admin/login` (clean light portal with zero customer signup distractions + working password recovery).
+  - `Authenticated Owner` &rarr; Instant entry to `/admin` executive dashboard.
+  - `Authenticated Customer` &rarr; Server-side RBAC Access Restricted barrier with direct link back to `/dashboard`.
+  - Zero manual reloads required.
+
+---
+
+### 3. Authoritative Identity Model: Owner vs. Player Separation
+- **Database Trigger Updated** ([supabase/migrations/002_customer_management.sql](file:///c:/Users/faaiz/Downloads/msc-final-main/msc-final-main/supabase/migrations/002_customer_management.sql)):
+  - Restricted `handle_new_customer_entry()` trigger to strictly fire for `NEW.role = 'customer'`.
+  - Owner (`role = 'owner'`), super admin (`role = 'super_admin'`), and staff (`role = 'reception'`) accounts are never inserted into the `customers` table.
+- **Leaderboard Materialized View & RPC**:
+  - `mv_customer_leaderboard` and fallback queries strictly enforce `WHERE p.role = 'customer'`, ensuring Eihab Naseer (Owner) and administrative staff are excluded from player rankings.
+- **Admin Customer Directory & Dashboard Metrics**:
+  - Customer directory and total player metrics in `/admin` and `/admin/customers` query `user_profiles` with `role = 'customer'`, preventing administrative accounts from inflating customer counts or stats.
+
+---
 
 ### 4. Build & Production Verification
-- `npm run build` executed successfully across all **36 static and dynamic routes** with **0 errors**.
-- All changes committed and pushed to `https://github.com/fqqizz/msc-final` on branch `main` (`commit f635ab6`).
+- `npm run build` compiled **36 static and dynamic routes** cleanly with **0 errors**.
+- All changes committed and pushed to `https://github.com/fqqizz/msc-final` on branch `main` (`commit 7314782`).

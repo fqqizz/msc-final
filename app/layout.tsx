@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Anton } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import Preloader from '@/components/preloader'
 import ScrollProgress from '@/components/scroll-progress'
 import ChatbotWrapper from '@/components/chatbot-wrapper'
 import CookieConsent from '@/components/cookie-consent'
@@ -60,7 +59,6 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${anton.variable}`}>
       <body className="font-sans antialiased bg-[#050505] text-foreground overflow-x-hidden">
         <AuthProvider>
-          <Preloader />
           <ScrollProgress />
           {children}
           <ChatbotWrapper />

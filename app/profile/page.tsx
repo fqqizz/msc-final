@@ -133,10 +133,10 @@ export default function ProfilePage() {
             <div className="flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                  {profile?.full_name || 'MSC Player'}
+                  {profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || (role === 'owner' ? 'Eihab Naseer' : 'MSC Player')}
                 </h1>
                 <span className="px-3 py-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold uppercase rounded-full tracking-wider">
-                  {customer?.tier || 'Pro Player'}
+                  {role === 'owner' ? 'Complex Owner' : (customer?.tier || 'Pro Player')}
                 </span>
               </div>
               <p className="text-slate-500 text-xs sm:text-sm mt-1">

@@ -198,7 +198,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
             <div className="truncate pr-2">
-              <p className="text-xs font-bold text-slate-900 truncate">{profile?.full_name || 'Owner'}</p>
+              <p className="text-xs font-bold text-slate-900 truncate">
+                {profile?.full_name || (role === 'owner' ? 'Eihab Naseer' : 'Admin User')}
+              </p>
               <span className="text-[10px] text-emerald-700 font-semibold uppercase">{role}</span>
             </div>
             <button
