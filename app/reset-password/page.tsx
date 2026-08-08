@@ -1,0 +1,172 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+
+export default function ResetPasswordPage() {
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorMessage(null)
+    setSuccessMessage(null)
+
+    if (!password || !confirmPassword) {
+      setErrorMessage('Please fill in both fields.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match.')
+      return
+    }
+
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password,
+      })
+
+      if (error) {
+        setErrorMessage(error.message)
+      } else {
+        setSuccessMessage('Password successfully updated! Redirecting to login...')
+        setTimeout(() => {
+          router.push('/login')
+        }, 1500)
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'An unexpected error occurred.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
+        <div className="flex flex-col items-center text-center">
+          <div className="relative w-16 h-16 mb-4">
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
+              alt="Maqbool Sports Complex"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <h2 className="text-3xl font-extrabold tracking-tight font-display text-white">
+            Set New Password
+          </h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Please enter your new password below
+          </p>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mt-8 bg-slate-900/80 backdrop-blur-xl py-8 px-6 shadow-2xl border border-emerald-500/20 rounded-2xl sm:px-10"
+        >
+          {errorMessage && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-400 text-sm">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3 text-emerald-400 text-sm">
+              <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleUpdatePassword}>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                New Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                Confirm New Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-sm"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full mt-2 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Updating Password...
+                </>
+              ) : (
+                'Update Password'
+              )}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
