@@ -80,23 +80,23 @@ export default function ProfilePage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <Loader2 className="animate-spin text-emerald-400" size={32} />
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center">
+        <Loader2 className="animate-spin text-emerald-600" size={32} />
       </div>
     )
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-center items-center px-4">
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center px-4">
         <Navigation />
-        <div className="text-center max-w-md my-auto">
-          <User className="mx-auto text-slate-500 mb-4" size={48} />
-          <h2 className="text-2xl font-bold font-display">Authentication Required</h2>
-          <p className="text-slate-400 mt-2 text-sm">Please sign in to view your MSC Player Profile.</p>
+        <div className="text-center max-w-md my-auto bg-white p-8 border border-slate-200 rounded-3xl shadow-xl">
+          <User className="mx-auto text-slate-400 mb-4" size={48} />
+          <h2 className="text-2xl font-bold text-slate-900">Authentication Required</h2>
+          <p className="text-slate-500 mt-2 text-xs">Please sign in to view your MSC Player Profile.</p>
           <Link
             href="/login?redirect=/profile"
-            className="inline-block mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 font-semibold rounded-xl text-sm transition-all"
+            className="inline-block mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition-all shadow-sm"
           >
             Sign In Now
           </Link>
@@ -110,21 +110,19 @@ export default function ProfilePage() {
   const completedBookings = bookings.filter((b) => b.booking_status === 'completed')
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col pt-24">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col pt-24">
       <Navigation />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Profile Banner Card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 overflow-hidden shadow-2xl"
+          className="relative bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 overflow-hidden shadow-xl"
         >
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
             {/* Avatar */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-emerald-600 border-2 border-emerald-400/50 flex items-center justify-center font-display text-4xl text-white font-bold shadow-xl overflow-hidden shrink-0">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-emerald-600 border-2 border-emerald-400/50 flex items-center justify-center text-4xl text-white font-bold shadow-md overflow-hidden shrink-0">
               {profile?.avatar_url ? (
                 <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" />
               ) : (
@@ -134,29 +132,29 @@ export default function ProfilePage() {
 
             <div className="flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-white">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                   {profile?.full_name || 'MSC Player'}
                 </h1>
-                <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold uppercase rounded-full tracking-wider">
+                <span className="px-3 py-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold uppercase rounded-full tracking-wider">
                   {customer?.tier || 'Pro Player'}
                 </span>
               </div>
-              <p className="text-slate-400 text-xs sm:text-sm mt-1">
+              <p className="text-slate-500 text-xs sm:text-sm mt-1">
                 {user.email} • MSC Member since {profile?.created_at ? format(new Date(profile.created_at), 'MMM yyyy') : '2026'}
               </p>
 
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 mt-4 text-xs text-slate-300">
-                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
-                  <Shield size={14} className="text-emerald-400" />
-                  <span>Role: {role || 'Customer'}</span>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4 text-xs text-slate-700">
+                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                  <Shield size={14} className="text-emerald-600" />
+                  <span>Role: <strong className="capitalize">{role || 'Customer'}</strong></span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
-                  <Trophy size={14} className="text-yellow-400" />
-                  <span>Rank: {rank ? `#${rank}` : 'Unranked'}</span>
+                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                  <Trophy size={14} className="text-amber-500" />
+                  <span>Rank: <strong>{rank ? `#${rank}` : 'Unranked'}</strong></span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
-                  <Zap size={14} className="text-sky-400" />
-                  <span>Fav Venue: {mostPlayedVenue}</span>
+                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                  <Zap size={14} className="text-sky-600" />
+                  <span>Fav Venue: <strong>{mostPlayedVenue}</strong></span>
                 </div>
               </div>
             </div>
@@ -164,7 +162,7 @@ export default function ProfilePage() {
             <div className="shrink-0">
               <Link
                 href="/dashboard"
-                className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-500/30 transition-all inline-flex items-center gap-2"
+                className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-all inline-flex items-center gap-2"
               >
                 Dashboard <ArrowRight size={14} />
               </Link>
@@ -174,80 +172,80 @@ export default function ProfilePage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-2 text-emerald-400 mb-1">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 text-center sm:text-left shadow-xs">
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-emerald-600 mb-1">
               <Clock size={18} />
-              <span className="text-xs font-semibold text-slate-400 uppercase">Hours Played</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase">Hours Played</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold font-display">{customer?.hours_played || completedBookings.length}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Verified facility turf time</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{customer?.hours_played || completedBookings.length}</p>
+            <p className="text-[11px] text-slate-400 mt-1">Verified facility turf time</p>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-2 text-sky-400 mb-1">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 text-center sm:text-left shadow-xs">
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-sky-600 mb-1">
               <Calendar size={18} />
-              <span className="text-xs font-semibold text-slate-400 uppercase">Total Bookings</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase">Total Bookings</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold font-display">{customer?.total_bookings || bookings.length}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Confirmed & completed sessions</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{customer?.total_bookings || bookings.length}</p>
+            <p className="text-[11px] text-slate-400 mt-1">Confirmed & completed sessions</p>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-2 text-amber-400 mb-1">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 text-center sm:text-left shadow-xs">
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-amber-500 mb-1">
               <Award size={18} />
-              <span className="text-xs font-semibold text-slate-400 uppercase">Completed</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase">Completed</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold font-display">{completedBookings.length}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Finished match hours</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{completedBookings.length}</p>
+            <p className="text-[11px] text-slate-400 mt-1">Finished match hours</p>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-2 text-purple-400 mb-1">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 text-center sm:text-left shadow-xs">
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-purple-600 mb-1">
               <CreditCard size={18} />
-              <span className="text-xs font-semibold text-slate-400 uppercase">Total Spend</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase">Total Spend</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold font-display">₹{customer?.total_spend || 0}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Invested in sports</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">₹{customer?.total_spend || 0}</p>
+            <p className="text-[11px] text-slate-400 mt-1">Invested in sports</p>
           </div>
         </div>
 
         {/* Two Column Layout: Upcoming & Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
           {/* Upcoming Session */}
-          <div className="lg:col-span-1 bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
-            <h3 className="text-base font-bold font-display text-white flex items-center gap-2 mb-4">
-              <Calendar className="text-emerald-400" size={18} />
+          <div className="lg:col-span-1 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
+              <Calendar className="text-emerald-600" size={18} />
               Upcoming Session
             </h3>
 
             {upcomingBooking ? (
-              <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 space-y-2">
-                <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded uppercase">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2">
+                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase">
                   Confirmed #{upcomingBooking.booking_number}
                 </span>
-                <p className="text-base font-bold text-white mt-1">
+                <p className="text-base font-bold text-slate-900 mt-1">
                   {upcomingBooking.venues?.name || 'Football Turf'}
                 </p>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-slate-700">
                   {format(new Date(upcomingBooking.start_time), 'EEEE, MMM d, yyyy')}
                 </p>
-                <p className="text-xs text-emerald-400 font-semibold">
+                <p className="text-xs text-emerald-800 font-semibold">
                   {format(new Date(upcomingBooking.start_time), 'h:mm a')} - {format(new Date(upcomingBooking.end_time), 'h:mm a')}
                 </p>
-                <div className="pt-2 flex justify-between items-center border-t border-emerald-500/20 text-xs">
-                  <span className="text-slate-400">Total: ₹{upcomingBooking.total_amount}</span>
-                  <Link href={`/dashboard?booking=${upcomingBooking.id}`} className="text-emerald-300 hover:underline">
+                <div className="pt-2 flex justify-between items-center border-t border-emerald-200 text-xs">
+                  <span className="text-slate-600">Total: ₹{upcomingBooking.total_amount}</span>
+                  <Link href={`/dashboard?booking=${upcomingBooking.id}`} className="text-emerald-700 font-semibold hover:underline">
                     View Ticket →
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 border border-dashed border-slate-800 rounded-xl">
-                <Calendar className="mx-auto text-slate-600 mb-2" size={32} />
-                <p className="text-xs text-slate-400">No active upcoming session scheduled.</p>
+              <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
+                <Calendar className="mx-auto text-slate-400 mb-2" size={32} />
+                <p className="text-xs text-slate-500">No active upcoming session scheduled.</p>
                 <Link
                   href="/book-now"
-                  className="inline-block mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all"
+                  className="inline-block mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shadow-xs"
                 >
                   Book Next Slot
                 </Link>
@@ -256,41 +254,41 @@ export default function ProfilePage() {
           </div>
 
           {/* Recent Activity */}
-          <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
-            <h3 className="text-base font-bold font-display text-white flex items-center gap-2 mb-4">
-              <Activity className="text-sky-400" size={18} />
+          <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
+              <Activity className="text-sky-600" size={18} />
               Recent Player Activity
             </h3>
 
             {bookings.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {bookings.slice(0, 5).map((b) => (
-                  <div key={b.id} className="flex items-center justify-between p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl text-xs">
+                  <div key={b.id} className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/60 rounded-xl text-xs">
                     <div className="space-y-1">
-                      <p className="font-semibold text-white">
+                      <p className="font-semibold text-slate-900">
                         {b.venues?.name || 'Football Turf'} • #{b.booking_number}
                       </p>
-                      <p className="text-slate-400 text-[11px]">
+                      <p className="text-slate-500 text-[11px]">
                         {format(new Date(b.start_time), 'MMM d, yyyy @ h:mm a')}
                       </p>
                     </div>
                     <div className="text-right">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        b.booking_status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
-                        b.booking_status === 'confirmed' ? 'bg-sky-500/20 text-sky-300' :
-                        'bg-slate-800 text-slate-400'
+                        b.booking_status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                        b.booking_status === 'confirmed' ? 'bg-sky-100 text-sky-800' :
+                        'bg-slate-200 text-slate-700'
                       }`}>
                         {b.booking_status}
                       </span>
-                      <p className="text-slate-300 font-semibold mt-1">₹{b.total_amount}</p>
+                      <p className="text-slate-900 font-bold mt-1">₹{b.total_amount}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10 border border-dashed border-slate-800 rounded-xl">
-                <Activity className="mx-auto text-slate-600 mb-2" size={32} />
-                <p className="text-xs text-slate-400">No recent player activity recorded yet.</p>
+              <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl">
+                <Activity className="mx-auto text-slate-400 mb-2" size={32} />
+                <p className="text-xs text-slate-500">No recent player activity recorded yet.</p>
               </div>
             )}
           </div>

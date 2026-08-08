@@ -17,7 +17,8 @@ import {
   RefreshCw,
   Loader2,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Bell
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
@@ -36,15 +37,31 @@ export default function AdminDashboardPage() {
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
 
   const supabase = createClient()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        setShowNotificationPrompt(true)
+      }
+    }
+  }, [])
+
+  const handleEnableNotifications = async () => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      const perm = await Notification.requestPermission()
+      setShowNotificationPrompt(false)
+    }
+  }
 
   const loadAdminMetrics = async () => {
     try {
       setIsLoading(true)
 
       // Try fetching RPC metrics
-      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_admin_dashboard_metrics')
+      const { data: rpcData } = await supabase.rpc('get_admin_dashboard_metrics')
 
       let currentTodayRevenue = 0
       let currentTodayBookings = 0
@@ -53,30 +70,29 @@ export default function AdminDashboardPage() {
       let currentFailedPayments = 0
       let currentTotalCustomers = 0
 
-      // Direct Table Queries as fallback / complement
-      const todayStr = new Date().toISOString().split('T')[0]
-
       const { count: custCount } = await supabase
         .from('customers')
         .select('*', { count: 'exact', head: true })
       currentTotalCustomers = custCount || 0
 
-      const { data: todayBookingList } = await supabase
+      const todayStr = new Date().toISOString().split('T')[0]
+      const { data: todayBookingsData } = await supabase
         .from('bookings')
-        .select('*, venues(name)')
+        .select('total_amount, amount_paid, booking_status')
         .gte('created_at', `${todayStr}T00:00:00Z`)
-        .order('created_at', { ascending: false })
 
-      if (todayBookingList) {
-        currentTodayBookings = todayBookingList.length
-        currentTodayRevenue = todayBookingList.reduce((acc, b) => acc + (b.total_amount || 0), 0)
+      if (todayBookingsData) {
+        currentTodayBookings = todayBookingsData.length
+        currentTodayRevenue = todayBookingsData
+          .filter((b) => b.booking_status === 'confirmed' || b.booking_status === 'completed')
+          .reduce((sum, b) => sum + (Number(b.amount_paid) || 0), 0)
       }
 
       const { count: upcomingCount } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
-        .gte('start_time', new Date().toISOString())
         .eq('booking_status', 'confirmed')
+        .gt('start_time', new Date().toISOString())
       currentUpcomingBookings = upcomingCount || 0
 
       const { count: failedCount } = await supabase
@@ -170,6 +186,33 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* Browser Notification User Gesture Prompt per Directive 10 */}
+      {showNotificationPrompt && (
+        <div className="p-4 bg-emerald-950/70 border border-emerald-500/40 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xl">
+          <div className="flex items-center gap-3">
+            <Bell size={20} className="text-emerald-400 shrink-0" />
+            <div>
+              <span className="font-bold text-white block">Enable MSC OS Alerts</span>
+              <span className="text-slate-300 text-[11px]">Get notified when new bookings, payments or important operational events occur.</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleEnableNotifications}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md"
+            >
+              Enable Notifications
+            </button>
+            <button
+              onClick={() => setShowNotificationPrompt(false)}
+              className="px-3 py-2 text-slate-400 hover:text-white text-xs font-medium"
+            >
+              Not Now
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Empty State Banner when 0 operational rows exist */}
       {isEmptyData && !isLoading && (
         <div className="p-6 bg-slate-900/90 border border-emerald-500/30 rounded-3xl text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -198,125 +241,115 @@ export default function AdminDashboardPage() {
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Today's Revenue</span>
-            <DollarSign className="text-emerald-400" size={18} />
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <DollarSign size={18} />
+            </div>
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
-            ₹{metrics.todayRevenue.toLocaleString()}
+            ₹{metrics.todayRevenue}
           </p>
-          <p className="text-[11px] text-slate-500 mt-1">Confirmed payments today</p>
+          <span className="text-[10px] text-slate-500 mt-1 block">Captured online & walk-in total</span>
         </div>
 
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase">Today's Bookings</span>
-            <Calendar className="text-sky-400" size={18} />
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+              <Calendar size={18} />
+            </div>
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
             {metrics.todayBookings}
           </p>
-          <p className="text-[11px] text-slate-500 mt-1">Total slots reserved today</p>
+          <span className="text-[10px] text-slate-500 mt-1 block">New reservations today</span>
         </div>
 
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Total Customers</span>
-            <Users className="text-amber-400" size={18} />
+            <span className="text-xs font-semibold text-slate-400 uppercase">Upcoming Slots</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+              <Clock size={18} />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
+            {metrics.upcomingBookings}
+          </p>
+          <span className="text-[10px] text-slate-500 mt-1 block">Confirmed future sessions</span>
+        </div>
+
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 uppercase">Total Players</span>
+            <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+              <Users size={18} />
+            </div>
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
             {metrics.totalCustomers}
           </p>
-          <p className="text-[11px] text-slate-500 mt-1">Registered MSC players</p>
-        </div>
-
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Failed Payments</span>
-            <AlertCircle className="text-red-400" size={18} />
-          </div>
-          <p className="text-2xl sm:text-3xl font-extrabold font-display text-white mt-2">
-            {metrics.failedPayments}
-          </p>
-          <p className="text-[11px] text-slate-500 mt-1">Requires administrative audit</p>
+          <span className="text-[10px] text-slate-500 mt-1 block">Registered customer accounts</span>
         </div>
       </div>
 
-      {/* Facility Operations Quick Overview */}
+      {/* Two Column Layout: Recent Bookings & Audit Trail */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Venues & Status */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
-              <Layers className="text-emerald-400" size={18} /> Venue Status Overview
-            </h3>
-            <Link href="/admin/venues" className="text-xs text-emerald-400 hover:underline">
-              Manage →
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-white">Football Turf</p>
-                <p className="text-[11px] text-slate-400">7-a-side FIFA Synthetic</p>
-              </div>
-              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-bold rounded uppercase text-[10px]">
-                Active
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-white">Cricket Net 1</p>
-                <p className="text-[11px] text-slate-400">Pro Polyurethane Pitch</p>
-              </div>
-              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-bold rounded uppercase text-[10px]">
-                Active
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-white">Cricket Net 2</p>
-                <p className="text-[11px] text-slate-400">Bowling Machine Lane</p>
-              </div>
-              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-bold rounded uppercase text-[10px]">
-                Active
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Admin Activity Log */}
         <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
-              <Activity className="text-sky-400" size={18} /> Recent System Activity
-            </h3>
-            <Link href="/admin/audit" className="text-xs text-sky-400 hover:underline">
-              View All Logs →
+            <h3 className="text-base font-bold font-display text-white">Recent Operations</h3>
+            <Link href="/admin/bookings" className="text-xs text-emerald-400 hover:underline">
+              View All Bookings →
             </Link>
           </div>
 
-          {recentActivity.length > 0 ? (
+          {recentBookings.length > 0 ? (
             <div className="space-y-3">
-              {recentActivity.map((log) => (
-                <div key={log.id} className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+              {recentBookings.map((b) => (
+                <div key={b.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-slate-950/60 border border-slate-800 rounded-xl gap-3 text-xs">
                   <div>
-                    <span className="font-semibold text-white uppercase text-[10px] text-emerald-400 tracking-wider">
-                      {log.action_type || 'SYSTEM'}
-                    </span>
-                    <p className="text-slate-300 font-medium">{log.description || 'Database event executed'}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white">{b.venues?.name || 'Football Turf'}</span>
+                      <span className="text-slate-400">#{b.booking_number}</span>
+                    </div>
+                    <p className="text-slate-400 text-xs mt-0.5">
+                      Customer: {b.user_profiles?.full_name || 'Guest'} • {format(new Date(b.start_time), 'MMM d @ h:mm a')}
+                    </p>
                   </div>
-                  <span className="text-[10px] text-slate-500">
-                    {log.timestamp ? format(new Date(log.timestamp), 'h:mm a') : 'Now'}
-                  </span>
+
+                  <div className="flex items-center gap-3">
+                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      b.booking_status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {b.booking_status}
+                    </span>
+                    <span className="font-extrabold text-white text-sm">₹{b.total_amount}</span>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 border border-dashed border-slate-800 rounded-xl">
-              <Activity className="mx-auto text-slate-600 mb-2" size={32} />
-              <p className="text-xs text-slate-400">No system events logged yet.</p>
+            <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl text-slate-400 text-xs">
+              0 bookings recorded today.
+            </div>
+          )}
+        </div>
+
+        <div className="lg:col-span-1 bg-slate-900/80 border border-slate-800 rounded-2xl p-6">
+          <h3 className="text-base font-bold font-display text-white mb-4">Audit Activity Stream</h3>
+          {recentActivity.length > 0 ? (
+            <div className="space-y-3 text-xs">
+              {recentActivity.map((log) => (
+                <div key={log.id} className="p-3 bg-slate-950/60 border border-slate-800/80 rounded-xl space-y-1">
+                  <div className="flex justify-between items-center text-[10px] text-slate-400">
+                    <span className="font-bold uppercase text-emerald-400">{log.action_type || 'SYSTEM'}</span>
+                    <span>{format(new Date(log.timestamp), 'h:mm a')}</span>
+                  </div>
+                  <p className="text-slate-300 text-xs">{log.details}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl text-slate-400 text-xs">
+              Audit log stream ready.
             </div>
           )}
         </div>

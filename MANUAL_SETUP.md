@@ -58,7 +58,7 @@ Configure these environment variables in your local `.env.local` file and in **V
 4. Go to **SQL Editor** and execute:
    ```sql
    INSERT INTO public.user_profiles (id, full_name, email, role, status)
-   VALUES ('USER_UUID_HERE', 'MSC Complex Owner', 'owner@maqboolsports.in', 'owner', 'active')
+   VALUES ('7e241e96-a2ab-469c-9076-0d1f9c10e943', 'MSC Complex Owner', 'owner@maqboolsports.in', 'owner', 'active')
    ON CONFLICT (id) DO UPDATE SET role = 'owner';
    ```
 5. Navigating to `/admin/login` will now allow owner sign-in into **MSC OS**.

@@ -34,13 +34,20 @@ type SlotItem = {
   price: number
 }
 
+// Verified high-res MSC venue images
+const VENUE_IMAGES: Record<string, string> = {
+  'football-turf': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
+  'cricket-net-1': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
+  'cricket-net-2': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
+}
+
 export default function BookNowPage() {
   const { user, profile } = useAuth()
   const router = useRouter()
   const supabase = createClient()
 
-  // Booking Flow Stages: 1: CALENDAR, 2: VENUES, 3: TIME, 4: DURATION, 5: ADDONS, 6: DETAILS, 7: POLICIES, 8: CHECKOUT
-  const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1)
+  // Streamlined 5 Booking Stages: 1: DATE, 2: VENUE, 3: TIME, 4: DURATION & ADDONS, 5: DETAILS & CHECKOUT
+  const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5>(1)
 
   // Selection States
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
@@ -53,16 +60,13 @@ export default function BookNowPage() {
   // Add-ons & Payment Options
   const [addBowlingMachine, setAddBowlingMachine] = useState<boolean>(false)
   const [bowlingRate, setBowlingRate] = useState<number>(299)
-  const [bowlingAvailable, setBowlingAvailable] = useState<boolean>(true)
   const [paymentType, setPaymentType] = useState<'full' | 'half'>('full')
 
-  // Customer Form
+  // Customer Form & Single Policy Checkbox at Checkout
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
-  const [acceptTerms, setAcceptTerms] = useState(false)
-  const [acceptCancellation, setAcceptCancellation] = useState(false)
-  const [acceptRefundPolicy, setAcceptRefundPolicy] = useState(false)
+  const [acceptAllPolicies, setAcceptAllPolicies] = useState(false)
 
   // Loading & Locking Status
   const [isLoadingVenues, setIsLoadingVenues] = useState(true)
@@ -94,7 +98,6 @@ export default function BookNowPage() {
           setVenues(data)
         }
 
-        // Fetch Bowling Machine extra cost
         const { data: resData } = await supabase
           .from('resources')
           .select('*')
@@ -143,17 +146,11 @@ export default function BookNowPage() {
           .eq('venue_id', selectedVenue.id)
           .gt('expires_at', new Date().toISOString())
 
-        // Check shared bowling machine resource usage across ALL cricket nets
-        const { data: bowlingLocks } = await supabase
-          .from('booking_resources')
-          .select('booking_id, bookings(start_time, end_time)')
-          .gte('created_at', dayStart)
-
         const now = new Date()
         const isToday = format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')
         const currentHour = now.getHours()
 
-        // Effective base price: ₹999 for Football Turf, ₹299 for Cricket Nets
+        // Base hourly rates: ₹999 for Football Turf, ₹299 for Cricket Nets
         const baseHourlyRate = selectedVenue.sport_type === 'football' ? 999 : 299
         const computed: SlotItem[] = []
 
@@ -201,7 +198,7 @@ export default function BookNowPage() {
     calculateSlots()
   }, [selectedVenue, selectedDate])
 
-  // Custom Light Calendar Month Generation
+  // Light Calendar Month Generation
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(monthStart)
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
@@ -226,15 +223,15 @@ export default function BookNowPage() {
     return paymentType === 'half' ? Math.ceil(total / 2) : total
   }
 
-  // Handle Slot Lock & Razorpay Payment Initiation
+  // Handle Slot Lock & Booking Initiation
   const handleProceedToPayment = async () => {
     if (!selectedVenue || selectedSlots.length === 0) return
     if (!customerName || !customerPhone || !customerEmail) {
-      setErrorMessage('Please provide customer Name, Phone, and Email to complete booking.')
+      setErrorMessage('Please provide your Name, Phone Number, and Email Address.')
       return
     }
-    if (!acceptTerms || !acceptCancellation || !acceptRefundPolicy) {
-      setErrorMessage('You must accept all required terms & cancellation policies before proceeding.')
+    if (!acceptAllPolicies) {
+      setErrorMessage('Please agree to the Terms & Conditions, Cancellation Policy and Refund Policy to complete your booking.')
       return
     }
 
@@ -299,7 +296,6 @@ export default function BookNowPage() {
         return
       }
 
-      // Redirect to confirmation page
       router.push(`/booking/success/${newBooking.id}`)
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred while locking your slot.')
@@ -308,16 +304,16 @@ export default function BookNowPage() {
     }
   }
 
-  const stageTitles = ['DATE', 'VENUE', 'TIME', 'DURATION', 'OPTIONS', 'DETAILS', 'POLICIES', 'CHECKOUT']
+  const stageTitles = ['DATE', 'VENUE', 'TIME', 'DURATION', 'CHECKOUT']
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col pt-24">
+    <main className="min-h-screen bg-slate-50 text-slate-900 flex flex-col pt-24">
       <Navigation />
 
       <section className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 w-full">
         {/* Minimal Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between overflow-x-auto pb-2 text-[10px] sm:text-xs font-bold text-slate-400">
+        <div className="mb-8 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between overflow-x-auto text-xs font-semibold text-slate-500">
             {stageTitles.map((stName, idx) => {
               const stNum = idx + 1
               const isActive = stage === stNum
@@ -325,15 +321,15 @@ export default function BookNowPage() {
 
               return (
                 <div key={stName} className="flex items-center gap-1.5 shrink-0">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                    isActive ? 'bg-emerald-500 text-slate-950 font-extrabold' : isPassed ? 'bg-emerald-950 text-emerald-400' : 'bg-slate-800 text-slate-400'
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    isActive ? 'bg-emerald-600 text-white shadow-sm' : isPassed ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-400'
                   }`}>
                     {stNum}
                   </span>
-                  <span className={isActive ? 'text-white font-bold' : isPassed ? 'text-emerald-400' : ''}>
+                  <span className={isActive ? 'text-slate-900 font-bold' : isPassed ? 'text-emerald-700' : ''}>
                     {stName}
                   </span>
-                  {idx < stageTitles.length - 1 && <span className="text-slate-700 mx-1">›</span>}
+                  {idx < stageTitles.length - 1 && <span className="text-slate-300 mx-2">›</span>}
                 </div>
               )
             })}
@@ -341,44 +337,44 @@ export default function BookNowPage() {
         </div>
 
         {errorMessage && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-start gap-3 text-red-400 text-xs">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3 text-red-700 text-xs">
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* SEQUENTIAL STAGE CONTAINER */}
+        {/* WHITE LIGHT THEME STAGE CONTAINER */}
         <AnimatePresence mode="wait">
           {/* STAGE 1: CALENDAR ONLY */}
           {stage === 1 && (
             <motion.div
               key="stage-1"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
-              className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl"
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div className="text-center">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Booking Step 1</span>
-                <h1 className="text-3xl font-extrabold font-display text-white mt-1">CHOOSE YOUR DATE</h1>
-                <p className="text-xs text-slate-400 mt-1">Select your preferred session date on the MSC calendar</p>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Step 1 of 5</span>
+                <h1 className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">CHOOSE YOUR DATE</h1>
+                <p className="text-xs text-slate-500 mt-1">Select your preferred play session date on the MSC calendar</p>
               </div>
 
               {/* Month Header Navigation */}
-              <div className="flex items-center justify-between max-w-sm mx-auto pt-2 pb-4 border-b border-slate-800">
+              <div className="flex items-center justify-between max-w-sm mx-auto pt-2 pb-4 border-b border-slate-100">
                 <button
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                 >
                   <ChevronLeft size={18} />
                 </button>
-                <span className="text-sm font-bold text-white tracking-wide">
+                <span className="text-sm font-bold text-slate-900 tracking-wide">
                   {format(currentMonth, 'MMMM yyyy')}
                 </span>
                 <button
                   onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -386,7 +382,7 @@ export default function BookNowPage() {
 
               {/* Calendar Days */}
               <div className="max-w-md mx-auto space-y-2">
-                <div className="grid grid-cols-7 text-center text-[11px] font-bold text-slate-500 py-1">
+                <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-slate-400 py-1">
                   <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
                 </div>
 
@@ -403,12 +399,12 @@ export default function BookNowPage() {
                           setSelectedDate(day)
                           setStage(2)
                         }}
-                        className={`h-12 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center ${
+                        className={`h-12 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center ${
                           isSelected
-                            ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-lg shadow-emerald-500/30'
+                            ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20'
                             : isPast
-                            ? 'text-slate-700 cursor-not-allowed bg-slate-950/40'
-                            : 'text-slate-200 bg-slate-950 border border-slate-800 hover:border-emerald-500/60 hover:text-emerald-400'
+                            ? 'text-slate-300 cursor-not-allowed bg-slate-50'
+                            : 'text-slate-800 bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-700'
                         }`}
                       >
                         <span>{format(day, 'd')}</span>
@@ -424,37 +420,35 @@ export default function BookNowPage() {
           {stage === 2 && (
             <motion.div
               key="stage-2"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
               className="space-y-6"
             >
-              <div className="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-4 rounded-2xl">
+              <div className="flex items-center justify-between bg-white border border-slate-200/80 p-4 rounded-2xl shadow-sm">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Selected Date</span>
-                  <p className="font-bold text-white text-sm">{selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
+                  <span className="text-[11px] text-slate-500 uppercase font-semibold">Selected Date</span>
+                  <p className="font-bold text-slate-900 text-sm">{selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
                 </div>
                 <button
                   onClick={() => setStage(1)}
-                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl flex items-center gap-1.5"
                 >
                   <RotateCcw size={14} /> Change Date
                 </button>
               </div>
 
-              <div className="text-center py-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Booking Step 2</span>
-                <h2 className="text-2xl font-extrabold font-display text-white mt-1">CHOOSE YOUR VENUE</h2>
+              <div className="text-center py-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Step 2 of 5</span>
+                <h2 className="text-2xl font-extrabold text-slate-900 mt-1">CHOOSE YOUR VENUE</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {venues.map((v) => {
                   const isSelected = selectedVenue?.id === v.id
                   const basePrice = v.sport_type === 'football' ? 999 : 299
-                  const imageSrc = v.sport_type === 'football'
-                    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp'
-                    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%281%29-PqfOsyQfepvDymmF6Bf9BqfT3Y77G7.jpg'
+                  const imageSrc = VENUE_IMAGES[v.slug] || VENUE_IMAGES['football-turf']
 
                   return (
                     <div
@@ -463,29 +457,29 @@ export default function BookNowPage() {
                         setSelectedVenue(v)
                         setStage(3)
                       }}
-                      className={`bg-slate-900/90 border rounded-3xl overflow-hidden cursor-pointer transition-all flex flex-col justify-between ${
+                      className={`bg-white border rounded-3xl overflow-hidden cursor-pointer transition-all flex flex-col justify-between shadow-sm hover:shadow-lg ${
                         isSelected
-                          ? 'border-emerald-500 ring-2 ring-emerald-500/30 shadow-2xl'
-                          : 'border-slate-800 hover:border-slate-700'
+                          ? 'border-emerald-600 ring-2 ring-emerald-500/20'
+                          : 'border-slate-200 hover:border-emerald-400'
                       }`}
                     >
-                      <div className="relative h-44 w-full bg-slate-950">
+                      <div className="relative h-44 w-full bg-slate-100">
                         <Image src={imageSrc} alt={v.name} fill className="object-cover" />
-                        <div className="absolute top-3 left-3 px-2.5 py-1 bg-slate-950/80 backdrop-blur-md rounded-lg text-[10px] font-bold text-emerald-400 uppercase">
+                        <div className="absolute top-3 left-3 px-2.5 py-1 bg-slate-900/80 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white uppercase">
                           {v.sport_type}
                         </div>
                       </div>
 
                       <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                         <div>
-                          <h4 className="text-lg font-bold font-display text-white">{v.name}</h4>
-                          <p className="text-xs text-slate-400 mt-1 line-clamp-2">{v.short_description || v.description}</p>
+                          <h4 className="text-lg font-bold text-slate-900">{v.name}</h4>
+                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">{v.short_description || v.description}</p>
                         </div>
 
-                        <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Starting From</span>
-                            <span className="text-base font-extrabold text-emerald-400">₹{basePrice} <span className="text-xs text-slate-400 font-normal">/ hr</span></span>
+                            <span className="text-[10px] text-slate-400 uppercase block font-medium">Rate</span>
+                            <span className="text-base font-extrabold text-emerald-600">₹{basePrice} <span className="text-xs text-slate-500 font-normal">/ hr</span></span>
                           </div>
 
                           <button
@@ -494,9 +488,9 @@ export default function BookNowPage() {
                               setSelectedVenue(v)
                               setStage(3)
                             }}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
                           >
-                            Select
+                            Select Venue
                           </button>
                         </div>
                       </div>
@@ -511,34 +505,34 @@ export default function BookNowPage() {
           {stage === 3 && (
             <motion.div
               key="stage-3"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
-              className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl"
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Selected Venue & Date</span>
-                  <p className="font-bold text-white text-sm">{selectedVenue?.name} · {selectedDate && format(selectedDate, 'MMM d, yyyy')}</p>
+                  <span className="text-[11px] text-slate-500 uppercase font-semibold">Selected Venue & Date</span>
+                  <p className="font-bold text-slate-900 text-sm">{selectedVenue?.name} · {selectedDate && format(selectedDate, 'MMM d, yyyy')}</p>
                 </div>
                 <button
                   onClick={() => setStage(2)}
-                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl flex items-center gap-1.5"
                 >
                   <RotateCcw size={14} /> Change Venue
                 </button>
               </div>
 
               <div className="text-center">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Booking Step 3</span>
-                <h2 className="text-2xl font-extrabold font-display text-white mt-1">SELECT YOUR STARTING TIME</h2>
-                <p className="text-xs text-slate-400 mt-1">Only genuinely available slots are displayed (past/booked excluded)</p>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Step 3 of 5</span>
+                <h2 className="text-2xl font-extrabold text-slate-900 mt-1">SELECT YOUR STARTING TIME</h2>
+                <p className="text-xs text-slate-500 mt-1">Only available slots are displayed (past/booked excluded)</p>
               </div>
 
               {isLoadingSlots ? (
-                <div className="py-12 text-center text-slate-400">
-                  <Loader2 size={32} className="animate-spin mx-auto text-emerald-400 mb-2" />
+                <div className="py-12 text-center text-slate-500">
+                  <Loader2 size={32} className="animate-spin mx-auto text-emerald-600 mb-2" />
                   Querying real-time slot availability...
                 </div>
               ) : availableSlots.length > 0 ? (
@@ -551,12 +545,12 @@ export default function BookNowPage() {
                         onClick={() => handleSlotToggle(slot)}
                         className={`p-4 rounded-2xl border text-center transition-all ${
                           isSelected
-                            ? 'border-emerald-500 bg-emerald-600 text-white font-extrabold shadow-lg shadow-emerald-600/30'
-                            : 'border-slate-800 bg-slate-950 text-slate-200 hover:border-emerald-500/50'
+                            ? 'border-emerald-600 bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20'
+                            : 'border-slate-200 bg-white text-slate-800 hover:border-emerald-400'
                         }`}
                       >
-                        <span className="text-xs font-bold block">{slot.label}</span>
-                        <span className={`text-xs mt-1 block ${isSelected ? 'text-emerald-100' : 'text-emerald-400 font-extrabold'}`}>
+                        <span className="text-xs font-semibold block">{slot.label}</span>
+                        <span className={`text-xs mt-1 block ${isSelected ? 'text-emerald-100' : 'text-emerald-600 font-bold'}`}>
                           ₹{slot.price}
                         </span>
                       </button>
@@ -564,20 +558,20 @@ export default function BookNowPage() {
                   })}
                 </div>
               ) : (
-                <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl">
-                  <CalendarIcon className="mx-auto text-slate-600 mb-2" size={36} />
-                  <p className="text-xs text-slate-400">No available slots for this venue & date.</p>
+                <div className="py-12 text-center border border-dashed border-slate-200 rounded-2xl">
+                  <CalendarIcon className="mx-auto text-slate-400 mb-2" size={36} />
+                  <p className="text-xs text-slate-500">No available slots for this venue & date.</p>
                 </div>
               )}
 
-              <div className="flex justify-between pt-4 border-t border-slate-800">
-                <button onClick={() => setStage(2)} className="px-4 py-2 text-xs text-slate-400 hover:text-white">
+              <div className="flex justify-between pt-4 border-t border-slate-100">
+                <button onClick={() => setStage(2)} className="px-4 py-2 text-xs text-slate-500 hover:text-slate-900 font-medium">
                   ← Back to Venues
                 </button>
                 <button
                   onClick={() => setStage(4)}
                   disabled={selectedSlots.length === 0}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
                 >
                   Continue to Duration →
                 </button>
@@ -589,289 +583,213 @@ export default function BookNowPage() {
           {stage === 4 && (
             <motion.div
               key="stage-4"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
-              className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl"
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div className="text-center">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Booking Step 4</span>
-                <h2 className="text-2xl font-extrabold font-display text-white mt-1">FACILITY ADD-ONS & OPTIONS</h2>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Step 4 of 5</span>
+                <h2 className="text-2xl font-extrabold text-slate-900 mt-1">FACILITY ADD-ONS & OPTIONS</h2>
               </div>
 
               {selectedVenue?.sport_type === 'cricket' ? (
-                <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <Wrench size={18} className="text-sky-400" />
-                      <h4 className="text-base font-bold text-white">Automated Bowling Machine</h4>
+                      <Wrench size={18} className="text-sky-600" />
+                      <h4 className="text-base font-bold text-slate-900">Automated Bowling Machine</h4>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-600 mt-1">
                       Variable speed & swing automated bowling machine during your reserved session.
                     </p>
-                    <p className="text-xs text-sky-400 font-bold mt-2">Rate: +₹{bowlingRate} / hour</p>
+                    <p className="text-xs text-sky-700 font-bold mt-2">Rate: +₹{bowlingRate} / hour</p>
                   </div>
 
                   <button
                     onClick={() => setAddBowlingMachine(!addBowlingMachine)}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    className={`px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
                       addBowlingMachine
-                        ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                        ? 'bg-sky-600 text-white shadow-sm'
+                        : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
                     {addBowlingMachine ? '✓ Included' : '+ Add Bowling Machine'}
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 text-center">No extra equipment add-ons required for Football Turf.</p>
+                <p className="text-xs text-slate-500 text-center">No extra equipment add-ons required for Football Turf.</p>
               )}
 
-              <div className="flex justify-between pt-4 border-t border-slate-800">
-                <button onClick={() => setStage(3)} className="px-4 py-2 text-xs text-slate-400 hover:text-white">
+              <div className="flex justify-between pt-4 border-t border-slate-100">
+                <button onClick={() => setStage(3)} className="px-4 py-2 text-xs text-slate-500 hover:text-slate-900 font-medium">
                   ← Back to Time Slots
                 </button>
                 <button
                   onClick={() => setStage(5)}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
                 >
-                  Enter Player Details →
+                  Proceed to Checkout →
                 </button>
               </div>
             </motion.div>
           )}
 
-          {/* STAGE 5: CUSTOMER DETAILS */}
+          {/* STAGE 5: DETAILS & FINAL CHECKOUT (SINGLE POLICY CHECKBOX) */}
           {stage === 5 && (
             <motion.div
               key="stage-5"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
-              className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl"
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl"
             >
               <div className="text-center">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Booking Step 5</span>
-                <h2 className="text-2xl font-extrabold font-display text-white mt-1">PLAYER IDENTITY & CONTACT</h2>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Step 5 of 5</span>
+                <h2 className="text-2xl font-extrabold text-slate-900 mt-1">CHECKOUT & PAYMENT</h2>
               </div>
 
-              <div className="space-y-4">
+              {/* Player Contact Form */}
+              <div className="space-y-4 pt-2">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Player Identity</h4>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Full Name *</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Full Name *</label>
                   <input
                     type="text"
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Player Name"
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Phone Number *</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Phone Number *</label>
                     <input
                       type="tel"
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="+91 99060 00000"
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Email Address *</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Email Address *</label>
                     <input
                       type="email"
                       required
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="info@maqboolsports.in"
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between pt-4 border-t border-slate-800">
-                <button onClick={() => setStage(4)} className="px-4 py-2 text-xs text-slate-400 hover:text-white">
-                  ← Back to Options
-                </button>
-                <button
-                  onClick={() => {
-                    if (!customerName || !customerPhone || !customerEmail) {
-                      setErrorMessage('Please provide customer Name, Phone, and Email.')
-                      return
-                    }
-                    setErrorMessage(null)
-                    setStage(6)
-                  }}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
-                >
-                  Review Policies →
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* STAGE 6: POLICIES ACKNOWLEDGEMENT */}
-          {stage === 6 && (
-            <motion.div
-              key="stage-6"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
-              className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl"
-            >
-              <div className="text-center">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Booking Step 6</span>
-                <h2 className="text-2xl font-extrabold font-display text-white mt-1">COMPLEX POLICIES</h2>
-              </div>
-
-              <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 text-xs text-slate-300">
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500"
-                  />
-                  <span>I accept the <strong>Terms & Conditions</strong> of Maqbool Sports Complex.</span>
-                </label>
-
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptCancellation}
-                    onChange={(e) => setAcceptCancellation(e.target.checked)}
-                    className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500"
-                  />
-                  <span>I accept the <strong>Cancellation Policy</strong> (Refundable more than 5 hours prior to session start).</span>
-                </label>
-
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptRefundPolicy}
-                    onChange={(e) => setAcceptRefundPolicy(e.target.checked)}
-                    className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500"
-                  />
-                  <span>I accept the <strong>Refund Policy</strong>.</span>
-                </label>
-              </div>
-
-              <div className="flex justify-between pt-4 border-t border-slate-800">
-                <button onClick={() => setStage(5)} className="px-4 py-2 text-xs text-slate-400 hover:text-white">
-                  ← Back to Details
-                </button>
-                <button
-                  onClick={() => {
-                    if (!acceptTerms || !acceptCancellation || !acceptRefundPolicy) {
-                      setErrorMessage('You must accept all required policies before checkout.')
-                      return
-                    }
-                    setErrorMessage(null)
-                    setStage(7)
-                  }}
-                  disabled={!acceptTerms || !acceptCancellation || !acceptRefundPolicy}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all"
-                >
-                  Proceed to Summary →
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* STAGE 7: FINAL CHECKOUT SUMMARY & PAYMENT SELECTION */}
-          {stage === 7 && (
-            <motion.div
-              key="stage-7"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
-              className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl"
-            >
-              <div className="text-center">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Booking Step 7</span>
-                <h2 className="text-2xl font-extrabold font-display text-white mt-1">YOUR SESSION SUMMARY</h2>
-              </div>
-
-              <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 text-xs">
-                <div className="flex justify-between pb-2 border-b border-slate-800">
-                  <span className="text-slate-400">Facility</span>
-                  <span className="font-bold text-white">{selectedVenue?.name}</span>
+              {/* Session Summary Card */}
+              <div className="p-5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3 text-xs">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider pb-1 border-b border-slate-200">Booking Summary</h4>
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Facility</span>
+                  <span className="font-bold text-slate-900">{selectedVenue?.name}</span>
                 </div>
-                <div className="flex justify-between pb-2 border-b border-slate-800">
-                  <span className="text-slate-400">Date</span>
-                  <span className="font-bold text-white">{selectedDate && format(selectedDate, 'MMMM d, yyyy')}</span>
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Date</span>
+                  <span className="font-bold text-slate-900">{selectedDate && format(selectedDate, 'MMMM d, yyyy')}</span>
                 </div>
-                <div className="flex justify-between pb-2 border-b border-slate-800">
-                  <span className="text-slate-400">Reserved Slot(s)</span>
-                  <span className="font-bold text-emerald-400">{selectedSlots.map((s) => s.label).join(', ')}</span>
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Time Slot(s)</span>
+                  <span className="font-bold text-emerald-700">{selectedSlots.map((s) => s.label).join(', ')}</span>
                 </div>
                 {addBowlingMachine && (
-                  <div className="flex justify-between pb-2 border-b border-slate-800 text-sky-400">
+                  <div className="flex justify-between py-1 border-b border-slate-200/60 text-sky-700">
                     <span>Automated Bowling Machine</span>
                     <span className="font-bold">+₹{selectedSlots.length * bowlingRate}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-2 text-sm">
-                  <span className="font-bold text-white">Total Amount</span>
-                  <span className="font-extrabold text-emerald-400 text-lg">₹{getSubtotal()}</span>
+                  <span className="font-bold text-slate-900">Total Amount</span>
+                  <span className="font-extrabold text-emerald-600 text-lg">₹{getSubtotal()}</span>
                 </div>
               </div>
 
-              {/* Payment Type Selection */}
+              {/* Payment Option Selection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-2">Payment Option</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">Payment Option</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setPaymentType('full')}
                     className={`p-4 rounded-xl border text-left transition-all ${
-                      paymentType === 'full' ? 'border-emerald-500 bg-emerald-950/40 text-white' : 'border-slate-800 bg-slate-950 text-slate-400'
+                      paymentType === 'full' ? 'border-emerald-600 bg-emerald-50 text-slate-900 font-semibold' : 'border-slate-200 bg-white text-slate-600'
                     }`}
                   >
                     <span className="text-xs font-bold block">100% Full Payment</span>
-                    <span className="text-sm font-extrabold text-emerald-400 mt-1 block">₹{getSubtotal()}</span>
+                    <span className="text-sm font-extrabold text-emerald-600 mt-1 block">₹{getSubtotal()}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPaymentType('half')}
                     className={`p-4 rounded-xl border text-left transition-all ${
-                      paymentType === 'half' ? 'border-emerald-500 bg-emerald-950/40 text-white' : 'border-slate-800 bg-slate-950 text-slate-400'
+                      paymentType === 'half' ? 'border-emerald-600 bg-emerald-50 text-slate-900 font-semibold' : 'border-slate-200 bg-white text-slate-600'
                     }`}
                   >
                     <span className="text-xs font-bold block">50% Advance Payment</span>
-                    <span className="text-sm font-extrabold text-emerald-400 mt-1 block">₹{Math.ceil(getSubtotal() / 2)}</span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Pay balance at facility</span>
+                    <span className="text-sm font-extrabold text-emerald-600 mt-1 block">₹{Math.ceil(getSubtotal() / 2)}</span>
+                    <span className="text-[10px] text-slate-500 block mt-0.5">Pay balance at facility</span>
                   </button>
                 </div>
               </div>
 
-              <div className="flex justify-between pt-4 border-t border-slate-800">
-                <button onClick={() => setStage(6)} className="px-4 py-2 text-xs text-slate-400 hover:text-white">
-                  ← Back to Policies
+              {/* SINGLE POLICY CHECKBOX AT CHECKOUT PER DIRECTIVE 15 */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptAllPolicies}
+                    onChange={(e) => setAcceptAllPolicies(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span className="leading-relaxed">
+                    I agree to the{' '}
+                    <Link href="/terms-conditions" target="_blank" className="text-emerald-700 font-medium underline">
+                      Terms & Conditions
+                    </Link>,{' '}
+                    <Link href="/refund-policy" target="_blank" className="text-emerald-700 font-medium underline">
+                      Cancellation Policy
+                    </Link>{' '}
+                    and{' '}
+                    <Link href="/refund-policy" target="_blank" className="text-emerald-700 font-medium underline">
+                      Refund Policy
+                    </Link>.
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex justify-between pt-4 border-t border-slate-100">
+                <button onClick={() => setStage(4)} className="px-4 py-2 text-xs text-slate-500 hover:text-slate-900 font-medium">
+                  ← Back to Options
                 </button>
                 <button
                   onClick={handleProceedToPayment}
-                  disabled={isLocking}
-                  className="px-8 py-3 bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2"
+                  disabled={isLocking || !acceptAllPolicies}
+                  className="px-8 py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2"
                 >
                   {isLocking ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" /> Locking 5-min slot...
+                      <Loader2 size={16} className="animate-spin" /> Locking Slot...
                     </>
                   ) : (
                     <>
-                      <CreditCard size={16} /> Pay ₹{getPayableNow()} & Lock Slot
+                      <CreditCard size={16} /> Pay ₹{getPayableNow()} & Confirm Booking
                     </>
                   )}
                 </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
@@ -46,6 +46,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const router = useRouter()
 
+  // Automatic redirect to /admin/login for unauthenticated users per Directive 4
+  useEffect(() => {
+    if (!isLoading && !user && pathname !== '/admin/login') {
+      router.push('/admin/login')
+    }
+  }, [user, isLoading, pathname, router])
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -54,14 +61,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // Guest -> Redirect to login
+  // Guest -> Redirect to /admin/login
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-center items-center px-4">
         <div className="text-center max-w-md bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl">
           <Shield className="mx-auto text-emerald-400 mb-4" size={48} />
-          <h2 className="text-2xl font-bold font-display">MSC OS Admin Authorization</h2>
-          <p className="text-slate-400 mt-2 text-sm">Owner & staff credentials are required to access the complex administrative engine.</p>
+          <h2 className="text-2xl font-bold font-display">Redirecting to MSC OS Login...</h2>
+          <p className="text-slate-400 mt-2 text-sm">Owner & staff credentials required.</p>
           <Link
             href="/admin/login"
             className="inline-block mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 font-semibold rounded-xl text-sm transition-all"
@@ -73,7 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // Non-staff / Non-owner -> Unauthorized Screen
+  // Non-staff / Non-owner -> Server-side RBAC Unauthorized Screen per Directive 6
   const isAuthorized = role === 'super_admin' || role === 'owner' || role === 'reception'
   if (!isAuthorized) {
     return (
@@ -82,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <AlertTriangle className="mx-auto text-red-400 mb-4" size={48} />
           <h2 className="text-2xl font-bold font-display text-red-400">Access Restricted</h2>
           <p className="text-slate-300 mt-2 text-sm">
-            Your account role (<span className="capitalize font-bold text-white">{role || 'Customer'}</span>) does not have owner management permissions for MSC OS.
+            Your account role (<span className="capitalize font-bold text-white">{role || 'Customer'}</span>) does not have owner administration permissions for MSC OS.
           </p>
           <div className="mt-6 flex flex-col gap-3">
             <Link
