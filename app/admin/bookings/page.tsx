@@ -70,7 +70,11 @@ export default function AdminBookingsPage() {
   const fetchScheduleData = async () => {
     try {
       setIsLoading(true)
-      const { data: vList } = await supabase.from('venues').select('*').order('display_order', { ascending: true })
+      const { data: vList } = await supabase
+        .from('venues')
+        .select('*')
+        .neq('slug', 'bowling-nets')
+        .order('display_order', { ascending: true })
       if (vList && vList.length > 0) {
         setVenues(vList)
         if (!selectedVenueId) setSelectedVenueId(vList[0].id)

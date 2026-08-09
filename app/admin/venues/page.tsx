@@ -17,7 +17,11 @@ export default function AdminVenuesPage() {
   const loadVenuesAndPricing = async () => {
     try {
       setIsLoading(true)
-      const { data: vData } = await supabase.from('venues').select('*').order('display_order')
+      const { data: vData } = await supabase
+        .from('venues')
+        .select('*')
+        .neq('slug', 'bowling-nets')
+        .order('display_order')
       if (vData) setVenues(vData)
 
       const { data: pData } = await supabase.from('pricing_rules').select('*')

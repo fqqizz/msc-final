@@ -50,7 +50,7 @@ export default function BookingSection() {
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-lg font-bold text-emerald-400">₹1,200/hr</span>
+              <span className="text-lg font-bold text-emerald-400">₹999/hr</span>
               <Link
                 href="/book-now?venue=football-turf"
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all inline-flex items-center gap-1.5"
@@ -77,7 +77,7 @@ export default function BookingSection() {
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-lg font-bold text-sky-400">₹600/hr</span>
+              <span className="text-lg font-bold text-sky-400">₹299/hr</span>
               <Link
                 href="/book-now?venue=cricket-net-1"
                 className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-500/30 transition-all inline-flex items-center gap-1.5"
@@ -104,7 +104,7 @@ export default function BookingSection() {
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-lg font-bold text-amber-400">₹600/hr</span>
+              <span className="text-lg font-bold text-amber-400">₹299/hr</span>
               <Link
                 href="/book-now?venue=cricket-net-2"
                 className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white font-semibold text-xs rounded-xl shadow-lg shadow-amber-500/30 transition-all inline-flex items-center gap-1.5"

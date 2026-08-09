@@ -92,6 +92,7 @@ export default function BookNowPage() {
           .from('venues')
           .select('*')
           .eq('status', 'active')
+          .neq('slug', 'bowling-nets')
           .order('display_order', { ascending: true })
 
         if (data && data.length > 0) {
@@ -293,10 +294,16 @@ export default function BookNowPage() {
     }
   }
 
+  const getSlotSubtotal = () => {
+    return selectedSlots.reduce((sum, s) => sum + s.price, 0)
+  }
+
+  const getBowlingSubtotal = () => {
+    return (addBowlingMachine && selectedVenue?.sport_type === 'cricket') ? selectedSlots.length * bowlingRate : 0
+  }
+
   const getSubtotal = () => {
-    const slotTotal = selectedSlots.reduce((sum, s) => sum + s.price, 0)
-    const bowlingTotal = addBowlingMachine ? selectedSlots.length * bowlingRate : 0
-    return slotTotal + bowlingTotal
+    return getSlotSubtotal() + getBowlingSubtotal()
   }
 
   const getPayableNow = () => {
@@ -341,7 +348,9 @@ export default function BookNowPage() {
       const { data: bNum } = await supabase.rpc('generate_booking_number')
       const bookingNumber = bNum || `MSC-${Date.now().toString().slice(-6)}`
 
-      const totalAmount = getSubtotal()
+      const slotTotal = getSlotSubtotal()
+      const bowlingTotal = getBowlingSubtotal()
+      const totalAmount = slotTotal + bowlingTotal
       const amountPaid = getPayableNow()
 
       const firstSlot = selectedSlots[0]
@@ -360,13 +369,13 @@ export default function BookNowPage() {
           booking_status: 'confirmed',
           payment_status: paymentType === 'half' ? 'partially_paid' : 'paid',
           booking_source: 'online_customer',
-          base_amount: totalAmount,
-          extra_charges: addBowlingMachine ? selectedSlots.length * bowlingRate : 0,
+          base_amount: slotTotal,
+          extra_charges: bowlingTotal,
           discount_amount: 0,
           tax_amount: 0,
           total_amount: totalAmount,
           amount_paid: amountPaid,
-          notes: `Customer: ${customerName} (${customerPhone}) ${addBowlingMachine ? '[With Bowling Machine]' : ''}`
+          notes: `Customer: ${customerName} (${customerPhone}) ${bowlingTotal > 0 ? '[With Automated Bowling Machine]' : ''}`
         })
         .select('*')
         .single()

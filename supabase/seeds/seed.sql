@@ -143,14 +143,16 @@ FROM public.venues v, public.resource_categories c
 WHERE v.slug = 'cricket-net-2' AND c.name = 'Courts & Pitches'
 ON CONFLICT (venue_id, code) DO NOTHING;
 
+-- Automated Bowling Machine (Shared resource at ₹299.00/hour)
 INSERT INTO public.resources (venue_id, category_id, name, code, status, hourly_extra_cost)
-SELECT v.id, c.id, 'Automated Bowling Machine #1', 'BM-CRICKET-01', 'available', 200.00 
+SELECT v.id, c.id, 'Automated Bowling Machine #1', 'BM-CRICKET-01', 'available', 299.00 
 FROM public.venues v, public.resource_categories c 
 WHERE v.slug = 'cricket-net-2' AND c.name = 'Bowling Machines'
-ON CONFLICT (venue_id, code) DO NOTHING;
+ON CONFLICT (venue_id, code) DO UPDATE 
+SET hourly_extra_cost = 299.00, name = 'Automated Bowling Machine #1';
 
 -- ----------------------------------------------------------------------------
--- 4. VENUE OPERATING HOURS & PRICING RULES SEED
+-- 4. VENUE OPERATING HOURS SEED
 -- ----------------------------------------------------------------------------
 
 -- Set Operating Hours (0 to 6 = All days, 06:00 AM - 11:00 PM)
@@ -160,21 +162,11 @@ FROM public.venues v
 CROSS JOIN (SELECT generate_series(0, 6) AS day) d
 ON CONFLICT (venue_id, day_of_week) DO NOTHING;
 
--- Set Base & Peak Pricing Rules for Football Turf
-INSERT INTO public.pricing_rules (venue_id, name, start_time, end_time, hourly_rate, is_peak_hour, priority)
-SELECT id, 'Turf Regular Daytime Rate', '06:00:00'::TIME, '17:00:00'::TIME, 1200.00, false, 1
-FROM public.venues WHERE slug = 'football-turf'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.pricing_rules (venue_id, name, start_time, end_time, hourly_rate, is_peak_hour, priority)
-SELECT id, 'Turf Floodlight Peak Evening Rate', '17:00:00'::TIME, '23:00:00'::TIME, 1800.00, true, 2
-FROM public.venues WHERE slug = 'football-turf'
-ON CONFLICT DO NOTHING;
-
--- Set Pricing Rules for Cricket Nets
-INSERT INTO public.pricing_rules (venue_id, name, start_time, end_time, hourly_rate, is_peak_hour, priority)
-SELECT id, 'Cricket Net Hourly Rate', '06:00:00'::TIME, '23:00:00'::TIME, 600.00, false, 1
-FROM public.venues WHERE slug IN ('cricket-net-1', 'cricket-net-2')
+-- Seed Authoritative Base Rates (₹999 Football Turf, ₹299 Cricket Nets)
+INSERT INTO public.venue_base_rates (venue_id, base_price, effective_from, reason)
+SELECT id, CASE WHEN slug = 'football-turf' THEN 999.00 ELSE 299.00 END, '2025-01-01 00:00:00+05:30'::TIMESTAMPTZ, 'Authoritative Baseline'
+FROM public.venues
+WHERE slug IN ('football-turf', 'cricket-net-1', 'cricket-net-2')
 ON CONFLICT DO NOTHING;
 
 -- Cancellation Policies Seed
