@@ -169,12 +169,11 @@ FROM public.venues
 WHERE slug IN ('football-turf', 'cricket-net-1', 'cricket-net-2')
 ON CONFLICT DO NOTHING;
 
--- Cancellation Policies Seed
+-- Cancellation Policies Seed (Strict > 5-hour notice rule)
 INSERT INTO public.cancellation_policies (name, min_notice_hours, refund_percentage, cancellation_fee, is_active)
 VALUES
-    ('Full Refund Notice', 24, 100.00, 0.00, true),
-    ('Partial Refund Notice', 12, 50.00, 100.00, true),
-    ('Non-Refundable Window', 0, 0.00, 0.00, true)
+    ('Eligible Notice Window (>5 Hours)', 5, 100.00, 0.00, true),
+    ('Non-Refundable Cutoff (<=5 Hours)', 0, 0.00, 0.00, true)
 ON CONFLICT DO NOTHING;
 
 -- ----------------------------------------------------------------------------
@@ -232,7 +231,7 @@ INSERT INTO public.cms_faqs (category, question, answer, display_order)
 VALUES 
 ('Booking', 'How do I book a slot on the Football Turf?', 'Select your preferred facility on the website, pick an available time slot, complete online payment, and receive instant WhatsApp/Email receipts.', 1),
 ('Rules', 'What footwear is allowed on the synthetic turf?', 'Standard rubber studded football boots and turf shoes are allowed. Metal spikes are strictly prohibited.', 2),
-('Cancellation', 'What is the cancellation and refund policy?', 'Cancellations made 24+ hours in advance receive a 100% refund. Cancellations made 12-24 hours in advance receive a 50% refund.', 3)
+('Cancellation', 'What is the cancellation and refund policy?', 'Cancellations made strictly more than 5 hours in advance are eligible for cancellation and refund. Requests made within 5 hours or less are non-cancellable.', 3)
 ON CONFLICT DO NOTHING;
 
 -- ----------------------------------------------------------------------------

@@ -22,8 +22,9 @@ const supportLinks = [
 
 const legalLinks = [
   { name: 'Privacy Policy', href: '/privacy-policy' },
-  { name: 'Terms & Conditions', href: '/terms-conditions' },
-  { name: 'Refund Policy', href: '/refund-policy' },
+  { name: 'Terms & Conditions', href: '/terms-conditions', policy: 'terms' },
+  { name: 'Cancellation Policy', href: '/cancellation-policy', policy: 'cancellation' },
+  { name: 'Refund Policy', href: '/refund-policy', policy: 'refund' },
 ]
 
 export default function Footer() {
@@ -168,7 +169,8 @@ export default function Footer() {
                   <li key={item.name}>
                     <Link 
                       href={item.href}
-                      className="text-[#0A0A0C]/60 text-sm hover:text-[#2BA84A] transition-colors"
+                      data-policy={item.policy}
+                      className="text-[#0A0A0C]/60 text-sm hover:text-[#2BA84A] transition-colors cursor-pointer"
                     >
                       {item.name}
                     </Link>

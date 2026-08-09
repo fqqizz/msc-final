@@ -42,7 +42,7 @@ const faqs = [
   },
   {
     question: 'Can I cancel or reschedule my booking?',
-    answer: 'Yes, cancellations made at least 24 hours before the booking time are eligible for a full refund or rescheduling. Cancellations within 24 hours of the booking are non-refundable but may be rescheduled subject to availability. Please refer to our Refund Policy for more details.'
+    answer: 'Yes, cancellation and rescheduling requests are accepted strictly MORE THAN 5 HOURS before the scheduled booking start time. Requests made within 5 hours or less are non-cancellable and non-refundable under standard policy.'
   },
   {
     question: 'Is the facility safe for children?',

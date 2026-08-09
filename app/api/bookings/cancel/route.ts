@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendRefundNotificationEmail, sendAdminOperationalAlert } from '@/lib/email/resend'
+import { isCancellationEligible } from '@/data/policies'
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,12 +29,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Booking is already cancelled' }, { status: 400 })
     }
 
-    // 2. Strict 5-Hour Cancellation Window Enforcement (Asia/Kolkata timezone standard)
-    const startTime = new Date(booking.start_time).getTime()
-    const nowTime = new Date().getTime()
-    const hoursRemaining = (startTime - nowTime) / (1000 * 60 * 60)
-
-    const isRefundable = hoursRemaining >= 5
+    // 2. Strict > 5-Hour Cancellation Window Enforcement
+    const { isEligible: isRefundable, hoursRemaining } = isCancellationEligible(booking.start_time, new Date())
     const refundAmount = isRefundable ? (booking.amount_paid || booking.total_amount) : 0
 
     // 3. Update Booking & Payment Status in Supabase

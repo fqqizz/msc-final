@@ -112,8 +112,7 @@ export function generateBookingReceiptPDF(booking: any): Buffer {
   // Policy Footer
   doc.setTextColor(120, 120, 120)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.text('Cancellation Policy: 100% refund for 24h+ notice. 50% refund for 12-24h notice. Non-refundable within 12h.', 14, 210)
+  doc.text('Cancellation Policy: Cancellations are permitted strictly more than 5 hours prior to session start time.', 14, 210)
   doc.text('This is an authentic computer-generated digital tax receipt issued by MSC OS (maqboolsports.in).', 14, 216)
 
   const arrayBuffer = doc.output('arraybuffer')

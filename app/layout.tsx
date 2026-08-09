@@ -5,6 +5,7 @@ import ScrollProgress from '@/components/scroll-progress'
 import ChatbotWrapper from '@/components/chatbot-wrapper'
 import CookieConsent from '@/components/cookie-consent'
 import { AuthProvider } from '@/components/providers/auth-provider'
+import PolicyModal from '@/components/policy-modal'
 import './globals.css'
 
 const inter = Inter({
@@ -62,6 +63,7 @@ export default function RootLayout({
           <ScrollProgress />
           {children}
           <ChatbotWrapper />
+          <PolicyModal />
           <CookieConsent />
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </AuthProvider>

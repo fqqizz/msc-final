@@ -41,7 +41,31 @@ Configure these environment variables in your local `.env.local` file and in **V
 
 ---
 
-## 3. Supabase Backend Setup & SQL Migrations
+## 3. Strict Cancellation Policy & Modal Experience
+
+### A. Authoritative Single Source of Truth
+All policies are defined in `data/policies.ts`:
+- `cancellationPolicy`: Strict > 5-hour cutoff notice rule.
+- `refundPolicy`: Clear distinction between cancellation and refund processing (5–7 business days).
+- `termsAndConditions`: Complex rules, sportswear/footwear, safety, and conduct.
+
+### B. Strict Cancellation Rule (`isCancellationEligible`)
+A customer can request cancellation/rescheduling/refund **ONLY IF** the request is made **STRICTLY MORE THAN 5 HOURS** before the scheduled booking time.
+- Request at **2:59 PM** for **8:00 PM** booking (5h 01m remaining) &rarr; **ELIGIBLE**.
+- Request at **3:00 PM** for **8:00 PM** booking (5h 00m remaining) &rarr; **NOT ELIGIBLE**.
+- Request at **3:01 PM** for **8:00 PM** booking (4h 59m remaining) &rarr; **NOT ELIGIBLE**.
+- Request at **4:00 PM** for **8:00 PM** booking (4h 00m remaining) &rarr; **NOT ELIGIBLE**.
+
+### C. Modal Experience & Dedicated Routes
+- Clicking policy links anywhere on the site opens a small, accessible modal on the current page (`components/policy-modal.tsx`).
+- Dedicated routes for SEO & deep linking:
+  - `/cancellation-policy`
+  - `/refund-policy`
+  - `/terms-conditions` (with `/terms-and-conditions` alias)
+
+---
+
+## 4. Supabase Backend Setup & SQL Migrations
 
 ### A. Database Migrations
 1. Log in to your [Supabase Dashboard](https://supabase.com/dashboard).
@@ -59,7 +83,7 @@ Configure these environment variables in your local `.env.local` file and in **V
    - `010_future.sql`
    - `011_enterprise_additions.sql`
    - `012_final_production_hardening.sql` *(Introduces `slot_reservations`, `reserve_owner_slot`, and `release_owner_slot`)*
-   - `013_authoritative_pricing_and_base_rates.sql` *(Crucial: introduces `venue_base_rates`, `change_base_price`, `calculate_booking_amount`, removes obsolete "Bowling Nets" venue, and sets Bowling Machine to ₹299/hr)*
+   - `013_authoritative_pricing_and_base_rates.sql` *(Introduces `venue_base_rates`, `change_base_price`, `calculate_booking_amount`, removes obsolete "Bowling Nets" venue, and sets Bowling Machine to ₹299/hr)*
 4. Run `supabase/seeds/seed.sql` to populate default venues and the Automated Bowling Machine resource.
 
 ### B. Storage Bucket Configuration
@@ -82,7 +106,7 @@ Configure these environment variables in your local `.env.local` file and in **V
 
 ---
 
-## 4. Razorpay Payment Gateway & Webhook Setup
+## 5. Razorpay Payment Gateway & Webhook Setup
 
 1. Log in to [Razorpay Dashboard](https://dashboard.razorpay.com).
 2. Go to **Account & Settings** &rarr; **API Keys** &rarr; **Generate Key**.
@@ -99,7 +123,7 @@ Configure these environment variables in your local `.env.local` file and in **V
 
 ---
 
-## 5. Resend Transactional Email Setup
+## 6. Resend Transactional Email Setup
 
 1. Log in to [Resend Dashboard](https://resend.com).
 2. Add and verify your custom domain: `maqboolsports.in`.
@@ -113,12 +137,13 @@ Configure these environment variables in your local `.env.local` file and in **V
 
 ---
 
-## 6. Authoritative Pricing Verification Matrix
+## 7. MSC Customer Chatbot Intelligence
 
-- [x] **Test A (Cricket Net 1 → 1 hr)**: ₹299
-- [x] **Test B (Cricket Net 2 → 1 hr)**: ₹299
-- [x] **Test C (Football Turf → 1 hr)**: ₹999
-- [x] **Test D (Cricket Net 1 + Bowling Machine → 1 hr)**: ₹598 (₹299 + ₹299)
-- [x] **Test E (Football Turf + no add-ons → 1 hr)**: ₹999
-- [x] **Test F (Change Base Price from Date)**: Changing Cricket Net base price to ₹399 effective tomorrow leaves today's existing bookings at ₹299 and applies ₹399 to tomorrow's new sessions.
-- [x] **Test G (Slot Override)**: Setting 6–7 PM slot to ₹499 applies ₹499 to that slot and leaves all other slots at standard rate.
+The customer chatbot (`components/chatbot.tsx`, `lib/chatbot-service.ts`, `data/mscKnowledge.ts`) features:
+- **Natural conversational greeting handling** (Salam, Namaste, Hi, Hello, Okay, Bye, Thanks).
+- **Real-Time Supabase Availability**: Answers queries like *"Is 7 PM free today?"* or *"What slots are open tomorrow?"* directly from live bookings and slot locks.
+- **Authoritative Database Pricing**: Quotes accurate live rates (Turf: ₹999/hr, Nets: ₹299/hr, Bowling Machine: ₹299/hr).
+- **Dynamic Time Cancellation Calculation**: Accurately computes remaining hours and explains eligibility without generic hardcoding.
+- **Sport Specific Explanations**: Cricket (Full Turf vs Nets vs Bowling Machine) and Football (7v7 Turf).
+- **Safe Fallback & Human Handoff**: Connects payment issues or tournament requests directly to MSC contact channels (+91 9682558775 / info@maqboolsports.in).
+- **Zero Hallucinations**: Responds gracefully to non-existent sports (Basketball, Pickleball, Volleyball) without false promises.

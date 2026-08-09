@@ -839,7 +839,7 @@ export default function BookNowPage() {
                 </div>
               </div>
 
-              {/* SINGLE POLICY CHECKBOX AT CHECKOUT PER DIRECTIVE 15 */}
+              {/* SINGLE POLICY CHECKBOX AT CHECKOUT */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
                 <label className="flex items-start gap-2.5 cursor-pointer">
                   <input
@@ -850,18 +850,19 @@ export default function BookNowPage() {
                   />
                   <span className="leading-relaxed">
                     I agree to the{' '}
-                    <Link href="/terms-conditions" target="_blank" className="text-emerald-700 font-medium underline">
+                    <Link href="/terms-conditions" data-policy="terms" className="text-emerald-700 font-medium underline cursor-pointer">
                       Terms & Conditions
                     </Link>,{' '}
-                    <Link href="/refund-policy" target="_blank" className="text-emerald-700 font-medium underline">
+                    <Link href="/cancellation-policy" data-policy="cancellation" className="text-emerald-700 font-medium underline cursor-pointer">
                       Cancellation Policy
                     </Link>{' '}
                     and{' '}
-                    <Link href="/refund-policy" target="_blank" className="text-emerald-700 font-medium underline">
+                    <Link href="/refund-policy" data-policy="refund" className="text-emerald-700 font-medium underline cursor-pointer">
                       Refund Policy
-                    </Link>.
+                    </Link> (Strict &gt;5 hours notice for cancellation).
                   </span>
                 </label>
+              </div>  </label>
               </div>
 
               <div className="flex justify-between pt-4 border-t border-slate-100">
