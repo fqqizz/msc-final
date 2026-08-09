@@ -40,20 +40,24 @@ ON public.slot_reservations(start_time, end_time);
 -- Enable RLS
 ALTER TABLE public.slot_reservations ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if re-running
+DROP POLICY IF EXISTS "Public can view active reservations for availability check" ON public.slot_reservations;
+DROP POLICY IF EXISTS "Staff and Owner full access to reservations" ON public.slot_reservations;
+
 -- RLS Policies
 -- Public can read active reservations (so slots disappear from public booking flow)
 CREATE POLICY "Public can view active reservations for availability check"
 ON public.slot_reservations FOR SELECT
 USING (status = 'active');
 
--- Staff/Owner can perform full CRUD on reservations
+-- Staff/Owner can perform full CRUD on reservations (Strictly using valid user_role values)
 CREATE POLICY "Staff and Owner full access to reservations"
 ON public.slot_reservations FOR ALL
 USING (
     EXISTS (
         SELECT 1 FROM public.user_profiles
         WHERE user_profiles.id = auth.uid()
-        AND user_profiles.role IN ('owner', 'super_admin', 'reception', 'staff')
+        AND user_profiles.role::TEXT IN ('owner', 'super_admin', 'reception')
     )
 );
 
@@ -409,6 +413,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Enable Realtime for slot_reservations, bookings, slot_locks, pricing_rules
-ALTER PUBLICATION supabase_realtime ADD TABLE public.slot_reservations;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.pricing_rules;
+-- Enable Realtime safely (handles duplicate publication additions gracefully)
+DO $$ BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.slot_reservations;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+    WHEN others THEN null;
+END $$;
+
+DO $$ BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.pricing_rules;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+    WHEN others THEN null;
+END $$;
