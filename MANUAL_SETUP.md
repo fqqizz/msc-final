@@ -1,6 +1,6 @@
-# Maqbool Sports Complex (MSC) — Complete Manual Setup & Deployment Guide
+# Maqbool Sports Complex (MSC) — Production Setup & Operations Manual
 
-This document details the exact, step-by-step instructions required to manually configure, connect, and launch **Maqbool Sports Complex (MSC)** and **MSC OS**.
+This document details the exact, step-by-step instructions required to configure, connect, and launch **Maqbool Sports Complex (MSC)** and the **MSC OS** administrative platform.
 
 ---
 
@@ -10,11 +10,11 @@ Configure these environment variables in your local `.env.local` file and in **V
 
 | Environment Variable | Scope / Exposure | Description & Location |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Public (Browser + Server) | Supabase Project URL (`https://your-project-id.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Public (Browser + Server) | Supabase Project URL (`https://jcezdsooysowqaehnbbc.supabase.co`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public (Browser + Server) | Supabase Publishable / Anon API Key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **SERVER ONLY** | Supabase Service Role Secret Key (Never expose to browser) |
 | `NEXT_PUBLIC_SITE_URL` | Public (Browser + Server) | Application Canonical Domain (`https://maqboolsports.in`) |
-| `RAZORPAY_KEY_ID` | Public (Client Safe) | Razorpay Live/Test Key ID (`rzp_live_...`) |
+| `RAZORPAY_KEY_ID` | Public (Client Safe) | Razorpay Live/Test Key ID (`rzp_live_...` or `rzp_test_...`) |
 | `RAZORPAY_KEY_SECRET` | **SERVER ONLY** | Razorpay Secret Key |
 | `RAZORPAY_WEBHOOK_SECRET` | **SERVER ONLY** | Razorpay Webhook Secret Key for signature verification |
 | `RESEND_API_KEY` | **SERVER ONLY** | Resend API Key (`re_...`) |
@@ -28,21 +28,21 @@ Configure these environment variables in your local `.env.local` file and in **V
 
 ### A. Database Migrations
 1. Log in to your [Supabase Dashboard](https://supabase.com/dashboard).
-2. Select project `jcezdsooysowqaehnbbc` (or your active project).
-3. Go to **SQL Editor** &rarr; **New Query**.
-4. Run each SQL file located in `supabase/migrations/` sequentially:
+2. Go to **SQL Editor** &rarr; **New Query**.
+3. Run the SQL files located in `supabase/migrations/` sequentially:
    - `001_authentication.sql`
-   - `002_venues_and_facilities.sql`
-   - `003_customers_and_profiles.sql`
+   - `002_customer_management.sql`
+   - `003_venue_management.sql`
    - `004_booking_engine.sql`
-   - `005_payments_and_gateways.sql`
-   - `006_memberships_and_loyalty.sql`
+   - `005_payments.sql`
+   - `006_cms.sql`
    - `007_notifications.sql`
-   - `008_pricing_overrides.sql`
-   - `009_audit_logs.sql`
-   - `010_leaderboard_rpc.sql`
+   - `008_analytics.sql`
+   - `009_admin.sql`
+   - `010_future.sql`
    - `011_enterprise_additions.sql`
-5. Run `supabase/seeds/seed.sql` to populate default venues (Cricket Net 1, Cricket Net 2, Football Turf) and the Automated Bowling Machine resource (`BM-CRICKET-01`).
+   - `012_final_production_hardening.sql` *(Crucial: introduces `slot_reservations`, `reserve_owner_slot`, `release_owner_slot`, and `get_authoritative_slot_availability`)*
+4. Run `supabase/seeds/seed.sql` to populate default venues (Cricket Net 1, Cricket Net 2, Football Turf) and the Automated Bowling Machine resource (`BM-CRICKET-01`).
 
 ### B. Storage Bucket Configuration
 1. Go to **Storage** in the Supabase Sidebar.
@@ -51,31 +51,16 @@ Configure these environment variables in your local `.env.local` file and in **V
    - `venues` (Facility photo assets)
    - `receipts` (PDF booking receipts, path pattern: `receipts/{booking_id}/MSC-{booking_number}.pdf`)
 
-### C. Creating the Owner Admin Account (Eihab Naseer)
+### C. Owner Admin Account Setup (Eihab Naseer)
 1. Go to **Authentication** &rarr; **Users** &rarr; **Add User** &rarr; **Create User**.
-2. Enter email (e.g. `eihab@maqboolsports.in` or `owner@maqboolsports.in`) and a secure password.
-3. Run this diagnostic query in **SQL Editor** to inspect the owner identity:
-   ```sql
-   SELECT
-     u.id,
-     u.email,
-     u.raw_user_meta_data,
-     u.raw_app_meta_data,
-     up.*
-   FROM auth.users u
-   LEFT JOIN public.user_profiles up ON up.id = u.id
-   WHERE
-     lower(coalesce(u.email, '')) LIKE '%eihab%'
-     OR lower(coalesce(u.email, '')) LIKE '%owner%'
-     OR lower(coalesce(u.raw_user_meta_data->>'full_name', '')) LIKE '%eihab%';
-   ```
-4. Set the authoritative name (`Eihab Naseer`) and `owner` role:
+2. Enter email (`owner@maqboolsports.in` or `eihab@maqboolsports.in`) and a secure password.
+3. In SQL Editor, assign the `owner` role and name:
    ```sql
    INSERT INTO public.user_profiles (id, full_name, email, role, status)
    VALUES ('7e241e96-a2ab-469c-9076-0d1f9c10e943', 'Eihab Naseer', 'owner@maqboolsports.in', 'owner', 'active')
    ON CONFLICT (id) DO UPDATE SET full_name = 'Eihab Naseer', role = 'owner';
    ```
-5. Navigating to `/admin/login` will now allow owner sign-in into **MSC OS**. The owner account is automatically excluded from player leaderboards, player stats, and customer counts.
+4. Navigating to `/admin/login` will now provide direct access to **MSC OS**. The owner account is strictly excluded from player leaderboards, player stats, and customer counts.
 
 ---
 
@@ -98,19 +83,33 @@ Configure these environment variables in your local `.env.local` file and in **V
 
 ## 4. Resend Transactional Email Setup
 
-1. Log in to [Resend Dashboard](https://resend.com/dashboard).
-2. Go to **Domains** &rarr; **Add Domain** &rarr; Enter `maqboolsports.in`.
-3. Add the generated DNS records (SPF, DKIM, DMARC) inside your domain DNS provider (Cloudflare/GoDaddy/Hostinger).
-4. Verify domain status in Resend.
-5. Go to **API Keys** &rarr; **Create API Key** &rarr; Copy key to `RESEND_API_KEY`.
-6. Outgoing email address standard: `info@maqboolsports.in`.
+1. Log in to [Resend Dashboard](https://resend.com).
+2. Add and verify your custom domain: `maqboolsports.in`.
+3. Add the required DNS records in your domain registrar (Namecheap/GoDaddy/Cloudflare):
+   - **SPF**: `v=spf1 include:amazonses.com ~all`
+   - **DKIM**: Add the 3 CNAME records generated by Resend.
+   - **DMARC**: `v=DMARC1; p=none;`
+4. Copy your API Key (`re_...`) to `RESEND_API_KEY`.
+5. All system emails (Booking Confirmations, Payment Invoices, Cancellation Notifications, Admin Alerts) will be dispatched from:
+   `Maqbool Sports Complex <info@maqboolsports.in>`.
 
 ---
 
-## 5. Vercel Deployment Checklist
+## 5. Browser Notifications
 
-1. Connect your GitHub repository `https://github.com/fqqizz/msc-final` in Vercel.
-2. Set Framework Preset to **Next.js**.
-3. Add all environment variables listed in Section 1.
-4. Click **Deploy**.
-5. After deployment completes, set up Custom Domain `maqboolsports.in` under **Settings** &rarr; **Domains**.
+1. Browser notifications are requested **only** for authenticated owners/staff upon logging into `/admin`.
+2. To test:
+   - Log in at `/admin/login`.
+   - Click **Allow** on the browser permission modal.
+   - Any new booking, payment failure, or slot reservation will dispatch an instant desktop alert.
+
+---
+
+## 6. Verification Checklist
+
+- [x] **Asia/Kolkata Current-Hour Rule**: Slot 1:00 PM – 2:00 PM remains bookable at 1:05 PM, 1:30 PM, and 1:59:59 PM. Disappears at 2:00 PM.
+- [x] **Owner Slot Reservation**: Direct 1-click slot blocking in `/admin/bookings`. Slot immediately disappears from `/book-now`.
+- [x] **Double-Booking Concurrency**: Concurrent payment attempts are atomic; one succeeds and one receives: *"That slot was just booked by another player. Please choose another time."*
+- [x] **Website CMS Removed from Admin**: Navigation and cards removed; operations suite focused on bookings, pricing, and analytics.
+- [x] **Resend Email Migration**: 100% migrated to `info@maqboolsports.in`.
+- [x] **Intro & Hero Video**: Snappy 2.6s original sequence with natural 1.0x video playback.

@@ -11,7 +11,6 @@ import {
   Shield,
   CreditCard,
   DollarSign,
-  FileText,
   TrendingUp,
   Settings,
   LogOut,
@@ -27,6 +26,7 @@ import {
   Sliders
 } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { createClient } from '@/lib/supabase/client'
 
 const adminNavSections = [
   {
@@ -51,7 +51,6 @@ const adminNavSections = [
     title: 'COMMUNICATION',
     items: [
       { name: 'Alert Center', href: '/admin/notifications', icon: Bell },
-      { name: 'Website CMS', href: '/admin/cms', icon: FileText },
     ]
   },
   {
@@ -67,8 +66,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const supabase = createClient()
 
-  // 1. If we are on /admin/login, render children immediately (No layout interception, no blocking)
+  // 1. If we are on /admin/login, render children immediately
   if (pathname === '/admin/login') {
     return <>{children}</>
   }
@@ -80,6 +80,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [user, isLoading, pathname])
 
+  // 3. Browser Notification Permission Request for Authenticated Admin Users
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && user && (role === 'owner' || role === 'super_admin' || role === 'reception')) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {})
+      }
+    }
+  }, [user, role])
+
+  // 4. Real-time Browser Notifications for Operational Events
+  useEffect(() => {
+    if (!user || (role !== 'owner' && role !== 'super_admin' && role !== 'reception')) return
+
+    const channel = supabase
+      .channel('admin-global-alerts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, (payload) => {
+        const newLog = payload.new as any
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          const action = newLog.action || 'MSC OS Event'
+          const details = newLog.details?.reason || newLog.details?.venue_name || newLog.action
+          try {
+            new Notification(`MSC OS Alert — ${action.replace(/_/g, ' ')}`, {
+              body: `${details}`,
+              icon: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png',
+            })
+          } catch (e) {
+            // Notification failed gracefully
+          }
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, role])
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-center gap-3">
@@ -88,7 +125,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // 3. Unauthenticated on a protected admin route -> Render minimal transition screen
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-center gap-3">
@@ -97,7 +133,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // 4. Authenticated normal customer -> Access Restricted Screen
+  // Authenticated normal customer -> Access Restricted Screen
   const isAuthorized = role === 'super_admin' || role === 'owner' || role === 'reception'
   if (!isAuthorized) {
     return (
@@ -316,8 +352,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </header>
 
-        {/* Content Body */}
-        <main className="flex-1 overflow-y-auto bg-slate-50/80">
+        {/* Content Body with Spacing & Breathing Room */}
+        <main className="flex-1 overflow-y-auto bg-slate-50/80 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
           {children}
         </main>
       </div>

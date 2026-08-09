@@ -117,85 +117,166 @@ export default function BookNowPage() {
     loadVenues()
   }, [])
 
-  // 2. Fetch Availability Slots (REAL SLOT DISAPPEARANCE RULE)
-  useEffect(() => {
-    async function calculateSlots() {
-      if (!selectedVenue || !selectedDate) return
+  // 2. Fetch Availability Slots (REAL AUTHORITATIVE AVAILABILITY & REALTIME DISAPPEARANCE)
+  const calculateSlots = async () => {
+    if (!selectedVenue || !selectedDate) return
 
-      try {
-        setIsLoadingSlots(true)
-        setErrorMessage(null)
+    try {
+      setIsLoadingSlots(true)
+      setErrorMessage(null)
 
-        const dateStr = format(selectedDate, 'yyyy-MM-dd')
-        const dayStart = `${dateStr}T00:00:00Z`
-        const dayEnd = `${dateStr}T23:59:59Z`
+      const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
-        // Fetch existing bookings for this venue & date
-        const { data: existingBookings } = await supabase
-          .from('bookings')
-          .select('start_time, end_time, booking_status')
-          .eq('venue_id', selectedVenue.id)
-          .in('booking_status', ['confirmed', 'in_progress', 'locked'])
-          .gte('start_time', dayStart)
-          .lte('start_time', dayEnd)
+      // Attempt Authoritative RPC first
+      const { data: rpcSlots, error: rpcErr } = await supabase.rpc('get_authoritative_slot_availability', {
+        p_venue_id: selectedVenue.id,
+        p_date: dateStr,
+      })
 
-        // Fetch active temporary slot locks
-        const { data: activeLocks } = await supabase
-          .from('slot_locks')
-          .select('start_time, end_time, expires_at')
-          .eq('venue_id', selectedVenue.id)
-          .gt('expires_at', new Date().toISOString())
+      if (!rpcErr && Array.isArray(rpcSlots) && rpcSlots.length > 0) {
+        const computed: SlotItem[] = rpcSlots
+          .filter((s: any) => s.is_available)
+          .map((s: any) => {
+            const h = s.slot_hour
+            const startLabel = h > 12 ? `${h - 12} PM` : h === 12 ? '12 PM' : `${h} AM`
+            const endLabel = (h + 1) > 12 ? `${(h + 1) - 12} PM` : (h + 1) === 12 ? '12 PM' : `${h + 1} AM`
 
-        const now = new Date()
-        const isToday = format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')
-        const currentHour = now.getHours()
-
-        // Base hourly rates: ₹999 for Football Turf, ₹299 for Cricket Nets
-        const baseHourlyRate = selectedVenue.sport_type === 'football' ? 999 : 299
-        const computed: SlotItem[] = []
-
-        // Operating hours: 6 AM (06:00) to 11 PM (23:00)
-        for (let hour = 6; hour <= 22; hour++) {
-          const startTime = new Date(`${dateStr}T${hour.toString().padStart(2, '0')}:00:00Z`)
-          const endTime = new Date(`${dateStr}T${(hour + 1).toString().padStart(2, '0')}:00:00Z`)
-
-          const isPast = isToday && hour <= currentHour
-
-          const isBooked = existingBookings?.some((b) => {
-            const bStart = new Date(b.start_time).getHours()
-            return bStart === hour
-          }) || false
-
-          const isLocked = activeLocks?.some((l) => {
-            const lStart = new Date(l.start_time).getHours()
-            return lStart === hour
-          }) || false
-
-          // DISAPPEARANCE RULE: EXCLUDE UNAVAILABLE SLOTS COMPLETELY
-          if (!isPast && !isBooked && !isLocked) {
-            const startLabel = hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`
-            const endLabel = (hour + 1) > 12 ? `${(hour + 1) - 12} PM` : (hour + 1) === 12 ? '12 PM' : `${hour + 1} AM`
-
-            computed.push({
-              hour,
+            return {
+              hour: h,
               label: `${startLabel} - ${endLabel}`,
-              startTimeStr: startTime.toISOString(),
-              endTimeStr: endTime.toISOString(),
-              price: baseHourlyRate,
-            })
-          }
-        }
+              startTimeStr: s.start_time,
+              endTimeStr: s.end_time,
+              price: Number(s.effective_price) || (selectedVenue.sport_type === 'football' ? 999 : 299),
+            }
+          })
 
         setAvailableSlots(computed)
         setSelectedSlots([])
-      } catch (err) {
-        console.error('Error calculating slot availability:', err)
-      } finally {
         setIsLoadingSlots(false)
+        return
       }
-    }
 
+      // Fallback Direct Supabase Query with Exact Asia/Kolkata Cutoff Semantics
+      const dayStart = `${dateStr}T00:00:00Z`
+      const dayEnd = `${dateStr}T23:59:59Z`
+
+      // 1. Fetch confirmed bookings
+      const { data: existingBookings } = await supabase
+        .from('bookings')
+        .select('start_time, end_time, booking_status')
+        .eq('venue_id', selectedVenue.id)
+        .in('booking_status', ['confirmed', 'in_progress', 'locked'])
+        .gte('start_time', dayStart)
+        .lte('start_time', dayEnd)
+
+      // 2. Fetch active temporary slot locks
+      const { data: activeLocks } = await supabase
+        .from('slot_locks')
+        .select('start_time, end_time, expires_at')
+        .eq('venue_id', selectedVenue.id)
+        .gt('expires_at', new Date().toISOString())
+
+      // 3. Fetch active owner slot reservations
+      const { data: activeReservations } = await supabase
+        .from('slot_reservations')
+        .select('start_time, end_time, status')
+        .eq('venue_id', selectedVenue.id)
+        .eq('status', 'active')
+
+      // 4. Fetch pricing overrides
+      const { data: pricingOverrides } = await supabase
+        .from('pricing_rules')
+        .select('hourly_rate, start_time, end_time, start_date, end_date, priority')
+        .eq('venue_id', selectedVenue.id)
+        .is('deleted_at', null)
+        .order('priority', { ascending: false })
+
+      // Asia/Kolkata Timezone calculations
+      const nowKolkata = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+      const isToday = dateStr === format(nowKolkata, 'yyyy-MM-dd')
+      const currentHour = nowKolkata.getHours()
+
+      const baseHourlyRate = selectedVenue.sport_type === 'football' ? 999 : 299
+      const computed: SlotItem[] = []
+
+      for (let hour = 6; hour <= 22; hour++) {
+        const startTime = new Date(`${dateStr}T${hour.toString().padStart(2, '0')}:00:00+05:30`)
+        const endTime = new Date(`${dateStr}T${(hour + 1).toString().padStart(2, '0')}:00:00+05:30`)
+
+        // CRITICAL TIME CUTOFF: Slot [hour, hour+1] only ends when currentHour >= hour + 1!
+        // At 1:05 PM (currentHour = 13), 1–2 PM (hour = 13) has 13 >= 14 -> FALSE (still available!)
+        // At 2:00 PM (currentHour = 14), 1–2 PM (hour = 13) has 14 >= 14 -> TRUE (disappears!)
+        const isPast = isToday && currentHour >= (hour + 1)
+
+        const isBooked = existingBookings?.some((b) => {
+          const bStart = new Date(b.start_time).getUTCHours()
+          return bStart === hour
+        }) || false
+
+        const isLocked = activeLocks?.some((l) => {
+          const lStart = new Date(l.start_time).getUTCHours()
+          return lStart === hour
+        }) || false
+
+        const isReserved = activeReservations?.some((r) => {
+          const rStart = new Date(r.start_time).getUTCHours()
+          return rStart === hour
+        }) || false
+
+        // DISAPPEARANCE RULE: EXCLUDE UNAVAILABLE SLOTS COMPLETELY
+        if (!isPast && !isBooked && !isLocked && !isReserved) {
+          const startLabel = hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`
+          const endLabel = (hour + 1) > 12 ? `${(hour + 1) - 12} PM` : (hour + 1) === 12 ? '12 PM' : `${hour + 1} AM`
+
+          // Check pricing override precedence
+          let slotPrice = baseHourlyRate
+          if (pricingOverrides && pricingOverrides.length > 0) {
+            const match = pricingOverrides.find((po) => {
+              if (po.start_date && po.start_date > dateStr) return false
+              if (po.end_date && po.end_date < dateStr) return false
+              return true
+            })
+            if (match) slotPrice = Number(match.hourly_rate)
+          }
+
+          computed.push({
+            hour,
+            label: `${startLabel} - ${endLabel}`,
+            startTimeStr: startTime.toISOString(),
+            endTimeStr: endTime.toISOString(),
+            price: slotPrice,
+          })
+        }
+      }
+
+      setAvailableSlots(computed)
+      setSelectedSlots([])
+    } catch (err) {
+      console.error('Error calculating slot availability:', err)
+    } finally {
+      setIsLoadingSlots(false)
+    }
+  }
+
+  useEffect(() => {
     calculateSlots()
+  }, [selectedVenue, selectedDate])
+
+  // Real-time Availability Subscription
+  useEffect(() => {
+    if (!selectedVenue || !selectedDate) return
+
+    const channel = supabase
+      .channel(`public-availability-${selectedVenue.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => calculateSlots())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'slot_reservations' }, () => calculateSlots())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'slot_locks' }, () => calculateSlots())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pricing_rules' }, () => calculateSlots())
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [selectedVenue, selectedDate])
 
   // Light Calendar Month Generation

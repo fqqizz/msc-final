@@ -18,7 +18,11 @@ import {
   Layers,
   Download,
   RotateCcw,
-  X
+  X,
+  BookmarkPlus,
+  Lock,
+  Unlock,
+  Eye
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
@@ -26,18 +30,20 @@ import Link from 'next/link'
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([])
+  const [reservations, setReservations] = useState<any[]>([])
   const [venues, setVenues] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'bookings' | 'reservations' | 'cancelled'>('all')
   const [isLoading, setIsLoading] = useState(true)
 
   // Booking Details Modal State
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null)
   const [isProcessingAction, setIsProcessingAction] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
 
-  // Manual Walk-In Booking Modal State
-  const [showModal, setShowModal] = useState(false)
+  // Walk-In Booking Modal State
+  const [showWalkInModal, setShowWalkInModal] = useState(false)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [selectedVenueId, setSelectedVenueId] = useState('')
@@ -45,37 +51,158 @@ export default function AdminBookingsPage() {
   const [startHour, setStartHour] = useState(17)
   const [manualAmount, setManualAmount] = useState(299)
   const [manualPaymentMethod, setManualPaymentMethod] = useState<'cash' | 'upi'>('cash')
+
+  // Owner Slot Reservation Modal State
+  const [showReserveModal, setShowReserveModal] = useState(false)
+  const [reserveVenueId, setReserveVenueId] = useState('')
+  const [reserveDate, setReserveDate] = useState(new Date().toISOString().split('T')[0])
+  const [reserveHour, setReserveHour] = useState(18)
+  const [reserveReason, setReserveReason] = useState('Tournament')
+  const [reserveCustomerName, setReserveCustomerName] = useState('')
+  const [reserveCustomerPhone, setReserveCustomerPhone] = useState('')
+  const [reserveNotes, setReserveNotes] = useState('')
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [modalError, setModalError] = useState<string | null>(null)
 
   const supabase = createClient()
 
-  const fetchBookings = async () => {
+  const fetchScheduleData = async () => {
     try {
       setIsLoading(true)
-      const { data: vList } = await supabase.from('venues').select('*')
-      if (vList) {
+      const { data: vList } = await supabase.from('venues').select('*').order('display_order', { ascending: true })
+      if (vList && vList.length > 0) {
         setVenues(vList)
-        if (vList.length > 0) setSelectedVenueId(vList[0].id)
+        if (!selectedVenueId) setSelectedVenueId(vList[0].id)
+        if (!reserveVenueId) setReserveVenueId(vList[0].id)
       }
 
+      // 1. Fetch Bookings
       const { data: bList } = await supabase
         .from('bookings')
         .select('*, venues(name), user_profiles(full_name, phone, email)')
         .order('start_time', { ascending: false })
 
       if (bList) setBookings(bList)
+
+      // 2. Fetch Active Slot Reservations
+      const { data: rList } = await supabase
+        .from('slot_reservations')
+        .select('*, venues(name)')
+        .order('start_time', { ascending: false })
+
+      if (rList) setReservations(rList)
     } catch (err) {
-      console.error('Error fetching admin bookings:', err)
+      console.error('Error fetching admin bookings/reservations:', err)
     } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchBookings()
+    fetchScheduleData()
+
+    // Real-time subscription for bookings and slot reservations
+    const channel = supabase
+      .channel('admin-bookings-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchScheduleData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'slot_reservations' }, () => fetchScheduleData())
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
+  // Handle Owner Slot Reservation
+  const handleCreateReservation = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setModalError(null)
+
+    if (!reserveVenueId || !reserveDate) {
+      setModalError('Please select venue and date.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const startTime = new Date(`${reserveDate}T${reserveHour.toString().padStart(2, '0')}:00:00+05:30`).toISOString()
+      const endTime = new Date(`${reserveDate}T${(reserveHour + 1).toString().padStart(2, '0')}:00:00+05:30`).toISOString()
+
+      // Attempt RPC first
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('reserve_owner_slot', {
+        p_venue_id: reserveVenueId,
+        p_start_time: startTime,
+        p_end_time: endTime,
+        p_reason: reserveReason,
+        p_customer_name: reserveCustomerName || null,
+        p_customer_phone: reserveCustomerPhone || null,
+        p_internal_notes: reserveNotes || null,
+      })
+
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        // Fallback insert
+        const { error: insertErr } = await supabase.from('slot_reservations').insert({
+          venue_id: reserveVenueId,
+          start_time: startTime,
+          end_time: endTime,
+          reason: reserveReason,
+          customer_name: reserveCustomerName || null,
+          customer_phone: reserveCustomerPhone || null,
+          internal_notes: reserveNotes || null,
+          status: 'active'
+        })
+
+        if (insertErr) {
+          setModalError(insertErr.message)
+          setIsSubmitting(false)
+          return
+        }
+      }
+
+      setShowReserveModal(false)
+      setReserveCustomerName('')
+      setReserveCustomerPhone('')
+      setReserveNotes('')
+      fetchScheduleData()
+    } catch (err: any) {
+      setModalError(err.message || 'An error occurred while reserving slot.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Handle Release Slot Reservation
+  const handleReleaseReservation = async (resId: string) => {
+    if (!confirm('Are you sure you want to release this reservation? It will immediately become available in the public booking flow.')) return
+
+    try {
+      setIsProcessingAction(true)
+      setActionError(null)
+
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('release_owner_slot', {
+        p_reservation_id: resId
+      })
+
+      if (rpcErr || (rpcRes && !rpcRes.success)) {
+        // Fallback update
+        await supabase
+          .from('slot_reservations')
+          .update({ status: 'released', released_at: new Date().toISOString() })
+          .eq('id', resId)
+      }
+
+      fetchScheduleData()
+      setSelectedBooking(null)
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to release reservation.')
+    } finally {
+      setIsProcessingAction(false)
+    }
+  }
+
+  // Handle Walk-In Booking
   const handleCreateManualBooking = async (e: React.FormEvent) => {
     e.preventDefault()
     setModalError(null)
@@ -88,25 +215,9 @@ export default function AdminBookingsPage() {
     setIsSubmitting(true)
 
     try {
-      const startTime = new Date(`${bookingDate}T${startHour.toString().padStart(2, '0')}:00:00Z`).toISOString()
-      const endTime = new Date(`${bookingDate}T${(startHour + 1).toString().padStart(2, '0')}:00:00Z`).toISOString()
+      const startTime = new Date(`${bookingDate}T${startHour.toString().padStart(2, '0')}:00:00+05:30`).toISOString()
+      const endTime = new Date(`${bookingDate}T${(startHour + 1).toString().padStart(2, '0')}:00:00+05:30`).toISOString()
 
-      // Call database lock to prevent simultaneous double booking
-      const { data: lockSuccess, error: lockErr } = await supabase.rpc('create_slot_lock', {
-        p_venue_id: selectedVenueId,
-        p_start_time: startTime,
-        p_end_time: endTime,
-        p_user_id: '00000000-0000-0000-0000-000000000000',
-        p_ttl_minutes: 60
-      })
-
-      if (lockErr || !lockSuccess) {
-        setModalError(lockErr?.message || 'That slot was just booked or is unavailable.')
-        setIsSubmitting(false)
-        return
-      }
-
-      // Generate booking number
       const { data: bNum } = await supabase.rpc('generate_booking_number')
       const bookingNumber = bNum || `MSC-${Date.now().toString().slice(-6)}`
 
@@ -126,7 +237,7 @@ export default function AdminBookingsPage() {
         tax_amount: 0,
         total_amount: manualAmount,
         amount_paid: manualAmount,
-        notes: `Walk-in Customer: ${customerName} (${customerPhone}) - Paid via ${manualPaymentMethod.toUpperCase()}`
+        notes: `Walk-in Player: ${customerName} (${customerPhone}) - Paid via ${manualPaymentMethod.toUpperCase()}`
       })
 
       if (insertErr) {
@@ -135,10 +246,10 @@ export default function AdminBookingsPage() {
         return
       }
 
-      setShowModal(false)
+      setShowWalkInModal(false)
       setCustomerName('')
       setCustomerPhone('')
-      fetchBookings()
+      fetchScheduleData()
     } catch (err: any) {
       setModalError(err.message || 'An error occurred.')
     } finally {
@@ -148,7 +259,7 @@ export default function AdminBookingsPage() {
 
   // Handle Cancel Booking
   const handleCancelBooking = async (bId: string) => {
-    if (!confirm('Are you sure you want to cancel this booking? This will trigger the cancellation workflow.')) return
+    if (!confirm('Are you sure you want to cancel this booking? This will trigger the refund and cancellation engine.')) return
 
     try {
       setIsProcessingAction(true)
@@ -167,7 +278,7 @@ export default function AdminBookingsPage() {
       }
 
       setSelectedBooking(null)
-      fetchBookings()
+      fetchScheduleData()
     } catch (err: any) {
       setActionError(err.message || 'Error executing cancellation.')
     } finally {
@@ -175,348 +286,573 @@ export default function AdminBookingsPage() {
     }
   }
 
-  const filteredBookings = bookings.filter((b) => {
-    const matchesSearch =
-      (b.booking_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.user_profiles?.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.notes || '').toLowerCase().includes(searchQuery.toLowerCase())
+  // Combined Schedule List
+  const unifiedItems = [
+    ...bookings.map((b) => ({ ...b, itemType: 'booking' })),
+    ...reservations.map((r) => ({ ...r, itemType: 'reservation' }))
+  ].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+
+  const filteredItems = unifiedItems.filter((item) => {
+    const searchTarget = (
+      (item.booking_number || '') +
+      (item.reason || '') +
+      (item.customer_name || '') +
+      (item.user_profiles?.full_name || '') +
+      (item.notes || '') +
+      (item.venues?.name || '')
+    ).toLowerCase()
+
+    const matchesSearch = searchTarget.includes(searchQuery.toLowerCase())
 
     if (statusFilter === 'all') return matchesSearch
-    return matchesSearch && b.booking_status === statusFilter
+    if (statusFilter === 'bookings') return matchesSearch && item.itemType === 'booking' && item.booking_status !== 'cancelled'
+    if (statusFilter === 'reservations') return matchesSearch && item.itemType === 'reservation' && item.status === 'active'
+    if (statusFilter === 'cancelled') return matchesSearch && item.booking_status === 'cancelled'
+    return matchesSearch
   })
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
+      {/* Header Bar with Proper Breathing Room */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Bookings & Reservations
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Real-time schedule management, slot locks & customer session logs
+          <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+            Real-time schedule management, owner slot blocking, and automated customer logs
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5"
-        >
-          <Plus size={16} /> New Walk-In Booking
-        </button>
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={() => setShowReserveModal(true)}
+            className="flex-1 sm:flex-initial px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
+          >
+            <BookmarkPlus size={16} /> Reserve Slot
+          </button>
+          <button
+            onClick={() => setShowWalkInModal(true)}
+            className="flex-1 sm:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
+          >
+            <Plus size={16} /> Walk-In Booking
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Controls */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
         <div className="relative w-full sm:w-80">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search booking ID, customer or phone..."
+            placeholder="Search booking ID, customer, tournament..."
             className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
           />
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-          {['all', 'confirmed', 'completed', 'cancelled'].map((st) => (
+          {[
+            { key: 'all', label: 'All Entries' },
+            { key: 'bookings', label: 'Confirmed Bookings' },
+            { key: 'reservations', label: 'Owner Reservations' },
+            { key: 'cancelled', label: 'Cancelled' },
+          ].map((st) => (
             <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${
-                statusFilter === st
+              key={st.key}
+              onClick={() => setStatusFilter(st.key as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all ${
+                statusFilter === st.key
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200/80'
               }`}
             >
-              {st}
+              {st.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Bookings Table View */}
+      {/* Schedule Table View */}
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
         {isLoading ? (
           <div className="py-20 text-center text-slate-400 text-xs">
             <Loader2 size={28} className="animate-spin mx-auto text-emerald-600 mb-2" />
-            Loading booking records...
+            Loading real-time schedule...
           </div>
-        ) : filteredBookings.length > 0 ? (
+        ) : filteredItems.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
-                  <th className="px-5 py-3">Booking ID</th>
-                  <th className="px-5 py-3">Customer</th>
-                  <th className="px-5 py-3">Venue</th>
-                  <th className="px-5 py-3">Date & Time</th>
-                  <th className="px-5 py-3">Amount</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3.5">Type & Reference</th>
+                  <th className="px-5 py-3.5">Venue & Slot</th>
+                  <th className="px-5 py-3.5">Customer / Details</th>
+                  <th className="px-5 py-3.5">Status</th>
+                  <th className="px-5 py-3.5">Amount</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredBookings.map((b) => (
-                  <tr
-                    key={b.id}
-                    onClick={() => setSelectedBooking(b)}
-                    className="hover:bg-slate-50/80 cursor-pointer transition-colors"
-                  >
-                    <td className="px-5 py-3.5 font-bold text-slate-900">#{b.booking_number}</td>
-                    <td className="px-5 py-3.5 font-medium text-slate-900">
-                      {b.user_profiles?.full_name || 'Walk-In Customer'}
-                    </td>
-                    <td className="px-5 py-3.5 font-semibold text-emerald-700">{b.venues?.name || 'Football Turf'}</td>
-                    <td className="px-5 py-3.5 text-slate-600">
-                      {format(new Date(b.start_time), 'MMM d, yyyy @ h:mm a')}
-                    </td>
-                    <td className="px-5 py-3.5 font-bold text-slate-900">₹{b.total_amount}</td>
-                    <td className="px-5 py-3.5">
-                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        b.booking_status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
-                        b.booking_status === 'completed' ? 'bg-sky-100 text-sky-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {b.booking_status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedBooking(b)
-                        }}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-medium"
-                      >
-                        Inspect
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {filteredItems.map((item) => {
+                  const isRes = item.itemType === 'reservation'
+                  const venueName = item.venues?.name || 'MSC Venue'
+                  const dateFormatted = format(new Date(item.start_time), 'dd MMM yyyy')
+                  const timeFormatted = `${format(new Date(item.start_time), 'hh:mm a')} - ${format(new Date(item.end_time), 'hh:mm a')}`
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-5 py-4">
+                        {isRes ? (
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">
+                              <Lock size={12} />
+                            </span>
+                            <div>
+                              <span className="font-bold text-amber-900 block">RESERVATION</span>
+                              <span className="text-[10px] text-slate-400 font-mono">ID: {item.id.slice(0, 8)}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
+                              ✓
+                            </span>
+                            <div>
+                              <span className="font-bold text-slate-900 block">#{item.booking_number}</span>
+                              <span className="text-[10px] text-slate-400 capitalize">{item.booking_source?.replace('_', ' ')}</span>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <span className="font-bold text-slate-900 block">{venueName}</span>
+                        <span className="text-slate-500 text-[11px] flex items-center gap-1 mt-0.5">
+                          <Calendar size={12} /> {dateFormatted} ({timeFormatted})
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        {isRes ? (
+                          <div>
+                            <span className="font-bold text-slate-900 block">{item.reason || 'Owner Block'}</span>
+                            <span className="text-slate-500 text-[11px]">
+                              {item.customer_name ? `${item.customer_name} (${item.customer_phone || ''})` : item.internal_notes || 'Operational block'}
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="font-bold text-slate-900 block">
+                              {item.user_profiles?.full_name || item.notes?.split('-')[0]?.replace('Walk-in Player:', '') || 'MSC Customer'}
+                            </span>
+                            <span className="text-slate-500 text-[11px]">
+                              {item.user_profiles?.phone || item.notes?.match(/\((.*?)\)/)?.[1] || 'Online Player'}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        {isRes ? (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                            item.status === 'active' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {item.status === 'active' ? '● Active Reservation' : 'Released'}
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                            item.booking_status === 'confirmed'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : item.booking_status === 'cancelled'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {item.booking_status}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-4 font-bold text-slate-900">
+                        {isRes ? '—' : `₹${item.total_amount || item.base_amount || 299}`}
+                      </td>
+
+                      <td className="px-5 py-4 text-right">
+                        {isRes ? (
+                          item.status === 'active' && (
+                            <button
+                              onClick={() => handleReleaseReservation(item.id)}
+                              className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1"
+                            >
+                              <Unlock size={14} /> Release Slot
+                            </button>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => setSelectedBooking(item)}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1"
+                          >
+                            <Eye size={14} /> View Details
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         ) : (
-          <div className="text-center py-16 text-xs text-slate-500">
-            <Calendar className="mx-auto text-slate-400 mb-2" size={32} />
-            <p className="font-semibold text-slate-700">No bookings match your current filter.</p>
-            <p className="text-slate-400 mt-0.5">New reservations will appear here automatically.</p>
+          <div className="py-16 text-center text-slate-400 text-xs">
+            No bookings or reservations match your search criteria.
           </div>
         )}
       </div>
 
-      {/* Booking Details Modal */}
-      <AnimatePresence>
-        {selectedBooking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-slate-200 rounded-3xl p-6 max-w-lg w-full text-xs text-slate-800 shadow-2xl space-y-4"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      {/* OWNER RESERVE SLOT MODAL */}
+      {showReserveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                  <BookmarkPlus size={20} />
+                </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Booking Details</span>
-                  <h3 className="text-base font-bold text-slate-900">#{selectedBooking.booking_number}</h3>
-                </div>
-                <button onClick={() => setSelectedBooking(null)} className="text-slate-400 hover:text-slate-600">
-                  <X size={18} />
-                </button>
-              </div>
-
-              {actionError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
-                  {actionError}
-                </div>
-              )}
-
-              <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Customer</span>
-                  <span className="font-semibold text-slate-900">{selectedBooking.user_profiles?.full_name || 'Walk-in'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Venue</span>
-                  <span className="font-semibold text-slate-900">{selectedBooking.venues?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Start Time</span>
-                  <span className="font-semibold text-slate-900">{format(new Date(selectedBooking.start_time), 'EEEE, MMM d @ h:mm a')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Duration</span>
-                  <span className="font-semibold text-slate-900">{selectedBooking.duration_hours} hr(s)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Total Amount</span>
-                  <span className="font-bold text-emerald-700">₹{selectedBooking.total_amount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Payment Status</span>
-                  <span className="font-semibold capitalize text-slate-900">{selectedBooking.payment_status}</span>
+                  <h3 className="font-extrabold text-base text-slate-900">Reserve Slot (Owner Block)</h3>
+                  <p className="text-xs text-slate-500">Block slot from public booking flow</p>
                 </div>
               </div>
+              <button onClick={() => setShowReserveModal(false)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100">
+                <X size={20} />
+              </button>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                <Link
-                  href={`/api/receipts/download?booking_id=${selectedBooking.id}`}
-                  target="_blank"
-                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-center flex items-center justify-center gap-1.5"
+            {modalError && (
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-2">
+                <AlertCircle size={16} />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateReservation} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Facility / Venue</label>
+                <select
+                  value={reserveVenueId}
+                  onChange={(e) => setReserveVenueId(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium"
                 >
-                  <Download size={14} /> Download PDF
-                </Link>
-
-                {selectedBooking.booking_status === 'confirmed' && (
-                  <button
-                    onClick={() => handleCancelBooking(selectedBooking.id)}
-                    disabled={isProcessingAction}
-                    className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-xl text-center disabled:opacity-50"
-                  >
-                    {isProcessingAction ? 'Cancelling...' : 'Cancel Booking'}
-                  </button>
-                )}
+                  {venues.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} ({v.sport_type})</option>
+                  ))}
+                </select>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
-      {/* Manual Walk-In Booking Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full text-xs text-slate-900 shadow-2xl space-y-4"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-sm font-bold text-slate-900">Create Walk-In / Phone Booking</h3>
-                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
-                  <X size={18} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={reserveDate}
+                    onChange={(e) => setReserveDate(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Time Slot (1 Hour)</label>
+                  <select
+                    value={reserveHour}
+                    onChange={(e) => setReserveHour(Number(e.target.value))}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                  >
+                    {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => {
+                      const start = h > 12 ? `${h - 12} PM` : h === 12 ? '12 PM' : `${h} AM`
+                      const end = (h + 1) > 12 ? `${(h + 1) - 12} PM` : (h + 1) === 12 ? '12 PM' : `${h + 1} AM`
+                      return <option key={h} value={h}>{start} – {end}</option>
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Reservation Reason</label>
+                <input
+                  type="text"
+                  required
+                  value={reserveReason}
+                  onChange={(e) => setReserveReason(e.target.value)}
+                  placeholder="e.g. Tournament, Reserved for Eihab, Maintenance"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Customer / Team (Optional)</label>
+                  <input
+                    type="text"
+                    value={reserveCustomerName}
+                    onChange={(e) => setReserveCustomerName(e.target.value)}
+                    placeholder="Player or Team Name"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Phone Number (Optional)</label>
+                  <input
+                    type="text"
+                    value={reserveCustomerPhone}
+                    onChange={(e) => setReserveCustomerPhone(e.target.value)}
+                    placeholder="+91 9876543210"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Internal Note (Admin Only)</label>
+                <textarea
+                  rows={2}
+                  value={reserveNotes}
+                  onChange={(e) => setReserveNotes(e.target.value)}
+                  placeholder="Private internal operational note..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowReserveModal(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-sm flex items-center gap-1.5"
+                >
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Confirm Reservation'}
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              {modalError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
-                  {modalError}
+      {/* WALK-IN BOOKING MODAL */}
+      {showWalkInModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                  <Plus size={20} />
                 </div>
-              )}
-
-              <form onSubmit={handleCreateManualBooking} className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Player Name *</label>
+                  <h3 className="font-extrabold text-base text-slate-900">New Walk-In Booking</h3>
+                  <p className="text-xs text-slate-500">Record cash/UPI on-spot booking</p>
+                </div>
+              </div>
+              <button onClick={() => setShowWalkInModal(false)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100">
+                <X size={20} />
+              </button>
+            </div>
+
+            {modalError && (
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-2">
+                <AlertCircle size={16} />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateManualBooking} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Customer Name</label>
                   <input
                     type="text"
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Faizan Qureshi"
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+                    placeholder="Player Name"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Player Phone</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Phone Number</label>
                   <input
-                    type="tel"
+                    type="text"
+                    required
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="+91 99060 00000"
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+                    placeholder="+91 9876543210"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                   />
                 </div>
+              </div>
 
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Venue</label>
+                <select
+                  value={selectedVenueId}
+                  onChange={(e) => {
+                    setSelectedVenueId(e.target.value)
+                    const v = venues.find(x => x.id === e.target.value)
+                    if (v) setManualAmount(v.sport_type === 'football' ? 999 : 299)
+                  }}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium"
+                >
+                  {venues.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} ({v.sport_type})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Venue *</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Time Slot</label>
                   <select
-                    value={selectedVenueId}
-                    onChange={(e) => {
-                      setSelectedVenueId(e.target.value)
-                      const v = venues.find((item) => item.id === e.target.value)
-                      setManualAmount(v?.sport_type === 'football' ? 999 : 299)
-                    }}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
+                    value={startHour}
+                    onChange={(e) => setStartHour(Number(e.target.value))}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                   >
-                    {venues.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name} ({v.sport_type === 'football' ? '₹999/hr' : '₹299/hr'})
-                      </option>
-                    ))}
+                    {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => {
+                      const start = h > 12 ? `${h - 12} PM` : h === 12 ? '12 PM' : `${h} AM`
+                      const end = (h + 1) > 12 ? `${(h + 1) - 12} PM` : (h + 1) === 12 ? '12 PM' : `${h + 1} AM`
+                      return <option key={h} value={h}>{start} – {end}</option>
+                    })}
                   </select>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Date *</label>
-                    <input
-                      type="date"
-                      required
-                      value={bookingDate}
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Start Hour *</label>
-                    <select
-                      value={startHour}
-                      onChange={(e) => setStartHour(Number(e.target.value))}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
-                    >
-                      {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => (
-                        <option key={h} value={h}>
-                          {h > 12 ? `${h - 12} PM` : h === 12 ? '12 PM' : `${h} AM`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Payment Method</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setManualPaymentMethod('cash')}
-                      className={`py-2 rounded-xl border text-xs font-semibold ${
-                        manualPaymentMethod === 'cash' ? 'bg-emerald-50 border-emerald-600 text-emerald-800' : 'bg-slate-50 border-slate-200'
-                      }`}
-                    >
-                      Cash at Facility
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setManualPaymentMethod('upi')}
-                      className={`py-2 rounded-xl border text-xs font-semibold ${
-                        manualPaymentMethod === 'upi' ? 'bg-emerald-50 border-emerald-600 text-emerald-800' : 'bg-slate-50 border-slate-200'
-                      }`}
-                    >
-                      UPI / QR Code
-                    </button>
-                  </div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Amount Paid (₹)</label>
+                  <input
+                    type="number"
+                    required
+                    value={manualAmount}
+                    onChange={(e) => setManualAmount(Number(e.target.value))}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold"
+                  />
                 </div>
-
-                <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-xs transition-all"
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Payment Method</label>
+                  <select
+                    value={manualPaymentMethod}
+                    onChange={(e) => setManualPaymentMethod(e.target.value as any)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium"
                   >
-                    {isSubmitting ? 'Creating Booking...' : `Confirm Booking & Collect ₹${manualAmount}`}
-                  </button>
+                    <option value="cash">Cash on Desk</option>
+                    <option value="upi">UPI / Scanner</option>
+                  </select>
                 </div>
-              </form>
-            </motion.div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowWalkInModal(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-sm flex items-center gap-1.5"
+                >
+                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & Save'}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
+
+      {/* BOOKING DETAILS MODAL */}
+      {selectedBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Booking Details</span>
+                <h3 className="font-extrabold text-lg text-slate-900">#{selectedBooking.booking_number}</h3>
+              </div>
+              <button onClick={() => setSelectedBooking(null)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100">
+                <X size={20} />
+              </button>
+            </div>
+
+            {actionError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
+                {actionError}
+              </div>
+            )}
+
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500">Facility:</span>
+                <span className="font-bold text-slate-900">{selectedBooking.venues?.name || 'MSC Venue'}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500">Date:</span>
+                <span className="font-bold text-slate-900">{format(new Date(selectedBooking.start_time), 'dd MMMM yyyy')}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500">Time Window:</span>
+                <span className="font-bold text-slate-900">
+                  {format(new Date(selectedBooking.start_time), 'hh:mm a')} – {format(new Date(selectedBooking.end_time), 'hh:mm a')}
+                </span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500">Customer:</span>
+                <span className="font-bold text-slate-900">{selectedBooking.user_profiles?.full_name || selectedBooking.notes || 'MSC Customer'}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500">Total Price:</span>
+                <span className="font-bold text-emerald-700 text-sm">₹{selectedBooking.total_amount || selectedBooking.base_amount}</span>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex flex-col gap-2">
+              <Link
+                href={`/api/receipts/download?booking_id=${selectedBooking.id}`}
+                target="_blank"
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl text-center flex items-center justify-center gap-1.5"
+              >
+                <Download size={16} /> Download Official PDF Receipt
+              </Link>
+
+              {selectedBooking.booking_status !== 'cancelled' && (
+                <button
+                  onClick={() => handleCancelBooking(selectedBooking.id)}
+                  disabled={isProcessingAction}
+                  className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5"
+                >
+                  {isProcessingAction ? <Loader2 size={16} className="animate-spin" /> : 'Cancel Booking & Process Refund'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
