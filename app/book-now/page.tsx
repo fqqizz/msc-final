@@ -862,7 +862,6 @@ export default function BookNowPage() {
                     </Link> (Strict &gt;5 hours notice for cancellation).
                   </span>
                 </label>
-              </div>  </label>
               </div>
 
               <div className="flex justify-between pt-4 border-t border-slate-100">
