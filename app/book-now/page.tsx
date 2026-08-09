@@ -98,6 +98,38 @@ export default function BookNowPage() {
 
         if (data && data.length > 0) {
           setVenues(data)
+
+          // Parse URL Search Parameters safely on client
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search)
+            const venueParam = params.get('venue')
+            const dateParam = params.get('date')
+            const hourParam = params.get('hour') || params.get('slot')
+
+            if (venueParam) {
+              const matchedVenue = data.find((v) => v.slug === venueParam || v.id === venueParam)
+              if (matchedVenue) {
+                setSelectedVenue(matchedVenue)
+
+                if (dateParam) {
+                  const parsedD = new Date(`${dateParam}T00:00:00`)
+                  if (!isNaN(parsedD.getTime())) {
+                    setSelectedDate(parsedD)
+                    setStage(3)
+                  }
+                } else {
+                  setSelectedDate(startOfToday())
+                  setStage(3)
+                }
+              }
+            } else if (dateParam) {
+              const parsedD = new Date(`${dateParam}T00:00:00`)
+              if (!isNaN(parsedD.getTime())) {
+                setSelectedDate(parsedD)
+                setStage(2)
+              }
+            }
+          }
         }
 
         const { data: resData } = await supabase
@@ -153,7 +185,26 @@ export default function BookNowPage() {
           })
 
         setAvailableSlots(computed)
-        setSelectedSlots([])
+
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search)
+          const hourParam = params.get('hour') || params.get('slot')
+          if (hourParam) {
+            const targetH = parseInt(hourParam, 10)
+            const matchingSlot = computed.find((s) => s.hour === targetH)
+            if (matchingSlot) {
+              setSelectedSlots([matchingSlot])
+              setStage(4)
+            } else {
+              setSelectedSlots([])
+            }
+          } else {
+            setSelectedSlots([])
+          }
+        } else {
+          setSelectedSlots([])
+        }
+
         setIsLoadingSlots(false)
         return
       }
