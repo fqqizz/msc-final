@@ -178,21 +178,17 @@ export default function PolicyModal() {
               ))}
             </div>
 
-            {/* Footer with Dedicated URL & Close */}
+            {/* Footer with Close Button */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50 text-xs">
-              <Link
-                href={getDedicatedUrl(activeType)}
-                onClick={() => setIsOpen(false)}
-                className="text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center gap-1 hover:underline"
-              >
-                View Full Page <ArrowUpRight size={13} />
-              </Link>
+              <span className="text-slate-400 font-medium">
+                Maqbool Sports Complex
+              </span>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs transition-colors shadow-xs"
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors shadow-xs"
                 >
                   Understood & Close
                 </button>

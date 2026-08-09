@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/auth-provider'
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isBefore, startOfToday } from 'date-fns'
+import { openPolicyModal } from '@/components/policy-modal'
 
 type VenueRecord = {
   id: string
@@ -841,7 +842,7 @@ export default function BookNowPage() {
 
               {/* SINGLE POLICY CHECKBOX AT CHECKOUT */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
-                <label className="flex items-start gap-2.5 cursor-pointer">
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={acceptAllPolicies}
@@ -850,16 +851,42 @@ export default function BookNowPage() {
                   />
                   <span className="leading-relaxed">
                     I agree to the{' '}
-                    <Link href="/terms-conditions" data-policy="terms" className="text-emerald-700 font-medium underline cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        openPolicyModal('terms')
+                      }}
+                      className="text-emerald-700 font-semibold underline hover:text-emerald-800 cursor-pointer inline p-0 bg-transparent border-none text-xs"
+                    >
                       Terms & Conditions
-                    </Link>,{' '}
-                    <Link href="/cancellation-policy" data-policy="cancellation" className="text-emerald-700 font-medium underline cursor-pointer">
+                    </button>
+                    ,{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        openPolicyModal('cancellation')
+                      }}
+                      className="text-emerald-700 font-semibold underline hover:text-emerald-800 cursor-pointer inline p-0 bg-transparent border-none text-xs"
+                    >
                       Cancellation Policy
-                    </Link>{' '}
+                    </button>{' '}
                     and{' '}
-                    <Link href="/refund-policy" data-policy="refund" className="text-emerald-700 font-medium underline cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        openPolicyModal('refund')
+                      }}
+                      className="text-emerald-700 font-semibold underline hover:text-emerald-800 cursor-pointer inline p-0 bg-transparent border-none text-xs"
+                    >
                       Refund Policy
-                    </Link> (Strict &gt;5 hours notice for cancellation).
+                    </button>
+                    .
                   </span>
                 </label>
               </div>
