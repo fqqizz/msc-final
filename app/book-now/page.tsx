@@ -586,7 +586,67 @@ export default function BookNowPage() {
                 <h2 className="text-2xl font-extrabold text-slate-900 mt-1">CHOOSE YOUR VENUE</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* MOBILE COMPACT RECTANGULAR VENUE CARDS (Minimal Scrolling, Floating Margins) */}
+              <div className="flex flex-col gap-3 md:hidden px-1">
+                {venues.map((v) => {
+                  const isSelected = selectedVenue?.id === v.id
+                  const basePrice = v.sport_type === 'football' ? 999 : 299
+                  const imageSrc = VENUE_IMAGES[v.slug] || VENUE_IMAGES['football-turf']
+
+                  return (
+                    <div
+                      key={v.id}
+                      onClick={() => {
+                        setSelectedVenue(v)
+                        setStage(3)
+                      }}
+                      className={`bg-white border rounded-2xl p-3 cursor-pointer transition-all flex items-center gap-3.5 shadow-sm active:scale-[0.99] ${
+                        isSelected
+                          ? 'border-emerald-600 ring-2 ring-emerald-500/20 bg-emerald-50/20'
+                          : 'border-slate-200/90 hover:border-emerald-400'
+                      }`}
+                    >
+                      {/* Compact Image Thumbnail */}
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-slate-100">
+                        <Image src={imageSrc} alt={v.name} fill className="object-cover" />
+                        <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-slate-900/85 backdrop-blur-xs rounded-md text-[9px] font-bold text-white uppercase">
+                          {v.sport_type}
+                        </div>
+                      </div>
+
+                      {/* Content & Price */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 leading-tight truncate">{v.name}</h4>
+                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{v.short_description || v.description}</p>
+                        </div>
+
+                        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-extrabold text-emerald-600">
+                              ₹{basePrice} <span className="text-[10px] text-slate-400 font-normal">/ hr</span>
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedVenue(v)
+                              setStage(3)
+                            }}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg shadow-2xs transition-all"
+                          >
+                            Select
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* DESKTOP 3-COLUMN VENUE CARDS */}
+              <div className="hidden md:grid md:grid-cols-3 gap-6">
                 {venues.map((v) => {
                   const isSelected = selectedVenue?.id === v.id
                   const basePrice = v.sport_type === 'football' ? 999 : 299

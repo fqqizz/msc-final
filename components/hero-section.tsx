@@ -22,7 +22,7 @@ const GPU_ACCELERATED = {
 // Easing curve: smooth cinematic deceleration
 const CINEMATIC_EASE = [0.16, 1, 0.3, 1] as const
 
-// Authoritative Original MSC Intro Animation with tight typography and punchy ~2.6s pacing
+// Authoritative Original MSC Intro Animation with soft radial glow, cinematic pacing (~2.7s) and balanced mobile layout
 const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete: () => void }) {
   const [phase, setPhase] = useState(1)
   const prefersReducedMotion = useReducedMotion()
@@ -33,21 +33,24 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   })
 
   useEffect(() => {
-    // Snappy, deliberate ~2.5s - 2.7s total cinematic duration
-    // 0.0s - 0.9s: Stage 1 — Full MSC Logo visible, breathing
-    // 0.95s: Stage 2 — "LET THE GAME" (White) & "BEGIN" (MSC Green) with natural letter spacing
-    // 1.85s: Full composition holds in complete harmony
-    // 2.30s: Smooth exit fade into the homepage
-    // 2.65s: Complete & unmount
+    // Precise ~2.7s total cinematic duration
+    // 0.0s - 0.95s: Stage 1 — Full MSC Logo centered and breathing
+    // 0.95s: Stage 2 — "LET THE GAME" (White)
+    // 1.25s: Stage 3 — "BEGIN" (MSC Green)
+    // 1.95s: Stage 4 — Full lockup holds in cinematic harmony
+    // 2.45s: Smooth exit fade into the homepage
+    // 2.75s: Complete & unmount
     const t2 = setTimeout(() => setPhase(2), 950)
-    const t3 = setTimeout(() => setPhase(3), 1850)
+    const t3 = setTimeout(() => setPhase(3), 1250)
+    const t4 = setTimeout(() => setPhase(4), 1950)
     const tDone = setTimeout(() => {
       onCompleteRef.current?.()
-    }, 2650)
+    }, 2750)
 
     return () => {
       clearTimeout(t2)
       clearTimeout(t3)
+      clearTimeout(t4)
       clearTimeout(tDone)
     }
   }, [])
@@ -55,72 +58,72 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   return (
     <motion.div
       key="msc-intro-fullscreen-overlay"
-      className="fixed inset-0 z-[99999] bg-[#030303] flex items-center justify-center transform-gpu overflow-hidden select-none pointer-events-none"
+      className="fixed inset-0 z-[99999] bg-[#030303] flex items-center justify-center transform-gpu overflow-hidden select-none pointer-events-none px-4 sm:px-6"
       style={GPU_ACCELERATED}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
     >
       {/* Subtle ambient vignette */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(70% 60% at 50% 40%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)',
+            'radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%)',
           opacity: 0.9,
           ...GPU_ACCELERATED,
         }}
       />
 
-      {/* Ambient emerald backlight glow */}
+      {/* Pure Soft Radial Emerald Atmospheric Glow (No rectangular boundary, natural smooth falloff) */}
       <motion.div
-        initial={{ opacity: 0.1 }}
-        animate={{ opacity: phase >= 1 ? 0.18 : 0.1 }}
-        transition={{ duration: 0.8 }}
-        className="absolute top-1/2 left-1/2 w-[450px] h-[450px] sm:w-[600px] sm:h-[600px] rounded-full bg-[#2BA84A]/30 blur-[90px] sm:blur-[130px] transform-gpu pointer-events-none"
-        style={{ 
-          ...GPU_ACCELERATED,
-          transform: 'translate(-50%, -50%) translateZ(0)',
+        initial={{ opacity: 0.12, scale: 0.9 }}
+        animate={{ 
+          opacity: phase >= 2 ? 0.22 : 0.12,
+          scale: phase >= 2 ? 1.05 : 0.95,
         }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[520px] sm:h-[520px] rounded-full bg-emerald-500/25 blur-[70px] sm:blur-[110px] transform-gpu pointer-events-none"
+        style={GPU_ACCELERATED}
       />
 
       {/* Main logo and typography container */}
-      <div className="relative z-10 flex flex-col items-center px-6 max-w-xl mx-auto text-center transform-gpu" style={GPU_ACCELERATED}>
-        {/* STAGE 1: Full MSC Logo (Complete shield & crest without clipping) */}
+      <div className="relative z-10 flex flex-col items-center max-w-lg mx-auto text-center transform-gpu w-full" style={GPU_ACCELERATED}>
+        {/* STAGE 1: Full MSC Logo (Properly centered, balanced for mobile & desktop) */}
         <motion.div
-          initial={{ scale: 0.92, opacity: 0.4, y: 6 }}
+          initial={{ scale: 0.9, opacity: 0.3, y: 8 }}
           animate={{
             scale: 1,
             opacity: 1,
             y: 0,
           }}
-          transition={{ duration: 0.5, ease: CINEMATIC_EASE }}
-          className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mb-4 sm:mb-6 transform-gpu"
+          transition={{ duration: 0.55, ease: CINEMATIC_EASE }}
+          className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 mb-4 sm:mb-6 transform-gpu"
         >
           <Image
             src={LOGO_URL}
             alt="Maqbool Sports Complex Full Logo"
             fill
-            className="object-contain drop-shadow-[0_10px_25px_rgba(43,168,74,0.25)]"
+            className="object-contain drop-shadow-[0_12px_30px_rgba(43,168,74,0.3)]"
             priority
-            sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
+            sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, 128px"
           />
         </motion.div>
         
-        {/* STAGE 2: Original Typography — Clean, tight Anton display letter spacing */}
-        <div className="text-center overflow-hidden space-y-0.5 sm:space-y-1">
+        {/* STAGE 2: Original Typography — Anton font with natural athletic spacing */}
+        <div className="text-center overflow-hidden space-y-0.5 sm:space-y-1 w-full">
           {/* Line 1: LET THE GAME */}
           <div className="overflow-hidden">
             <motion.div
-              initial={{ y: 28, opacity: 0 }}
+              initial={{ y: 32, opacity: 0 }}
               animate={{
-                y: phase >= 2 ? 0 : 28,
+                y: phase >= 2 ? 0 : 32,
                 opacity: phase >= 2 ? 1 : 0,
               }}
-              transition={{ duration: 0.5, ease: CINEMATIC_EASE }}
-              className="transform-gpu drop-shadow-[0_0_18px_rgba(43,168,74,0.35)]"
+              transition={{ duration: 0.45, ease: CINEMATIC_EASE }}
+              className="transform-gpu drop-shadow-[0_0_20px_rgba(43,168,74,0.3)]"
             >
-              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-normal sm:tracking-wide uppercase leading-tight">
+              <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white tracking-normal sm:tracking-wide uppercase leading-tight whitespace-nowrap">
                 LET THE GAME
               </h2>
             </motion.div>
@@ -129,12 +132,12 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
           {/* Line 2: BEGIN */}
           <div className="overflow-hidden">
             <motion.div
-              initial={{ y: 28, opacity: 0 }}
+              initial={{ y: 32, opacity: 0 }}
               animate={{
-                y: phase >= 2 ? 0 : 28,
-                opacity: phase >= 2 ? 1 : 0,
+                y: phase >= 3 ? 0 : 32,
+                opacity: phase >= 3 ? 1 : 0,
               }}
-              transition={{ duration: 0.5, delay: 0.1, ease: CINEMATIC_EASE }}
+              transition={{ duration: 0.45, ease: CINEMATIC_EASE }}
               className="transform-gpu"
             >
               <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2BA84A] tracking-normal sm:tracking-wide uppercase leading-tight">
@@ -148,7 +151,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   )
 })
 
-// Natural speed video background that starts preloading immediately
+// Natural speed video background that starts preloading immediately with subtle cinematic rate (0.92x)
 const VideoBackground = memo(function VideoBackground({ 
   onReady 
 }: { 
@@ -160,8 +163,8 @@ const VideoBackground = memo(function VideoBackground({
 
   const handleLoadedData = useCallback(() => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = 1.0
-      videoRef.current.defaultPlaybackRate = 1.0
+      videoRef.current.playbackRate = 0.92
+      videoRef.current.defaultPlaybackRate = 0.92
       videoRef.current.play().then(() => {
         setIsPlaying(true)
         onReady()
@@ -176,8 +179,8 @@ const VideoBackground = memo(function VideoBackground({
     const video = videoRef.current
     if (!video) return
 
-    video.playbackRate = 1.0
-    video.defaultPlaybackRate = 1.0
+    video.playbackRate = 0.92
+    video.defaultPlaybackRate = 0.92
 
     const playPromise = video.play()
     if (playPromise !== undefined) {

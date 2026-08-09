@@ -31,7 +31,7 @@ const venues = [
     description: '10,000+ sq. ft. premium synthetic turf for football and box cricket.',
     price: '₹999',
     unit: '/hour',
-    image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-9yWOKvvBNNBK6xIquOyQsdI5jRibpr.webp',
+    image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
     features: ['10,000+ sq. ft.', 'Floodlights', 'Multi-sport'],
     popular: true,
   },

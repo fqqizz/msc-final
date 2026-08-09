@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Medal, Award, Clock, Calendar, Users, Loader2, ArrowLeft } from 'lucide-react'
+import { Trophy, Loader2, Calendar } from 'lucide-react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import Link from 'next/link'
@@ -63,36 +63,35 @@ export default function LeaderboardPage() {
     loadLeaderboard()
   }, [timeframe])
 
-  const topThree = leaderboard.slice(0, 3)
-  const restList = leaderboard.slice(3)
+  const topFive = leaderboard.slice(0, 5)
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col pt-24">
       <Navigation />
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-12 w-full">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="inline-block px-4 py-1.5 bg-emerald-100 border border-emerald-200 rounded-full text-emerald-800 text-xs font-semibold uppercase tracking-wider mb-4">
-            <Trophy size={14} className="inline mr-1.5 text-emerald-700" /> MSC Player Prestige
+        <div className="text-center max-w-xl mx-auto mb-10">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-100/80 border border-emerald-200/80 rounded-full text-emerald-800 text-[11px] font-bold uppercase tracking-wider mb-3">
+            <Trophy size={13} className="text-emerald-700" /> TOP ATHLETES
           </span>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
             Complex Leaderboard
           </h1>
-          <p className="mt-3 text-slate-600 text-sm sm:text-base">
-            Honoring Baramulla's top athletes ranked by verified facility hours played
+          <p className="mt-2 text-slate-500 text-xs sm:text-sm">
+            Ranked by verified facility hours played at Maqbool Sports Complex
           </p>
 
           {/* Timeframe Controls */}
-          <div className="mt-6 inline-flex items-center gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-xs">
+          <div className="mt-5 inline-flex items-center gap-1 p-1 bg-white border border-slate-200/90 rounded-xl shadow-2xs">
             {(['all_time', 'monthly', 'weekly'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTimeframe(t)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold capitalize transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
                   timeframe === t
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 {t.replace('_', ' ')}
@@ -102,134 +101,101 @@ export default function LeaderboardPage() {
         </div>
 
         {isLoading ? (
-          <div className="py-24 text-center text-slate-500">
-            <Loader2 size={36} className="animate-spin mx-auto text-emerald-600 mb-3" />
+          <div className="py-20 text-center text-slate-400 text-xs">
+            <Loader2 size={30} className="animate-spin mx-auto text-emerald-600 mb-2" />
             Calculating leaderboard rankings...
           </div>
-        ) : leaderboard.length > 0 ? (
-          <div className="space-y-12">
-            {/* Top 3 Podium Highlights */}
-            {topThree.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto items-end">
-                {/* 2nd Place */}
-                {topThree[1] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 bg-white border border-slate-200 rounded-3xl text-center relative overflow-hidden order-2 md:order-1 shadow-md"
-                  >
-                    <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 mx-auto flex items-center justify-center font-bold text-2xl text-slate-700 overflow-hidden relative">
-                      {topThree[1].avatar_url ? (
-                        <Image src={topThree[1].avatar_url} alt="Avatar" fill className="object-cover" />
-                      ) : (
-                        topThree[1].full_name?.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <span className="inline-block mt-3 px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full">
-                      #2 Silver
-                    </span>
-                    <h3 className="text-base font-bold text-slate-900 mt-2">{topThree[1].full_name}</h3>
-                    <p className="text-xs text-emerald-700 font-bold mt-1">{topThree[1].hours_played || 0} Hours Played</p>
-                  </motion.div>
-                )}
+        ) : topFive.length > 0 ? (
+          /* MINIMAL TOP 5 LEADERBOARD LIST */
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-7 max-w-xl mx-auto shadow-sm"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3 px-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">RANK & ATHLETE</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">HOURS PLAYED</span>
+            </div>
 
-                {/* 1st Place Champion Podium */}
-                {topThree[0] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-8 bg-gradient-to-b from-amber-50 to-white border-2 border-amber-400 rounded-3xl text-center relative overflow-hidden order-1 md:order-2 shadow-xl scale-105"
-                  >
-                    <div className="w-20 h-20 rounded-2xl bg-amber-400 border-2 border-amber-300 mx-auto flex items-center justify-center font-extrabold text-3xl text-slate-950 overflow-hidden relative shadow-md">
-                      {topThree[0].avatar_url ? (
-                        <Image src={topThree[0].avatar_url} alt="Avatar" fill className="object-cover" />
-                      ) : (
-                        topThree[0].full_name?.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <span className="inline-block mt-3 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold rounded-full tracking-wider uppercase">
-                      👑 Champion #1
-                    </span>
-                    <h3 className="text-lg font-bold text-slate-900 mt-2">{topThree[0].full_name}</h3>
-                    <p className="text-sm text-amber-800 font-extrabold mt-1">{topThree[0].hours_played || 0} Hours Played</p>
-                  </motion.div>
-                )}
+            <div className="space-y-2">
+              {topFive.map((player, idx) => {
+                const rankNum = (idx + 1).toString().padStart(2, '0')
+                const isTop1 = idx === 0
+                const isTop3 = idx < 3
 
-                {/* 3rd Place */}
-                {topThree[2] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 bg-white border border-slate-200 rounded-3xl text-center relative overflow-hidden order-3 shadow-md"
+                return (
+                  <div
+                    key={player.customer_id || idx}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
+                      isTop1
+                        ? 'bg-emerald-50/40 border-emerald-200/80 shadow-2xs'
+                        : 'bg-slate-50/70 border-slate-100 hover:border-slate-200'
+                    }`}
                   >
-                    <div className="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-200 mx-auto flex items-center justify-center font-bold text-2xl text-orange-800 overflow-hidden relative">
-                      {topThree[2].avatar_url ? (
-                        <Image src={topThree[2].avatar_url} alt="Avatar" fill className="object-cover" />
-                      ) : (
-                        topThree[2].full_name?.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <span className="inline-block mt-3 px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full">
-                      #3 Bronze
-                    </span>
-                    <h3 className="text-base font-bold text-slate-900 mt-2">{topThree[2].full_name}</h3>
-                    <p className="text-xs text-emerald-700 font-bold mt-1">{topThree[2].hours_played || 0} Hours Played</p>
-                  </motion.div>
-                )}
-              </div>
-            )}
+                    {/* Rank & Player Info */}
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <span className={`font-mono text-xs font-extrabold w-6 ${
+                        isTop1 ? 'text-emerald-700' : isTop3 ? 'text-slate-700' : 'text-slate-400'
+                      }`}>
+                        {rankNum}
+                      </span>
 
-            {/* Complete Ranking List */}
-            {restList.length > 0 && (
-              <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-4xl mx-auto shadow-xl">
-                <div className="space-y-2">
-                  {restList.map((player, idx) => (
-                    <div
-                      key={player.customer_id || idx}
-                      className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200/60 rounded-2xl text-xs hover:border-emerald-300 transition-all"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="w-8 font-bold text-slate-400 text-sm">#{idx + 4}</span>
-                        <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-white overflow-hidden relative">
-                          {player.avatar_url ? (
-                            <Image src={player.avatar_url} alt="Avatar" fill className="object-cover" />
-                          ) : (
-                            player.full_name?.charAt(0).toUpperCase()
-                          )}
-                        </div>
-                        <span className="font-semibold text-slate-900 text-sm">{player.full_name}</span>
+                      <div className="relative w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+                        {player.avatar_url ? (
+                          <Image src={player.avatar_url} alt={player.full_name} fill className="object-cover" />
+                        ) : (
+                          (player.full_name || 'P').charAt(0).toUpperCase()
+                        )}
                       </div>
 
-                      <div className="text-right">
-                        <span className="font-extrabold text-emerald-700 text-sm block">
-                          {player.hours_played || 0} hrs
+                      <div className="min-w-0">
+                        <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
+                          {player.full_name}
                         </span>
-                        <span className="text-[10px] text-slate-500">
-                          {player.total_bookings || 0} sessions
-                        </span>
+                        {player.total_bookings > 0 && (
+                          <span className="text-[10px] text-slate-400 block">
+                            {player.total_bookings} session{player.total_bookings > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+
+                    {/* Hours Played */}
+                    <div className="text-right shrink-0 pl-3">
+                      <span className="font-extrabold text-emerald-600 text-sm sm:text-base">
+                        {player.hours_played || 0}h
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Subtle Book Slot CTA */}
+            <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+              <Link
+                href="/book-now"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl shadow-2xs transition-all"
+              >
+                Play & Climb Leaderboard &rarr;
+              </Link>
+            </div>
+          </motion.div>
         ) : (
-          /* CENTERED EMPTY STATE FORMATTED IN EXACT 3 BALANCED LINES PER DIRECTIVE 29 */
-          <div className="text-center py-16 bg-white border border-slate-200/80 rounded-3xl max-w-md mx-auto shadow-xl px-6">
-            <Trophy size={44} className="mx-auto text-amber-500 mb-3" />
-            <h3 className="text-lg font-bold text-slate-900">Complex Leaderboard</h3>
-            
-            <p className="text-xs text-slate-600 mt-3 leading-relaxed max-w-xs mx-auto">
+          /* EMPTY STATE */
+          <div className="text-center py-16 bg-white border border-slate-200/80 rounded-3xl max-w-md mx-auto shadow-sm px-6">
+            <Trophy size={36} className="mx-auto text-amber-500 mb-2" />
+            <h3 className="text-base font-bold text-slate-900">Complex Leaderboard</h3>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed max-w-xs mx-auto">
               No players have completed a facility session yet.<br />
-              Book a slot and play to claim the #1 rank!
+              Book a slot to claim the #1 rank!
             </p>
-
             <Link
               href="/book-now"
-              className="inline-block mt-6 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all uppercase tracking-wider"
+              className="inline-block mt-5 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all uppercase tracking-wider"
             >
-              BOOK NOW
+              BOOK A SLOT
             </Link>
           </div>
         )}

@@ -34,6 +34,18 @@ export default function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Body scroll lock on mobile drawer open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileMenuOpen])
+
   return (
     <>
       {/* FLOATING EMERALD GLASS NAVBAR DETACHED FROM VIEWPORT EDGES */}
@@ -46,7 +58,7 @@ export default function Navigation() {
         }`}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 bg-emerald-950/75 backdrop-blur-xl border border-emerald-500/30 shadow-2xl shadow-emerald-950/50">
+          <div className="flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 bg-[#062615]/80 backdrop-blur-xl border border-emerald-500/25 shadow-2xl shadow-emerald-950/40">
             {/* Logo ONLY — No text beside the logo */}
             <Link href="/" className="flex items-center group shrink-0" title="Maqbool Sports Complex">
               <div className="relative w-10 h-10 overflow-hidden transition-transform duration-200 group-hover:scale-105">
@@ -236,12 +248,12 @@ export default function Navigation() {
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute right-0 top-0 bottom-0 w-[280px] bg-slate-950 border-l border-emerald-500/20 p-6 flex flex-col justify-between"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="absolute right-0 top-0 bottom-0 w-[285px] bg-[#072b17]/95 backdrop-blur-2xl border-l border-emerald-500/25 p-6 flex flex-col justify-between shadow-2xl"
             >
               <div>
-                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                  <div className="relative w-8 h-8">
+                <div className="flex items-center justify-between pb-4 border-b border-emerald-500/20">
+                  <div className="relative w-9 h-9">
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
                       alt="MSC Logo"
@@ -249,12 +261,12 @@ export default function Navigation() {
                       className="object-contain"
                     />
                   </div>
-                  <button onClick={() => setMobileMenuOpen(false)} className="p-1 text-slate-400 hover:text-white">
+                  <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-white/10">
                     <X size={20} />
                   </button>
                 </div>
 
-                <nav className="mt-6 space-y-1">
+                <nav className="mt-6 space-y-1.5">
                   {navItems.map((item) => {
                     const isActive = pathname === item.href
                     return (
@@ -263,7 +275,7 @@ export default function Navigation() {
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
                         className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                          isActive ? 'bg-emerald-900/60 text-emerald-400 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                          isActive ? 'bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-500/30' : 'text-emerald-100/80 hover:text-white hover:bg-white/10'
                         }`}
                       >
                         {item.name}
@@ -273,20 +285,20 @@ export default function Navigation() {
                 </nav>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 space-y-2">
+              <div className="pt-4 border-t border-emerald-500/20 space-y-2">
                 {!user ? (
                   <>
                     <Link
                       href="/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-slate-900 text-white border border-slate-700"
+                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-white/10 text-white border border-emerald-500/30 hover:bg-white/15 transition-all"
                     >
                       Login
                     </Link>
                     <Link
                       href="/register"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-emerald-600 text-white"
+                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all"
                     >
                       Register
                     </Link>
@@ -297,7 +309,7 @@ export default function Navigation() {
                       setMobileMenuOpen(false)
                       logout()
                     }}
-                    className="w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-red-500/10 border border-red-500/30 text-red-400"
+                    className="w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 transition-all"
                   >
                     Sign Out
                   </button>
