@@ -48,7 +48,7 @@ export default function Navigation() {
 
   return (
     <>
-      {/* FLOATING EMERALD GLASS NAVBAR DETACHED FROM VIEWPORT EDGES */}
+      {/* FLOATING EMERALD GLASS NAVBAR */}
       <motion.nav
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -58,9 +58,27 @@ export default function Navigation() {
         }`}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 bg-[#062615]/80 backdrop-blur-xl border border-emerald-500/25 shadow-2xl shadow-emerald-950/40">
+          {/* Premium emerald glass panel — lighter, more translucent, natural emerald */}
+          <div
+            className="flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(16,78,42,0.52) 0%, rgba(10,55,28,0.60) 100%)',
+              backdropFilter: 'blur(18px)',
+              WebkitBackdropFilter: 'blur(18px)',
+              border: '1px solid rgba(52,211,153,0.18)',
+              boxShadow: '0 8px 32px rgba(10,50,24,0.28), inset 0 1px 0 rgba(110,231,183,0.10)',
+            }}
+          >
+            {/* Glass highlight reflection strip — top-left diagonal gleam */}
+            <div
+              className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+              style={{
+                background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.22) 30%, rgba(110,231,183,0.10) 70%, transparent 100%)',
+              }}
+            />
+
             {/* Logo ONLY — No text beside the logo */}
-            <Link href="/" className="flex items-center group shrink-0" title="Maqbool Sports Complex">
+            <Link href="/" className="flex items-center group shrink-0 relative z-10" title="Maqbool Sports Complex">
               <div className="relative w-10 h-10 overflow-hidden transition-transform duration-200 group-hover:scale-105">
                 <Image
                   src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
@@ -73,7 +91,7 @@ export default function Navigation() {
             </Link>
 
             {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1 relative z-10">
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
@@ -81,9 +99,9 @@ export default function Navigation() {
                     key={item.name}
                     href={item.href}
                     className={`px-3.5 py-2 text-xs font-medium transition-all duration-200 relative group rounded-xl ${
-                      isActive 
+                      isActive
                         ? 'text-white bg-white/10'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                        : 'text-white/85 hover:text-white hover:bg-white/10'
                     }`}
                   >
                     {item.name}
@@ -96,8 +114,8 @@ export default function Navigation() {
             </div>
 
             {/* CTAs & User Profile */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* BLUE BOOK NOW CTA — VISIBLE ON MOBILE & DESKTOP PER DIRECTIVE */}
+            <div className="flex items-center gap-2 sm:gap-3 relative z-10">
+              {/* BOOK NOW CTA */}
               <Link
                 href="/book-now"
                 className="px-4 py-2 sm:px-5 sm:py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs sm:text-xs rounded-xl transition-all duration-200 shadow-lg shadow-sky-500/30 hover:shadow-sky-400/40 hover:scale-[1.02] active:scale-[0.98]"
@@ -116,7 +134,7 @@ export default function Navigation() {
                   </Link>
                   <Link
                     href="/register"
-                    className="px-3.5 py-2 text-xs font-semibold text-emerald-300 bg-emerald-900/60 border border-emerald-500/30 hover:bg-emerald-800/60 rounded-xl transition-all"
+                    className="px-3.5 py-2 text-xs font-semibold text-emerald-200 bg-emerald-800/50 border border-emerald-400/25 hover:bg-emerald-700/50 rounded-xl transition-all"
                   >
                     Register
                   </Link>
@@ -128,7 +146,7 @@ export default function Navigation() {
                 <div className="relative">
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors border border-emerald-500/30"
+                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors border border-emerald-400/25"
                   >
                     <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs overflow-hidden relative">
                       {profile?.avatar_url ? (
@@ -146,9 +164,13 @@ export default function Navigation() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-56 bg-slate-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden z-50 text-white py-2"
+                        className="absolute right-0 mt-2 w-56 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden z-50 text-white py-2"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(10,40,22,0.97) 0%, rgba(7,30,16,0.98) 100%)',
+                          boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.12)',
+                        }}
                       >
-                        <div className="px-4 py-3 border-b border-slate-800">
+                        <div className="px-4 py-3 border-b border-emerald-500/15">
                           <p className="text-xs font-semibold text-white truncate">
                             {profile?.full_name || 'MSC Player'}
                           </p>
@@ -203,7 +225,7 @@ export default function Navigation() {
                           )}
                         </div>
 
-                        <div className="pt-1 border-t border-slate-800">
+                        <div className="pt-1 border-t border-emerald-500/15">
                           <button
                             onClick={() => {
                               setProfileDropdownOpen(false)
@@ -234,25 +256,47 @@ export default function Navigation() {
         </div>
       </motion.nav>
 
-      {/* Mobile Drawer */}
+      {/* Premium Glass Mobile Drawer */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="fixed inset-0 z-40 md:hidden"
           >
-            <div className="fixed inset-0 bg-black/70" onClick={() => setMobileMenuOpen(false)} />
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/55 backdrop-blur-sm"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Floating Glass Drawer Panel */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="absolute right-0 top-0 bottom-0 w-[285px] bg-[#072b17]/95 backdrop-blur-2xl border-l border-emerald-500/25 p-6 flex flex-col justify-between shadow-2xl"
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute right-0 top-0 bottom-0 w-[285px] flex flex-col justify-between p-6 overflow-hidden"
+              style={{
+                background: 'linear-gradient(160deg, rgba(18,82,44,0.72) 0%, rgba(8,46,24,0.82) 60%, rgba(5,30,15,0.90) 100%)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                borderLeft: '1px solid rgba(52,211,153,0.18)',
+                boxShadow: '-8px 0 40px rgba(0,0,0,0.45), inset 1px 0 0 rgba(110,231,183,0.08)',
+              }}
             >
+              {/* Top highlight strip */}
+              <div
+                className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+                style={{
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.18) 50%, transparent 100%)',
+                }}
+              />
+
               <div>
-                <div className="flex items-center justify-between pb-4 border-b border-emerald-500/20">
+                <div className="flex items-center justify-between pb-4 border-b border-emerald-400/15">
                   <div className="relative w-9 h-9">
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
@@ -261,7 +305,10 @@ export default function Navigation() {
                       className="object-contain"
                     />
                   </div>
-                  <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-white/10">
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-white/10 transition-colors"
+                  >
                     <X size={20} />
                   </button>
                 </div>
@@ -274,9 +321,15 @@ export default function Navigation() {
                         key={item.name}
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                          isActive ? 'bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-500/30' : 'text-emerald-100/80 hover:text-white hover:bg-white/10'
+                        className={`block px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                          isActive
+                            ? 'text-white font-bold'
+                            : 'text-emerald-100/80 hover:text-white hover:bg-white/10'
                         }`}
+                        style={isActive ? {
+                          background: 'rgba(52,211,153,0.15)',
+                          border: '1px solid rgba(52,211,153,0.22)',
+                        } : {}}
                       >
                         {item.name}
                       </Link>
@@ -285,20 +338,25 @@ export default function Navigation() {
                 </nav>
               </div>
 
-              <div className="pt-4 border-t border-emerald-500/20 space-y-2">
+              <div className="pt-4 border-t border-emerald-400/15 space-y-2">
                 {!user ? (
                   <>
                     <Link
                       href="/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-white/10 text-white border border-emerald-500/30 hover:bg-white/15 transition-all"
+                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl text-white border border-emerald-400/20 hover:bg-white/10 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.07)' }}
                     >
                       Login
                     </Link>
                     <Link
                       href="/register"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all"
+                      className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl text-white shadow-md transition-all hover:opacity-90"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(34,197,94,0.85) 0%, rgba(16,144,64,0.90) 100%)',
+                        boxShadow: '0 4px 16px rgba(34,197,94,0.25)',
+                      }}
                     >
                       Register
                     </Link>
@@ -309,7 +367,8 @@ export default function Navigation() {
                       setMobileMenuOpen(false)
                       logout()
                     }}
-                    className="w-full py-2.5 text-center font-semibold text-xs rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 transition-all"
+                    className="w-full py-2.5 text-center font-semibold text-xs rounded-xl text-red-300 hover:bg-red-500/20 transition-all border border-red-500/25"
+                    style={{ background: 'rgba(239,68,68,0.10)' }}
                   >
                     Sign Out
                   </button>

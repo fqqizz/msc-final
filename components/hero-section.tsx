@@ -33,19 +33,19 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   })
 
   useEffect(() => {
-    // Precise ~2.7s total cinematic duration
-    // 0.0s - 0.95s: Stage 1 — Full MSC Logo centered and breathing
-    // 0.95s: Stage 2 — "LET THE GAME" (White)
-    // 1.25s: Stage 3 — "BEGIN" (MSC Green)
-    // 1.95s: Stage 4 — Full lockup holds in cinematic harmony
-    // 2.45s: Smooth exit fade into the homepage
-    // 2.75s: Complete & unmount
-    const t2 = setTimeout(() => setPhase(2), 950)
-    const t3 = setTimeout(() => setPhase(3), 1250)
-    const t4 = setTimeout(() => setPhase(4), 1950)
+    // Precise ~2.0s total cinematic duration
+    // 0.0s - 0.65s: Stage 1 — Full MSC Logo centered and breathing
+    // 0.65s: Stage 2 — "LET THE GAME" (White)
+    // 0.90s: Stage 3 — "BEGIN" (MSC Green)
+    // 1.35s: Stage 4 — Full lockup holds in cinematic harmony
+    // 1.65s: Smooth exit fade into the homepage
+    // 2.00s: Complete & unmount
+    const t2 = setTimeout(() => setPhase(2), 650)
+    const t3 = setTimeout(() => setPhase(3), 900)
+    const t4 = setTimeout(() => setPhase(4), 1350)
     const tDone = setTimeout(() => {
       onCompleteRef.current?.()
-    }, 2750)
+    }, 2000)
 
     return () => {
       clearTimeout(t2)
@@ -62,7 +62,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
       style={GPU_ACCELERATED}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4, ease: 'easeInOut' }}
+      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
     >
       {/* Subtle ambient vignette */}
       <div
@@ -151,7 +151,7 @@ const IntroAnimation = memo(function IntroAnimation({ onComplete }: { onComplete
   )
 })
 
-// Natural speed video background that starts preloading immediately with subtle cinematic rate (0.92x)
+// Cinematic-paced video background — 0.82x playback rate for a subtle slow-motion feel
 const VideoBackground = memo(function VideoBackground({ 
   onReady 
 }: { 
@@ -163,8 +163,8 @@ const VideoBackground = memo(function VideoBackground({
 
   const handleLoadedData = useCallback(() => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = 0.92
-      videoRef.current.defaultPlaybackRate = 0.92
+      videoRef.current.playbackRate = 0.82
+      videoRef.current.defaultPlaybackRate = 0.82
       videoRef.current.play().then(() => {
         setIsPlaying(true)
         onReady()
@@ -179,8 +179,8 @@ const VideoBackground = memo(function VideoBackground({
     const video = videoRef.current
     if (!video) return
 
-    video.playbackRate = 0.92
-    video.defaultPlaybackRate = 0.92
+    video.playbackRate = 0.82
+    video.defaultPlaybackRate = 0.82
 
     const playPromise = video.play()
     if (playPromise !== undefined) {
