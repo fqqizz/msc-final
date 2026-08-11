@@ -32,55 +32,80 @@ export default function Footer() {
 
   return (
     <footer className="relative">
-      {/* Final CTA Section - Dark */}
-      <div className="relative py-24 overflow-hidden bg-[#050505]">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-[#2BA84A]/15 to-transparent blur-[100px]" />
+      {/* Final CTA Section - Refined Premium MSC Athletic Direction */}
+      <div className="relative py-20 sm:py-28 md:py-32 overflow-hidden bg-[#06120b] border-t border-emerald-500/10">
+        {/* Soft Ambient Radial Atmosphere */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] sm:w-[700px] h-[350px] sm:h-[450px] bg-emerald-500/10 rounded-full blur-[120px] transform-gpu" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(43,168,74,0.06)_0%,rgba(6,18,11,0.95)_75%)]" />
         </div>
         
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
+          {/* Heading */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 22 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-1 sm:space-y-2"
           >
-            <h2 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white tracking-tight leading-none">
+            <h2 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-white tracking-wide uppercase leading-[0.95] drop-shadow-sm">
               THE GAME
             </h2>
-            <h2 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-[#2BA84A] tracking-tight leading-none mt-2">
+            <h2 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-[#2BA84A] tracking-wide uppercase leading-[0.95] drop-shadow-[0_0_35px_rgba(43,168,74,0.25)]">
               STARTS HERE
             </h2>
           </motion.div>
           
+          {/* Subtitle */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="mt-8 text-xl text-white/60"
+            transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-emerald-100/70 font-medium tracking-wide max-w-md mx-auto"
           >
             Maqbool Sports Complex
           </motion.p>
 
+          {/* Refined CTAs */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
+            transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-sm sm:max-w-md mx-auto px-2"
           >
-            <Link
-              href="/book-now"
-              className="px-10 py-4 bg-[#2BA84A] text-white font-semibold rounded-xl btn-glow hover:bg-[#146B3A] transition-all text-lg"
+            {/* Primary CTA: Book Your Slot */}
+            <motion.div
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="w-full sm:w-auto"
             >
-              Book Your Slot
-            </Link>
-            <Link
-              href="/facilities"
-              className="px-10 py-4 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 transition-all text-lg"
+              <Link
+                href="/book-now"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 sm:py-3.5 bg-[#2BA84A] hover:bg-[#23903e] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-950/60 hover:shadow-emerald-500/25 transition-all duration-200"
+              >
+                <span>Book Your Slot</span>
+                <span className="text-xs">&rarr;</span>
+              </Link>
+            </motion.div>
+
+            {/* Secondary CTA: Explore Facilities */}
+            <motion.div
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="w-full sm:w-auto"
             >
-              Explore Facilities
-            </Link>
+              <Link
+                href="/facilities"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 sm:py-3.5 bg-[#0e2419]/80 hover:bg-[#133324] border border-emerald-500/25 hover:border-emerald-500/40 text-emerald-100 hover:text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md backdrop-blur-md transition-all duration-200"
+              >
+                <span>Explore Facilities</span>
+              </Link>
+            </motion.div>
           </motion.div>
         </div>
       </div>

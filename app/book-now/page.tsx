@@ -452,7 +452,8 @@ export default function BookNowPage() {
       <section className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 w-full relative z-10">
         {/* Minimal Progress Indicator */}
         <div className="mb-8 bg-[#0d2217]/85 backdrop-blur-xl border border-emerald-500/20 rounded-2xl p-4 shadow-xl shadow-black/30">
-          <div className="flex items-center justify-between overflow-x-auto text-xs font-semibold">
+          {/* Horizontally swipeable step labels with zero native scrollbar track */}
+          <div className="flex items-center justify-between overflow-x-auto text-xs font-semibold no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1">
             {stageTitles.map((stName, idx) => {
               const stNum = idx + 1
               const isActive = stage === stNum
@@ -476,6 +477,15 @@ export default function BookNowPage() {
                 </div>
               )
             })}
+          </div>
+
+          {/* MSC Booking Progress Fill Bar */}
+          <div className="w-full bg-[#07170f] h-1.5 rounded-full mt-3 overflow-hidden border border-emerald-500/10">
+            <motion.div
+              className="bg-emerald-500 h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(43,168,74,0.7)]"
+              initial={false}
+              animate={{ width: `${(stage / stageTitles.length) * 100}%` }}
+            />
           </div>
         </div>
 

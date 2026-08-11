@@ -184,6 +184,15 @@
   transition: all 0.3s ease;
 }
 
+/* Cross-browser scrollbar hiding */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Safe area padding for mobile devices */
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
