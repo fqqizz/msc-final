@@ -197,7 +197,7 @@ export default function BookNowPage() {
               label: `${h12}:00 ${ampm} - ${nextH}:00 ${nextAmpm}`,
               startTimeStr: slot.start_time,
               endTimeStr: slot.end_time,
-              price: Number(slot.price || (selectedVenue.sport_type === 'football' ? 999 : 299))
+              price: Number(slot.price || (selectedVenue.base_price ? Number(selectedVenue.base_price) : (selectedVenue.sport_type === 'football' ? 999 : 299)))
             }
           })
 
@@ -247,7 +247,7 @@ export default function BookNowPage() {
       const pricingRules = priceRulesRes.data || []
 
       const computed: SlotItem[] = []
-      const defaultBase = selectedVenue.sport_type === 'football' ? 999 : 299
+      const defaultBase = selectedVenue.base_price ? Number(selectedVenue.base_price) : (selectedVenue.sport_type === 'football' ? 999 : 299)
 
       for (let h = 6; h <= 22; h++) {
         // Skip past slots for today
@@ -601,7 +601,7 @@ export default function BookNowPage() {
               <div className="flex flex-col gap-3 md:hidden px-1">
                 {venues.map((v) => {
                   const isSelected = selectedVenue?.id === v.id
-                  const basePrice = v.sport_type === 'football' ? 999 : 299
+                  const basePrice = v.base_price ? Number(v.base_price) : (v.sport_type === 'football' ? 999 : 299)
                   const imageSrc = VENUE_IMAGES[v.slug] || VENUE_IMAGES['football-turf']
 
                   return (
@@ -660,7 +660,7 @@ export default function BookNowPage() {
               <div className="hidden md:grid md:grid-cols-3 gap-6">
                 {venues.map((v) => {
                   const isSelected = selectedVenue?.id === v.id
-                  const basePrice = v.sport_type === 'football' ? 999 : 299
+                  const basePrice = v.base_price ? Number(v.base_price) : (v.sport_type === 'football' ? 999 : 299)
                   const imageSrc = VENUE_IMAGES[v.slug] || VENUE_IMAGES['football-turf']
 
                   return (

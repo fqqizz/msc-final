@@ -9,78 +9,72 @@ import Link from 'next/link'
 
 export default function TermsConditionsPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#061009] text-white">
       <Navigation />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-16 bg-gradient-to-b from-[#F8FAFB] to-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-block px-4 py-2 bg-[#E8F5EC] text-[#2BA84A] text-sm font-medium rounded-full mb-6">
-              Official Legal
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#0A0A0C] tracking-tight">
-              {termsAndConditions.title}
-            </h1>
-            <p className="mt-6 text-[#0A0A0C]/60 text-lg max-w-2xl mx-auto leading-relaxed">
-              {termsAndConditions.subtitle}
-            </p>
-          </motion.div>
+      <section className="relative pt-32 pb-16 bg-[#040d07] overflow-hidden border-b border-emerald-500/10 text-center">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[130px] transform-gpu" />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-6 shadow-sm backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Official Legal Rules
+          </span>
+          <h1 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl text-white tracking-wide uppercase leading-tight">
+            TERMS & <span className="text-[#2BA84A]">CONDITIONS</span>
+          </h1>
+          <p className="mt-5 text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            {termsAndConditions.subtitle}
+          </p>
         </div>
       </section>
 
       {/* Content */}
-      <section className="py-16">
+      <section className="py-16 sm:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Quick Summary Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-gradient-to-r from-[#2BA84A]/10 to-[#146B3A]/10 border border-[#2BA84A]/20 rounded-3xl p-6 sm:p-8 mb-12"
-          >
+          <div className="bg-[#0e2419]/90 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 mb-10 backdrop-blur-xl shadow-xl shadow-black/30">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#2BA84A] text-white flex items-center justify-center shrink-0">
-                <FileText size={24} />
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 flex items-center justify-center shrink-0">
+                <FileText size={22} />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#0A0A0C] mb-2">
+                <h2 className="text-lg sm:text-xl font-bold text-white mb-1.5">
                   {termsAndConditions.summary.highlight}
                 </h2>
-                <p className="text-[#0A0A0C]/70 text-sm leading-relaxed">
+                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
                   {termsAndConditions.summary.description}
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Sections List */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {termsAndConditions.sections.map((section, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-[#F8FAFB] rounded-2xl p-6 sm:p-8 border border-slate-100"
+                transition={{ delay: index * 0.04 }}
+                className="bg-[#0e2419]/90 border border-emerald-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-xl shadow-black/30"
               >
-                <h3 className="text-lg font-bold text-[#0A0A0C] mb-4 flex items-center gap-2.5">
-                  <CheckCircle2 size={18} className="text-[#2BA84A]" />
+                <h3 className="text-base sm:text-lg font-bold text-white mb-4 flex items-center gap-2.5">
+                  <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
                   {section.title}
                 </h3>
                 {Array.isArray(section.content) ? (
-                  <ul className="space-y-2.5 text-[#0A0A0C]/70 text-sm leading-relaxed list-disc pl-5 marker:text-[#2BA84A]">
+                  <ul className="space-y-2.5 text-slate-300 text-xs sm:text-sm leading-relaxed list-disc pl-5 marker:text-emerald-400">
                     {section.content.map((item, i) => (
                       <li key={i}>{item}</li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-[#0A0A0C]/70 text-sm leading-relaxed whitespace-pre-line">
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
                     {section.content}
                   </p>
                 )}
@@ -89,25 +83,20 @@ export default function TermsConditionsPage() {
           </div>
 
           {/* Contact Support */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-12 bg-slate-900 text-white rounded-3xl p-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6"
-          >
+          <div className="mt-12 bg-[#040d07] border border-emerald-500/20 rounded-3xl p-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
             <div>
-              <h3 className="text-xl font-bold">Questions about MSC policies or terms?</h3>
-              <p className="text-sm text-slate-300 mt-1">
-                Our support team is available all 7 days from 6:00 AM to 11:00 PM.
+              <h3 className="text-lg sm:text-xl font-bold text-white">Questions about MSC policies or terms?</h3>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                Our support team is available daily from 6:00 AM to 11:00 PM.
               </p>
             </div>
             <Link
               href="/contact"
-              className="px-6 py-3 bg-[#2BA84A] hover:bg-[#146B3A] text-white font-semibold text-xs rounded-xl transition-all shrink-0 inline-flex items-center gap-2"
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl shrink-0 transition-all"
             >
-              <Mail size={16} /> Contact MSC
+              Contact Support
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 

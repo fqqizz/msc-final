@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Metadata } from 'next'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import Image from 'next/image'
@@ -11,37 +10,37 @@ import { X, Play } from 'lucide-react'
 const images = [
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-9yWOKvvBNNBK6xIquOyQsdI5jRibpr.webp',
-    alt: 'Night match at MSC',
+    alt: 'Night match under floodlights at MSC',
     category: 'matches'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/contact-fsgvfbe8149b7d7aaf60a37248cac104cff70-nopehSpkqvMqC7oJJY6RAFFztOHa5x.png',
-    alt: 'MSC Turf Overview',
+    alt: 'MSC Turf Complex Overview',
     category: 'facility'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
-    alt: 'Players on turf',
+    alt: 'Football action on synthetic turf',
     category: 'matches'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%281%29-cTfRT8gpqovQtI1n8tjmfmQjPApiM5.webp',
-    alt: 'Turf installation',
+    alt: 'Turf surface close-up',
     category: 'facility'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
-    alt: 'View through net',
+    alt: 'Cricket Net 1 pitch & batting enclosure',
     category: 'facility'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/categoryww-11-5SQXOQi5VinDcWf4sCttNRzzVlb0gC.png',
-    alt: 'Wide turf view',
+    alt: 'Full turf perspective',
     category: 'facility'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
-    alt: 'Facility collage',
+    alt: 'Cricket Net 2 training enclosure',
     category: 'facility'
   },
 ]
@@ -55,12 +54,12 @@ const videos = [
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Video-151-w98Mi9ESSOejKPO4Dk6V8scjnpApbH.mp4',
     thumbnail: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-9yWOKvvBNNBK6xIquOyQsdI5jRibpr.webp',
-    title: 'Night Football'
+    title: 'Night Football under Lights'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Video-627-O0kafdXukxbEpiMjpg2FYJuT9PE5GQ.mp4',
     thumbnail: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/categoryww-11-5SQXOQi5VinDcWf4sCttNRzzVlb0gC.png',
-    title: 'Turf Overview'
+    title: 'Complex Aerial Overview'
   },
 ]
 
@@ -76,37 +75,41 @@ export default function GalleryPage() {
     : images.filter(img => img.category === activeCategory)
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#061009] text-white">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 bg-gradient-to-b from-[#F8FAFB] to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <span className="inline-block px-4 py-2 bg-[#E8F5EC] text-[#2BA84A] text-sm font-medium rounded-full mb-6">
-            Gallery
+      <section className="relative pt-32 pb-16 bg-[#040d07] overflow-hidden border-b border-emerald-500/10 text-center">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[130px] transform-gpu" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-6 shadow-sm backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Media Gallery
           </span>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#0A0A0C] tracking-tight">
-            Moments from the
-            <span className="text-[#2BA84A]"> Field</span>
+          <h1 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl text-white tracking-wide uppercase leading-tight">
+            MOMENTS FROM THE <span className="text-[#2BA84A]">FIELD</span>
           </h1>
-          <p className="mt-6 text-[#0A0A0C]/60 text-lg max-w-2xl mx-auto">
-            Explore our world-class facilities and see the action happening at Maqbool Sports Complex.
+          <p className="mt-5 text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            Explore our world-class facilities, training setups, and real match action in Baramulla.
           </p>
         </div>
       </section>
 
       {/* Category Filter */}
-      <section className="py-8 bg-white sticky top-20 z-30 border-b border-[#0A0A0C]/5">
+      <section className="py-6 bg-[#061009]/95 sticky top-20 z-30 border-b border-emerald-500/10 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`px-6 py-2 rounded-full text-sm font-medium capitalize transition-all ${
+                className={`px-5 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
                   activeCategory === category
-                    ? 'bg-[#2BA84A] text-white'
-                    : 'bg-[#F8FAFB] text-[#0A0A0C]/60 hover:text-[#0A0A0C]'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/50'
+                    : 'bg-[#0d2217] border border-emerald-500/20 text-slate-300 hover:text-white hover:border-emerald-400/40'
                 }`}
               >
                 {category}
@@ -116,76 +119,80 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Images Grid */}
-      <section className="py-16">
+      {/* Image Grid */}
+      <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-[#0A0A0C] mb-8">Photos</h2>
-          <motion.div 
-            layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-          >
-            <AnimatePresence>
-              {filteredImages.map((image, index) => (
-                <motion.div
-                  key={image.src}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                  className={`relative group cursor-pointer rounded-2xl overflow-hidden ${
-                    index === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
-                  }`}
-                  onClick={() => setSelectedImage(image.src)}
-                >
-                  <div className={`relative ${index === 0 ? 'aspect-square' : 'aspect-[4/3]'}`}>
-                    <Image
-                      src={image.src}
-                      alt={image.alt}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Videos Section */}
-      <section className="py-16 bg-[#F8FAFB]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-[#0A0A0C] mb-8">Videos</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos.map((video) => (
-              <div
-                key={video.src}
-                className="relative group cursor-pointer rounded-2xl overflow-hidden"
-                onClick={() => setSelectedVideo(video.src)}
+            {filteredImages.map((image, index) => (
+              <motion.div
+                key={image.src + index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05, duration: 0.5 }}
+                className="group relative aspect-[4/3] rounded-3xl overflow-hidden cursor-pointer bg-[#040d07] border border-emerald-500/20 hover:border-emerald-400/50 shadow-xl shadow-black/40 transition-all duration-300"
+                onClick={() => setSelectedImage(image.src)}
               >
-                <div className="relative aspect-video">
-                  <Image
-                    src={video.thumbnail}
-                    alt={video.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Play size={28} className="text-white ml-1" />
-                    </div>
-                  </div>
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#040d07]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <p className="text-white text-xs sm:text-sm font-semibold">{image.alt}</p>
                 </div>
-                <p className="mt-3 font-medium text-[#0A0A0C]">{video.title}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Image Lightbox */}
+      {/* Video Highlights */}
+      <section className="py-20 bg-[#040d07] border-t border-emerald-500/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-4 shadow-sm">
+              Cinematic Reel
+            </span>
+            <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-5xl text-white uppercase tracking-wide">
+              VIDEO <span className="text-[#2BA84A]">HIGHLIGHTS</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {videos.map((video, index) => (
+              <motion.div
+                key={video.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="group relative aspect-video rounded-3xl overflow-hidden cursor-pointer bg-[#061009] border border-emerald-500/20 hover:border-emerald-400/50 shadow-xl shadow-black/40"
+                onClick={() => setSelectedVideo(video.src)}
+              >
+                <Image
+                  src={video.thumbnail}
+                  alt={video.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-600/90 text-white flex items-center justify-center shadow-lg shadow-emerald-950/60 group-hover:scale-110 transition-transform">
+                    <Play size={24} className="fill-current ml-1" />
+                  </div>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4 text-white font-bold text-sm drop-shadow-md">
+                  {video.title}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Lightbox Modals */}
       <AnimatePresence>
         {selectedImage && (
           <motion.div
@@ -196,32 +203,17 @@ export default function GalleryPage() {
             onClick={() => setSelectedImage(null)}
           >
             <button
-              className="absolute top-4 right-4 p-2 text-white/80 hover:text-white"
               onClick={() => setSelectedImage(null)}
+              className="absolute top-6 right-6 p-2 text-white/80 hover:text-white bg-white/10 rounded-full transition-colors"
             >
-              <X size={32} />
+              <X size={24} />
             </button>
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative max-w-5xl w-full max-h-[90vh]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Image
-                src={selectedImage}
-                alt="Gallery image"
-                width={1200}
-                height={800}
-                className="w-full h-auto object-contain rounded-lg"
-              />
-            </motion.div>
+            <div className="relative w-full max-w-5xl aspect-[4/3] max-h-[85vh] rounded-2xl overflow-hidden">
+              <Image src={selectedImage} alt="Gallery view" fill className="object-contain" />
+            </div>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      {/* Video Lightbox */}
-      <AnimatePresence>
         {selectedVideo && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -231,25 +223,14 @@ export default function GalleryPage() {
             onClick={() => setSelectedVideo(null)}
           >
             <button
-              className="absolute top-4 right-4 p-2 text-white/80 hover:text-white z-10"
               onClick={() => setSelectedVideo(null)}
+              className="absolute top-6 right-6 p-2 text-white/80 hover:text-white bg-white/10 rounded-full transition-colors"
             >
-              <X size={32} />
+              <X size={24} />
             </button>
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative max-w-4xl w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <video
-                src={selectedVideo}
-                controls
-                autoPlay
-                className="w-full rounded-lg"
-              />
-            </motion.div>
+            <div className="relative w-full max-w-4xl aspect-video" onClick={(e) => e.stopPropagation()}>
+              <video src={selectedVideo} controls autoPlay className="w-full h-full rounded-2xl" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

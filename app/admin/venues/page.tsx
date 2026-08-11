@@ -125,7 +125,7 @@ export default function AdminVenuesPage() {
               <div className="flex justify-between text-slate-600">
                 <span>Base Rate:</span>
                 <span className="font-bold text-emerald-700">
-                  {venue.sport_type === 'football' ? '₹999/hour' : '₹299/hour'}
+                  {venue.base_price ? `₹${venue.base_price}/hour` : (venue.sport_type === 'football' ? '₹999/hour' : '₹299/hour')}
                 </span>
               </div>
               <div className="flex justify-between text-slate-600">

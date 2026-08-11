@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react'
+import { Instagram, Facebook, Mail, Phone, MapPin, ArrowRight } from 'lucide-react'
 
 const quickLinks = [
   { name: 'Home', href: '/' },
@@ -12,6 +12,7 @@ const quickLinks = [
   { name: 'Our Features', href: '/features' },
   { name: 'About Us', href: '/about' },
   { name: 'Gallery', href: '/gallery' },
+  { name: 'Leaderboard', href: '/leaderboard' },
 ]
 
 const supportLinks = [
@@ -31,7 +32,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="relative">
+    <footer className="relative bg-[#040c07] text-white">
       {/* Final CTA Section - Refined Premium MSC Athletic Direction */}
       <div className="relative py-20 sm:py-28 md:py-32 overflow-hidden bg-[#06120b] border-t border-emerald-500/10">
         {/* Soft Ambient Radial Atmosphere */}
@@ -110,14 +111,14 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Footer content - Light */}
-      <div className="bg-[#F8FAFB] border-t border-[#0A0A0C]/5">
+      {/* Footer content - Dark Carbon Theme */}
+      <div className="bg-[#040c07] border-t border-emerald-500/15">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
             {/* Logo and description */}
             <div className="lg:col-span-2">
-              <Link href="/" className="flex items-center gap-3 mb-4">
-                <div className="relative w-12 h-12 overflow-hidden">
+              <Link href="/" className="flex items-center gap-3 mb-4 group">
+                <div className="relative w-12 h-12 overflow-hidden transition-transform duration-200 group-hover:scale-105">
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
                     alt="MSC Logo"
@@ -126,12 +127,12 @@ export default function Footer() {
                   />
                 </div>
                 <div>
-                  <span className="text-[#0A0A0C] font-bold text-lg block">Maqbool Sports Complex</span>
-                  <p className="text-[#0A0A0C]/50 text-sm">Premier Sports Hub</p>
+                  <span className="text-white font-bold text-lg block">Maqbool Sports Complex</span>
+                  <p className="text-emerald-400/80 text-xs font-medium">Premier Sports Hub · Baramulla</p>
                 </div>
               </Link>
-              <p className="text-[#0A0A0C]/60 text-sm max-w-sm leading-relaxed">
-                Nestled amidst the scenic landscapes of Baramulla, our 10,000+ sq. ft. multi-sport turf is more than just a playing field - it&apos;s a space built out of love for the game.
+              <p className="text-slate-300 text-xs sm:text-sm max-w-sm leading-relaxed">
+                Nestled amidst the scenic mountain landscapes of Baramulla, our 10,000+ sq. ft. multi-sport turf is more than just a playing field - it&apos;s a space built out of love for the game.
               </p>
               
               {/* Social Links */}
@@ -140,7 +141,8 @@ export default function Footer() {
                   href="https://www.instagram.com/msc_baramulla"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white border border-[#0A0A0C]/10 flex items-center justify-center text-[#0A0A0C]/60 hover:text-[#2BA84A] hover:border-[#2BA84A]/30 transition-all"
+                  aria-label="Instagram"
+                  className="w-10 h-10 rounded-xl bg-[#0d2217] border border-emerald-500/20 flex items-center justify-center text-emerald-300 hover:text-white hover:border-emerald-400/50 hover:bg-[#133324] transition-all"
                 >
                   <Instagram size={18} />
                 </a>
@@ -148,7 +150,8 @@ export default function Footer() {
                   href="https://www.facebook.com/profile.php?id=61579371065902"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white border border-[#0A0A0C]/10 flex items-center justify-center text-[#0A0A0C]/60 hover:text-[#2BA84A] hover:border-[#2BA84A]/30 transition-all"
+                  aria-label="Facebook"
+                  className="w-10 h-10 rounded-xl bg-[#0d2217] border border-emerald-500/20 flex items-center justify-center text-emerald-300 hover:text-white hover:border-emerald-400/50 hover:bg-[#133324] transition-all"
                 >
                   <Facebook size={18} />
                 </a>
@@ -157,13 +160,13 @@ export default function Footer() {
 
             {/* Quick Links */}
             <div>
-              <h4 className="text-[#0A0A0C] font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-3">
+              <h4 className="text-white font-bold text-sm tracking-wide uppercase mb-4">Quick Links</h4>
+              <ul className="space-y-2.5">
                 {quickLinks.map((item) => (
                   <li key={item.name}>
                     <Link 
                       href={item.href}
-                      className="text-[#0A0A0C]/60 text-sm hover:text-[#2BA84A] transition-colors"
+                      className="text-slate-400 text-xs sm:text-sm hover:text-emerald-400 transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -174,28 +177,23 @@ export default function Footer() {
 
             {/* Support */}
             <div>
-              <h4 className="text-[#0A0A0C] font-semibold mb-4">Support</h4>
-              <ul className="space-y-3">
+              <h4 className="text-white font-bold text-sm tracking-wide uppercase mb-4">Support & Rules</h4>
+              <ul className="space-y-2.5">
                 {supportLinks.map((item) => (
                   <li key={item.name}>
                     <Link 
                       href={item.href}
-                      className="text-[#0A0A0C]/60 text-sm hover:text-[#2BA84A] transition-colors"
+                      className="text-slate-400 text-xs sm:text-sm hover:text-emerald-400 transition-colors"
                     >
                       {item.name}
                     </Link>
                   </li>
                 ))}
-              </ul>
-              
-              <h4 className="text-[#0A0A0C] font-semibold mb-4 mt-6">Legal</h4>
-              <ul className="space-y-3">
                 {legalLinks.map((item) => (
                   <li key={item.name}>
                     <Link 
                       href={item.href}
-                      data-policy={item.policy}
-                      className="text-[#0A0A0C]/60 text-sm hover:text-[#2BA84A] transition-colors cursor-pointer"
+                      className="text-slate-400 text-xs sm:text-sm hover:text-emerald-400 transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -206,51 +204,39 @@ export default function Footer() {
 
             {/* Contact */}
             <div>
-              <h4 className="text-[#0A0A0C] font-semibold mb-4">Contact</h4>
-              <ul className="space-y-4">
+              <h4 className="text-white font-bold text-sm tracking-wide uppercase mb-4">Contact Info</h4>
+              <ul className="space-y-3 text-xs sm:text-sm text-slate-300">
                 <li className="flex items-start gap-3">
-                  <MapPin size={18} className="text-[#2BA84A] mt-0.5 flex-shrink-0" />
-                  <span className="text-[#0A0A0C]/60 text-sm">
-                    Sangri Colony, Baramulla,<br />
-                    Jammu and Kashmir, 193101
-                  </span>
+                  <MapPin size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Sangri Colony, Baramulla, Jammu and Kashmir, 193101</span>
                 </li>
-                <li>
-                  <a href="tel:+919682558775" className="flex items-center gap-3 text-[#0A0A0C]/60 text-sm hover:text-[#2BA84A] transition-colors">
-                    <Phone size={18} className="text-[#2BA84A]" />
+                <li className="flex items-center gap-3">
+                  <Phone size={16} className="text-emerald-400 shrink-0" />
+                  <a href="tel:+919682558775" className="hover:text-emerald-400 transition-colors">
                     +91 9682558775
                   </a>
                 </li>
-                <li>
-                  <a href="mailto:info@maqboolsports.in" className="flex items-center gap-3 text-[#0A0A0C]/60 text-sm hover:text-[#2BA84A] transition-colors">
-                    <Mail size={18} className="text-[#2BA84A]" />
+                <li className="flex items-center gap-3">
+                  <Mail size={16} className="text-emerald-400 shrink-0" />
+                  <a href="mailto:info@maqboolsports.in" className="hover:text-emerald-400 transition-colors">
                     info@maqboolsports.in
                   </a>
                 </li>
                 <li className="pt-2">
-                  <span className="inline-block px-3 py-1.5 bg-[#2BA84A]/10 text-[#2BA84A] text-sm font-medium rounded-lg">
-                    Open: 6 AM - 11 PM
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Open Daily: 6:00 AM – 11:00 PM
                   </span>
                 </li>
               </ul>
             </div>
           </div>
 
-          {/* Bottom bar */}
-          <div className="mt-12 pt-8 border-t border-[#0A0A0C]/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-[#0A0A0C]/50 text-sm">
-              &copy; {currentYear} Maqbool Sports Complex. All rights reserved.
-            </p>
-            <p className="text-[#0A0A0C]/40 text-sm">
-              Built by{' '}
-              <a 
-                href="https://www.instagram.com/upsurge.ai/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-[#2BA84A] hover:underline font-medium"
-              >
-                UpSurge
-              </a>
+          {/* Bottom Bar */}
+          <div className="mt-12 pt-8 border-t border-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <p>© {currentYear} Maqbool Sports Complex. All rights reserved.</p>
+            <p className="flex items-center gap-4">
+              <span>Authoritative Kashmir Sports Infrastructure</span>
             </p>
           </div>
         </div>

@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ShieldAlert, FileText, RefreshCw, CheckCircle2, ArrowUpRight } from 'lucide-react'
-import Link from 'next/link'
+import { X, ShieldAlert, FileText, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { POLICIES, PolicyDocument } from '@/data/policies'
 
 export type PolicyType = 'cancellation' | 'refund' | 'terms'
@@ -76,27 +75,14 @@ export default function PolicyModal() {
 
   const policy: PolicyDocument = POLICIES[activeType] || POLICIES.cancellation
 
-  const getDedicatedUrl = (type: PolicyType) => {
-    switch (type) {
-      case 'cancellation':
-        return '/cancellation-policy'
-      case 'refund':
-        return '/refund-policy'
-      case 'terms':
-        return '/terms-conditions'
-      default:
-        return '/cancellation-policy'
-    }
-  }
-
   const getPolicyIcon = (type: PolicyType) => {
     switch (type) {
       case 'cancellation':
-        return <ShieldAlert className="text-emerald-700" size={22} />
+        return <ShieldAlert className="text-emerald-400" size={22} />
       case 'refund':
-        return <RefreshCw className="text-emerald-700" size={22} />
+        return <RefreshCw className="text-emerald-400" size={22} />
       case 'terms':
-        return <FileText className="text-emerald-700" size={22} />
+        return <FileText className="text-emerald-400" size={22} />
     }
   }
 
@@ -111,7 +97,7 @@ export default function PolicyModal() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             aria-hidden="true"
           />
 
@@ -124,19 +110,19 @@ export default function PolicyModal() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="policy-modal-title"
-            className="relative w-full max-w-2xl max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col z-10 text-slate-900"
+            className="relative w-full max-w-2xl max-h-[85vh] bg-[#0e2419] rounded-3xl shadow-2xl border border-emerald-500/30 overflow-hidden flex flex-col z-10 text-white"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/80">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-emerald-500/20 bg-[#07170f]/90">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
                   {getPolicyIcon(activeType)}
                 </div>
                 <div>
-                  <h3 id="policy-modal-title" className="text-lg font-bold text-slate-900 leading-tight">
+                  <h3 id="policy-modal-title" className="text-base sm:text-lg font-bold text-white leading-tight">
                     {policy.title}
                   </h3>
-                  <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">
+                  <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
                     Maqbool Sports Complex
                   </span>
                 </div>
@@ -144,7 +130,7 @@ export default function PolicyModal() {
 
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-200/60 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#07170f] border border-emerald-500/20 hover:bg-emerald-950 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
                 aria-label="Close modal"
               >
                 <X size={18} />
@@ -152,21 +138,21 @@ export default function PolicyModal() {
             </div>
 
             {/* Quick Summary Pill / Alert */}
-            <div className="px-6 py-3 bg-emerald-50/60 border-b border-emerald-100/60 flex items-start gap-2.5 text-xs text-emerald-950">
-              <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+            <div className="px-6 py-3 bg-emerald-950/60 border-b border-emerald-500/20 flex items-start gap-2.5 text-xs text-emerald-200">
+              <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="font-semibold text-emerald-900">{policy.summary.highlight}: </strong>
+                <strong className="font-bold text-white">{policy.summary.highlight}: </strong>
                 <span>{policy.summary.description}</span>
               </div>
             </div>
 
             {/* Scrollable Policy Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 text-xs text-slate-700 leading-relaxed">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 text-xs text-slate-300 leading-relaxed [scrollbar-width:thin] [scrollbar-color:rgba(43,168,74,0.3)_transparent]">
               {policy.sections.map((section, idx) => (
                 <div key={idx} className="space-y-2">
-                  <h4 className="font-bold text-slate-900 text-sm">{section.title}</h4>
+                  <h4 className="font-bold text-white text-sm">{section.title}</h4>
                   {Array.isArray(section.content) ? (
-                    <ul className="space-y-1.5 pl-3 list-disc marker:text-emerald-500">
+                    <ul className="space-y-1.5 pl-3 list-disc marker:text-emerald-400">
                       {section.content.map((item, i) => (
                         <li key={i}>{item}</li>
                       ))}
@@ -179,7 +165,7 @@ export default function PolicyModal() {
             </div>
 
             {/* Footer with Close Button */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50 text-xs">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-emerald-500/20 bg-[#07170f] text-xs">
               <span className="text-slate-400 font-medium">
                 Maqbool Sports Complex
               </span>
@@ -188,7 +174,7 @@ export default function PolicyModal() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors shadow-xs"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors shadow-lg shadow-emerald-950/60"
                 >
                   Understood & Close
                 </button>

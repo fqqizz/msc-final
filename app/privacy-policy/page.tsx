@@ -12,8 +12,8 @@ const sections = [
     content: `We may collect the following types of information:
 
 • Personal Information: Name, phone number, email address, age, and other details provided during registration, bookings, or membership.
-• Payment Information: Billing details required for booking or purchasing services.
-• Usage Data: Information about your interactions with our website, booking system, or mobile application.
+• Payment Information: Billing details required for booking or purchasing services (processed securely via authorized payment gateways).
+• Usage Data: Information about your interactions with our website and booking system.
 • Security Monitoring: CCTV footage within our premises for safety and security purposes.`
   },
   {
@@ -21,8 +21,8 @@ const sections = [
     title: '2. How We Use Your Information',
     content: `Your information may be used for:
 
-• Processing turf/ground bookings and managing memberships.
-• Communicating updates, schedules, and special offers.
+• Processing turf/ground bookings and managing slot schedules.
+• Communicating updates, booking confirmations, and schedules.
 • Ensuring security and safety within the sports complex.
 • Improving our facilities, services, and website experience.
 • Complying with legal and regulatory requirements.`
@@ -32,7 +32,7 @@ const sections = [
     title: '3. Sharing of Information',
     content: `We do not sell or rent your personal information. However, we may share your data:
 
-• With trusted service providers for payment processing or IT support.
+• With trusted service providers for payment processing and automated SMS/WhatsApp booking delivery.
 • With law enforcement or authorities, if required by law.
 • Internally, to improve services and enhance your experience.`
   },
@@ -41,14 +41,14 @@ const sections = [
     title: '4. Data Protection & Security',
     content: `We implement strict measures to protect your personal information, including:
 
-• Secure payment gateways for transactions.
-• Limited access to sensitive data by authorized staff only.
-• CCTV monitoring for the safety of all visitors.`
+• Secure 256-bit encrypted payment gateways for transactions.
+• Limited access to sensitive data by authorized management staff only.
+• 24/7 CCTV monitoring for the physical safety of all visitors.`
   },
   {
     icon: Cookie,
-    title: '5. Cookies & Website Tracking',
-    content: `Our website may use cookies to enhance your browsing experience and analyze visitor traffic. You may disable cookies through your browser settings, but some features may not function properly.`
+    title: '5. Cookies & Tracking',
+    content: `Our website may use cookies to maintain your login session and enhance your browsing experience. You may disable cookies through your browser settings, but some features may not function properly.`
   },
   {
     icon: Shield,
@@ -56,8 +56,8 @@ const sections = [
     content: `You have the right to:
 
 • Access and update your personal information.
-• Request deletion of your personal data (subject to legal requirements).
-• Opt-out of promotional communications.`
+• Request deletion of your personal account data (subject to legal and financial compliance).
+• Opt-out of non-essential promotional communications.`
   },
   {
     icon: RefreshCw,
@@ -68,50 +68,49 @@ const sections = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#061009] text-white">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 bg-gradient-to-b from-[#F8FAFB] to-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-block px-4 py-2 bg-[#E8F5EC] text-[#2BA84A] text-sm font-medium rounded-full mb-6">
-              Legal
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#0A0A0C] tracking-tight">
-              Privacy Policy
-            </h1>
-            <p className="mt-6 text-[#0A0A0C]/60 text-lg max-w-2xl mx-auto leading-relaxed">
-              At Maqbool Sports Complex, we respect your privacy and are committed to protecting the personal information you share with us.
-            </p>
-          </motion.div>
+      <section className="relative pt-32 pb-16 bg-[#040d07] overflow-hidden border-b border-emerald-500/10 text-center">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[130px] transform-gpu" />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-6 shadow-sm backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Legal Documentation
+          </span>
+          <h1 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl text-white tracking-wide uppercase leading-tight">
+            PRIVACY <span className="text-[#2BA84A]">POLICY</span>
+          </h1>
+          <p className="mt-5 text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            At Maqbool Sports Complex, we respect your privacy and are committed to protecting the personal information you share with us.
+          </p>
         </div>
       </section>
 
       {/* Content */}
-      <section className="py-16">
+      <section className="py-16 sm:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-8">
+          <div className="space-y-6">
             {sections.map((section, index) => (
               <motion.div
                 key={section.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-[#F8FAFB] rounded-2xl p-6 sm:p-8"
+                transition={{ delay: index * 0.05 }}
+                className="bg-[#0e2419]/90 border border-emerald-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-xl shadow-black/30"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#E8F5EC] flex items-center justify-center flex-shrink-0">
-                    <section.icon className="text-[#2BA84A]" size={24} />
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 text-emerald-400">
+                    <section.icon size={22} />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-xl font-bold text-[#0A0A0C] mb-4">{section.title}</h2>
-                    <div className="text-[#0A0A0C]/70 whitespace-pre-line leading-relaxed">
+                    <h2 className="text-lg sm:text-xl font-bold text-white mb-3">{section.title}</h2>
+                    <div className="text-slate-300 text-xs sm:text-sm whitespace-pre-line leading-relaxed">
                       {section.content}
                     </div>
                   </div>
@@ -121,26 +120,20 @@ export default function PrivacyPolicyPage() {
           </div>
 
           {/* Contact Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-12 bg-[#0A0A0C] rounded-2xl p-8 text-center"
-          >
-            <div className="w-16 h-16 rounded-full bg-[#2BA84A]/20 flex items-center justify-center mx-auto mb-6">
-              <Mail className="text-[#2BA84A]" size={28} />
+          <div className="mt-10 bg-[#040d07] border border-emerald-500/20 rounded-3xl p-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto mb-4 text-emerald-400">
+              <Mail size={24} />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-4">8. Contact Us</h3>
-            <p className="text-white/70 mb-6">
+            <h3 className="text-xl font-bold text-white mb-2">8. Contact Us</h3>
+            <p className="text-slate-300 text-xs sm:text-sm mb-4">
               If you have any questions or concerns about this Privacy Policy, please contact us:
             </p>
-            <div className="space-y-2 text-white/80">
-              <p>Maqbool Sports Complex</p>
+            <div className="space-y-1 text-slate-200 text-xs sm:text-sm">
+              <p className="font-bold text-white">Maqbool Sports Complex</p>
               <p>Sangri Colony, Baramulla, Jammu and Kashmir, 193101</p>
-              <p>Phone: +91 9682558775</p>
-              <p>Email: info@maqboolsports.in</p>
+              <p>Phone: +91 9682558775 | Email: info@maqboolsports.in</p>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 

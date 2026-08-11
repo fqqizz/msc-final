@@ -9,52 +9,28 @@ import Link from 'next/link'
 
 const faqs = [
   {
-    question: 'How can I book a turf slot?',
-    answer: 'You can easily book any turf by selecting your preferred date and time on our website. Just choose the turf, check availability, and confirm your booking. You can also visit our facility or call us at +91 9682558775 to make a booking.'
+    question: 'How can I book a turf or cricket net slot?',
+    answer: 'You can easily book any turf or cricket net by choosing your preferred date, venue, and 1-hour time slot on our live booking calendar. You can pay securely in full or with a 50% online advance to lock your slot instantly.'
   },
   {
     question: 'What is the duration of each booking slot?',
-    answer: 'Each booking slot is for 1 hour, but you can book multiple slots if you need more time. Simply select consecutive time slots during the booking process.'
+    answer: 'Standard booking slots are for 1 hour. You can book multiple consecutive hours during the checkout process if you require longer training or match durations.'
   },
   {
-    question: 'Are the turfs available for both individual and team bookings?',
-    answer: 'Yes! Whether you\'re practicing solo, with a coach, or booking for a team session or match, all three turfs can be reserved accordingly. We welcome individuals, groups, and institutions.'
+    question: 'What are the authoritative facility prices?',
+    answer: 'Our authoritative baseline prices are: Cricket Practice Net 1: ₹299/hr, Cricket Practice Net 2: ₹299/hr, and Football Turf: ₹999/hr. The automated bowling machine add-on is ₹299/hr. All prices are calculated authoritatively from our live database with zero hidden fees.'
   },
   {
-    question: 'Can we play matches on the turfs?',
-    answer: 'Yes! You can definitely play matches on our turfs. The Football/Cricket Turf is ideal for friendly matches and team games, while Cricket Net 1 and Cricket Net 2 are perfect for practice sessions and smaller group play.'
+    question: 'What are the complex operating hours?',
+    answer: 'Maqbool Sports Complex is open daily from 6:00 AM to 11:00 PM, featuring high-lumen professional LED floodlights for early morning and evening sessions.'
   },
   {
-    question: 'What are the pricing details?',
-    answer: 'Our pricing is as follows:\n• Cricket Net 1 & 2: ₹299/hour\n• Football/Cricket Turf: ₹999/hour\n\nPeak hour pricing may vary slightly on weekends and holidays.'
+    question: 'What is the cancellation and refund policy?',
+    answer: 'Cancellation and rescheduling requests are accepted strictly MORE THAN 5 HOURS before the scheduled booking start time. Eligible cancellations receive a 90% refund (10% processing deduction) within 5-7 working days. Bookings within 5 hours or less are non-cancellable and non-refundable.'
   },
   {
-    question: 'Are there any coaching or training sessions available?',
-    answer: 'Currently, we provide turf rentals only. However, we are planning to launch a Sports Academy with certified coaches soon - stay tuned for updates!'
-  },
-  {
-    question: 'Is there parking available near the turfs?',
-    answer: 'Yes, parking is available at or near all turf locations for your convenience. The parking area is spacious enough to accommodate vehicles for team events.'
-  },
-  {
-    question: 'What are the operating hours?',
-    answer: 'Maqbool Sports Complex is open from 6 AM to 11 PM daily. This includes availability for early morning practice sessions and night games under floodlights.'
-  },
-  {
-    question: 'Can I cancel or reschedule my booking?',
-    answer: 'Yes, cancellation and rescheduling requests are accepted strictly MORE THAN 5 HOURS before the scheduled booking start time. Requests made within 5 hours or less are non-cancellable and non-refundable under standard policy.'
-  },
-  {
-    question: 'Is the facility safe for children?',
-    answer: 'Yes, our facility is safe, inclusive, and family-friendly. We have CCTV surveillance for safety and monitoring. Children under 12 must be accompanied by an adult at all times.'
-  },
-  {
-    question: 'What should I wear while playing?',
-    answer: 'Players must wear appropriate sportswear and footwear while using the grounds/turfs. We recommend football boots for the turf and proper cricket gear for the nets.'
-  },
-  {
-    question: 'Can we host tournaments at MSC?',
-    answer: 'Yes! Our facility is equipped to host local and regional tournaments. Contact us for special event bookings and tournament packages.'
+    question: 'Is parking and CCTV surveillance available?',
+    answer: 'Yes, secure on-site parking is available at the complex. The entire facility operates under 24/7 CCTV surveillance for athlete, visitor, and equipment safety.'
   },
 ]
 
@@ -62,50 +38,57 @@ export default function FAQsPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#061009] text-white">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 bg-gradient-to-b from-[#F8FAFB] to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <span className="inline-block px-4 py-2 bg-[#E8F5EC] text-[#2BA84A] text-sm font-medium rounded-full mb-6">
-            FAQs
+      <section className="relative pt-32 pb-20 bg-[#040d07] overflow-hidden border-b border-emerald-500/10 text-center">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[130px] transform-gpu" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-6 shadow-sm backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Knowledge & Rules
           </span>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#0A0A0C] tracking-tight">
-            Frequently Asked
-            <span className="text-[#2BA84A]"> Questions</span>
+          <h1 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl text-white tracking-wide uppercase leading-tight">
+            FREQUENTLY ASKED <span className="text-[#2BA84A]">QUESTIONS</span>
           </h1>
-          <p className="mt-6 text-[#0A0A0C]/60 text-lg max-w-2xl mx-auto">
-            Some questions about Turfs & Grounds - find answers to common queries about booking, facilities, and more.
+          <p className="mt-5 text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            Essential information regarding facility bookings, pricing policies, complex guidelines, and operating rules.
           </p>
         </div>
       </section>
 
       {/* FAQs */}
-      <section className="py-24">
+      <section className="py-20 sm:py-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-4">
             {faqs.map((faq, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className="border border-[#0A0A0C]/10 rounded-xl overflow-hidden"
+                className="bg-[#0e2419]/90 border border-emerald-500/20 rounded-2xl overflow-hidden backdrop-blur-xl transition-all"
               >
                 <button
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="w-full flex items-center justify-between p-6 text-left hover:bg-[#F8FAFB] transition-colors"
+                  className="w-full flex items-center justify-between p-6 text-left hover:bg-emerald-950/40 transition-colors"
                 >
-                  <span className="font-semibold text-[#0A0A0C] pr-4">{faq.question}</span>
+                  <span className="font-bold text-white text-sm sm:text-base pr-4">
+                    {faq.question}
+                  </span>
                   <ChevronDown
-                    size={20}
-                    className={`text-[#0A0A0C]/40 flex-shrink-0 transition-transform ${
+                    className={`text-emerald-400 shrink-0 transition-transform duration-200 ${
                       openIndex === index ? 'rotate-180' : ''
                     }`}
+                    size={20}
                   />
                 </button>
+
                 <AnimatePresence>
                   {openIndex === index && (
                     <motion.div
@@ -113,8 +96,9 @@ export default function FAQsPage() {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
+                      className="px-6 pb-6"
                     >
-                      <div className="px-6 pb-6 text-[#0A0A0C]/60 whitespace-pre-line">
+                      <div className="pt-2 border-t border-emerald-500/10 text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
                         {faq.answer}
                       </div>
                     </motion.div>
@@ -123,32 +107,18 @@ export default function FAQsPage() {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* Still have questions */}
-      <section className="py-24 bg-[#F8FAFB]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <HelpCircle className="mx-auto mb-6 text-[#2BA84A]" size={48} />
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#0A0A0C] tracking-tight mb-4">
-            Still Have Questions?
-          </h2>
-          <p className="text-[#0A0A0C]/60 text-lg mb-8 max-w-xl mx-auto">
-            Can&apos;t find the answer you&apos;re looking for? Please reach out to our team.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="text-center mt-14 sm:mt-16 bg-[#040d07] border border-emerald-500/20 p-8 rounded-3xl">
+            <h3 className="text-lg font-bold text-white mb-2">Still Have Questions?</h3>
+            <p className="text-slate-300 text-xs sm:text-sm mb-6 max-w-md mx-auto">
+              Our team is here to assist you daily from 6:00 AM to 11:00 PM.
+            </p>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#2BA84A] text-white font-semibold rounded-xl hover:bg-[#146B3A] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-950/50 transition-all duration-200"
             >
-              Contact Us
+              Contact Support
             </Link>
-            <a
-              href="tel:+919682558775"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-[#0A0A0C]/10 text-[#0A0A0C] font-semibold rounded-xl hover:bg-white transition-colors"
-            >
-              Call +91 9682558775
-            </a>
           </div>
         </div>
       </section>

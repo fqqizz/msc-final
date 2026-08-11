@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle, MapPin, Clock, Shield, Users, Trophy, Sparkles, Heart } from 'lucide-react'
+import { CheckCircle, MapPin, Clock, Shield, Users, Trophy, Sparkles, Heart, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
@@ -9,42 +9,42 @@ const reasons = [
   {
     icon: Trophy,
     title: "First of its Kind",
-    description: "One of Baramulla's first dedicated turf facilities"
+    description: "One of Baramulla's first dedicated FIFA-grade turf facilities"
   },
   {
     icon: Users,
     title: "For Everyone",
-    description: "Ideal for both casual play and professional training"
+    description: "Ideal for casual friend matches, team leagues & academy training"
   },
   {
     icon: Sparkles,
     title: "Expert Coaching",
-    description: "Expert coaching and youth development programs"
+    description: "Upcoming sports academy with certified cricket & football coaches"
   },
   {
     icon: Shield,
-    title: "Safe Environment",
-    description: "Safe, inclusive, and family-friendly atmosphere"
+    title: "Safe & Monitored",
+    description: "Safe, inclusive environment with 24/7 CCTV surveillance"
   },
   {
     icon: Clock,
     title: "Flexible Hours",
-    description: "Flexible booking hours for individuals, groups, and institutions"
+    description: "Open 6:00 AM to 11:00 PM with professional LED floodlights"
   },
   {
     icon: MapPin,
     title: "Scenic Location",
-    description: "Located in a serene, inspiring natural environment"
+    description: "Nestled in Sangri Colony against breathtaking mountain vistas"
   },
   {
     icon: Heart,
     title: "Community Focused",
-    description: "Built for players, coaches, and the community"
+    description: "Built for local athletes, grassroots players, and youth sport"
   },
   {
     icon: CheckCircle,
-    title: "Affordable",
-    description: "Affordable pricing without compromising on quality"
+    title: "Authoritative Pricing",
+    description: "Transparent, reliable pricing starting at ₹299/hr with zero hidden fees"
   },
 ]
 
@@ -52,70 +52,79 @@ export default function WhyChooseUs() {
   const { isMobile } = useMobilePerformance()
 
   return (
-    <section className="py-24 bg-[#F8FAFB]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 sm:py-28 bg-[#061009] relative overflow-hidden text-white border-t border-emerald-500/10">
+      {/* Ambient Radial Atmosphere */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[130px] transform-gpu" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center mb-14 sm:mb-16"
         >
-          <span className="inline-block px-4 py-2 bg-[#E8F5EC] text-[#2BA84A] text-sm font-medium rounded-full mb-6">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-4 shadow-sm backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Why Choose Us
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#0A0A0C] tracking-tight">
-            Built for Players & Community
+          <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-5xl md:text-6xl text-white tracking-wide uppercase leading-tight">
+            BUILT FOR PLAYERS <span className="text-[#2BA84A]">& COMMUNITY</span>
           </h2>
-          <p className="mt-4 text-[#0A0A0C]/60 max-w-xl mx-auto text-lg">
-            Experience world-class sports facilities right here in the heart of Kashmir.
+          <p className="mt-4 text-slate-300 text-sm sm:text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+            Experience world-class sports infrastructure designed to elevate local athletic talent in the heart of Kashmir.
           </p>
         </motion.div>
 
         {/* Reasons grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
           {reasons.map((reason, index) => (
             <motion.div
               key={reason.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.05, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: index * 0.04, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               whileHover={
                 isMobile
                   ? {}
                   : {
-                      y: -6,
-                      scale: 1.015,
-                      rotateX: 2,
-                      rotateY: -2,
-                      boxShadow: '0 18px 40px rgba(10,10,12,0.10)',
+                      y: -4,
+                      scale: 1.01,
+                      transition: { duration: 0.2 },
                     }
               }
               whileTap={isMobile ? { scale: 0.98 } : { scale: 0.99 }}
-              className="bg-white p-6 rounded-2xl border border-[#0A0A0C]/5 hover:border-[#2BA84A]/20 hover:shadow-[#2BA84A]/5 transition-all group transform-gpu will-change-transform"
+              className="bg-[#0e2419]/90 border border-emerald-500/20 hover:border-emerald-400/50 p-6 rounded-2xl backdrop-blur-xl shadow-lg shadow-black/30 transition-all duration-300 group flex flex-col justify-start"
             >
-              <div className="w-12 h-12 rounded-xl bg-[#E8F5EC] flex items-center justify-center mb-4 group-hover:bg-[#2BA84A] transition-colors">
-                <reason.icon className="text-[#2BA84A] group-hover:text-white transition-colors" size={24} />
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mb-4 group-hover:bg-emerald-500/25 group-hover:border-emerald-400/40 transition-colors">
+                <reason.icon className="text-emerald-400" size={22} />
               </div>
-              <h3 className="text-lg font-semibold text-[#0A0A0C] mb-2">{reason.title}</h3>
-              <p className="text-[#0A0A0C]/60 text-sm">{reason.description}</p>
+              <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 tracking-tight group-hover:text-emerald-300 transition-colors">
+                {reason.title}
+              </h3>
+              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">{reason.description}</p>
             </motion.div>
           ))}
         </div>
 
         {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mt-12"
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-center mt-12 sm:mt-14"
         >
           <Link
             href="/about"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#2BA84A] text-white font-semibold rounded-xl hover:bg-[#146B3A] transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0e2419]/80 hover:bg-[#133324] border border-emerald-500/25 hover:border-emerald-500/40 text-emerald-100 hover:text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md backdrop-blur-md transition-all duration-200"
           >
             Learn More About Us
+            <ArrowRight size={16} />
           </Link>
         </motion.div>
       </div>

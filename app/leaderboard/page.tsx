@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Loader2, Calendar } from 'lucide-react'
+import { Trophy, Loader2, Calendar, Award, Medal } from 'lucide-react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import Link from 'next/link'
@@ -28,7 +28,7 @@ export default function LeaderboardPage() {
         if (data && Array.isArray(data)) {
           setLeaderboard(data)
         } else {
-          // Fallback query from customers table strictly filtering role = 'customer'
+          // Fallback query from user_profiles & customers
           const { data: custData } = await supabase
             .from('user_profiles')
             .select('full_name, avatar_url, customers(*)')
@@ -66,32 +66,33 @@ export default function LeaderboardPage() {
   const topFive = leaderboard.slice(0, 5)
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col pt-24">
+    <div className="min-h-screen bg-[#061009] text-white flex flex-col pt-24">
       <Navigation />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-12 w-full">
         {/* Header */}
         <div className="text-center max-w-xl mx-auto mb-10">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-100/80 border border-emerald-200/80 rounded-full text-emerald-800 text-[11px] font-bold uppercase tracking-wider mb-3">
-            <Trophy size={13} className="text-emerald-700" /> TOP ATHLETES
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-4 shadow-sm backdrop-blur-md">
+            <Trophy size={14} className="text-emerald-400" />
+            Verified Athlete Rankings
           </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-            Complex Leaderboard
+          <h1 className="font-[family-name:var(--font-anton)] text-3xl sm:text-5xl text-white uppercase tracking-wide">
+            COMPLEX <span className="text-[#2BA84A]">LEADERBOARD</span>
           </h1>
-          <p className="mt-2 text-slate-500 text-xs sm:text-sm">
+          <p className="mt-2 text-slate-300 text-xs sm:text-sm">
             Ranked by verified facility hours played at Maqbool Sports Complex
           </p>
 
           {/* Timeframe Controls */}
-          <div className="mt-5 inline-flex items-center gap-1 p-1 bg-white border border-slate-200/90 rounded-xl shadow-2xs">
+          <div className="mt-6 inline-flex items-center gap-1 p-1 bg-[#040d07] border border-emerald-500/25 rounded-2xl shadow-lg">
             {(['all_time', 'monthly', 'weekly'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTimeframe(t)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
                   timeframe === t
-                    ? 'bg-emerald-600 text-white shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/50'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {t.replace('_', ' ')}
@@ -100,105 +101,103 @@ export default function LeaderboardPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="py-20 text-center text-slate-400 text-xs">
-            <Loader2 size={30} className="animate-spin mx-auto text-emerald-600 mb-2" />
-            Calculating leaderboard rankings...
-          </div>
-        ) : topFive.length > 0 ? (
-          /* MINIMAL TOP 5 LEADERBOARD LIST */
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-7 max-w-xl mx-auto shadow-sm"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3 px-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">RANK & ATHLETE</span>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">HOURS PLAYED</span>
-            </div>
-
-            <div className="space-y-2">
-              {topFive.map((player, idx) => {
-                const rankNum = (idx + 1).toString().padStart(2, '0')
-                const isTop1 = idx === 0
-                const isTop3 = idx < 3
-
-                return (
+        {/* Top 5 Hall of Fame */}
+        {topFive.length > 0 && !isLoading && (
+          <div className="mb-10 bg-[#0e2419]/90 border border-emerald-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-black/40">
+            <h2 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-6 text-center">
+              Top MSC Athletes ({timeframe.replace('_', ' ')})
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {topFive.map((player) => (
+                <div
+                  key={player.rank}
+                  className={`flex items-center gap-3.5 p-4 rounded-2xl border transition-all ${
+                    player.rank === 1
+                      ? 'bg-emerald-950/60 border-emerald-400/40 shadow-lg shadow-emerald-950/40'
+                      : 'bg-[#07170f] border-emerald-500/15'
+                  }`}
+                >
                   <div
-                    key={player.customer_id || idx}
-                    className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
-                      isTop1
-                        ? 'bg-emerald-50/40 border-emerald-200/80 shadow-2xs'
-                        : 'bg-slate-50/70 border-slate-100 hover:border-slate-200'
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 ${
+                      player.rank === 1
+                        ? 'bg-emerald-500 text-white shadow-md'
+                        : player.rank === 2
+                        ? 'bg-slate-700 text-slate-200'
+                        : player.rank === 3
+                        ? 'bg-amber-900/60 text-amber-300'
+                        : 'bg-[#040d07] text-slate-400 border border-emerald-500/20'
                     }`}
                   >
-                    {/* Rank & Player Info */}
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <span className={`font-mono text-xs font-extrabold w-6 ${
-                        isTop1 ? 'text-emerald-700' : isTop3 ? 'text-slate-700' : 'text-slate-400'
-                      }`}>
-                        {rankNum}
-                      </span>
-
-                      <div className="relative w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
-                        {player.avatar_url ? (
-                          <Image src={player.avatar_url} alt={player.full_name} fill className="object-cover" />
-                        ) : (
-                          (player.full_name || 'P').charAt(0).toUpperCase()
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate">
-                          {player.full_name}
-                        </span>
-                        {player.total_bookings > 0 && (
-                          <span className="text-[10px] text-slate-400 block">
-                            {player.total_bookings} session{player.total_bookings > 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Hours Played */}
-                    <div className="text-right shrink-0 pl-3">
-                      <span className="font-extrabold text-emerald-600 text-sm sm:text-base">
-                        {player.hours_played || 0}h
-                      </span>
-                    </div>
+                    #{player.rank}
                   </div>
-                )
-              })}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-white truncate">{player.full_name}</p>
+                    <p className="text-xs text-emerald-400/80 font-medium">
+                      {player.hours_played || 0} Hours Played
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block font-mono">
+                      {player.total_bookings || 0} slots
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-
-            {/* Subtle Book Slot CTA */}
-            <div className="mt-6 pt-4 border-t border-slate-100 text-center">
-              <Link
-                href="/book-now"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl shadow-2xs transition-all"
-              >
-                Play & Climb Leaderboard &rarr;
-              </Link>
-            </div>
-          </motion.div>
-        ) : (
-          /* EMPTY STATE */
-          <div className="text-center py-16 bg-white border border-slate-200/80 rounded-3xl max-w-md mx-auto shadow-sm px-6">
-            <Trophy size={36} className="mx-auto text-amber-500 mb-2" />
-            <h3 className="text-base font-bold text-slate-900">Complex Leaderboard</h3>
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed max-w-xs mx-auto">
-              No players have completed a facility session yet.<br />
-              Book a slot to claim the #1 rank!
-            </p>
-            <Link
-              href="/book-now"
-              className="inline-block mt-5 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all uppercase tracking-wider"
-            >
-              BOOK A SLOT
-            </Link>
           </div>
         )}
+
+        {/* Full Table */}
+        <div className="bg-[#0e2419]/90 border border-emerald-500/20 rounded-3xl overflow-hidden backdrop-blur-xl shadow-2xl shadow-black/40">
+          <div className="p-5 border-b border-emerald-500/15 flex items-center justify-between">
+            <h3 className="font-bold text-white text-sm uppercase tracking-wide">All Competitors</h3>
+            <span className="text-xs text-slate-400 font-medium">
+              {leaderboard.length} Verified Athletes
+            </span>
+          </div>
+
+          {isLoading ? (
+            <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
+              <Loader2 className="animate-spin text-emerald-500" size={28} />
+              <p className="text-xs font-medium tracking-wide">Loading real-time leaderboard statistics...</p>
+            </div>
+          ) : leaderboard.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 text-xs sm:text-sm px-4">
+              No athlete records found for this timeframe. Complete bookings at MSC to claim your rank!
+            </div>
+          ) : (
+            <div className="divide-y divide-emerald-500/10">
+              {leaderboard.map((item) => (
+                <div
+                  key={item.rank}
+                  className="flex items-center justify-between p-4 sm:p-5 hover:bg-emerald-950/30 transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <span
+                      className={`w-7 text-center font-bold text-xs ${
+                        item.rank <= 3 ? 'text-emerald-400 font-extrabold' : 'text-slate-400'
+                      }`}
+                    >
+                      #{item.rank}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{item.full_name}</p>
+                      <p className="text-[11px] text-slate-400">
+                        {item.total_bookings || 0} total bookings completed
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-extrabold text-emerald-400 font-mono">
+                      {item.hours_played || 0}
+                    </span>
+                    <span className="text-[10px] text-slate-400 ml-1">hrs</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
       <Footer />

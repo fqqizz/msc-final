@@ -288,6 +288,25 @@ export default function AdminPricingPage() {
           effective_from: new Date(effectiveFromDateTime).toISOString(),
           reason: basePriceReason,
         })
+
+        if (targetVenueId) {
+          await supabase.from('venues').update({ base_price: newBasePrice }).eq('id', targetVenueId)
+        }
+        if (targetResourceId) {
+          await supabase.from('resources').update({ hourly_extra_cost: newBasePrice }).eq('id', targetResourceId)
+        }
+
+        await supabase.from('audit_logs').insert({
+          action: 'VENUE_BASE_PRICE_CHANGED',
+          entity_type: targetVenueId ? 'venue' : 'resource',
+          entity_id: targetVenueId || targetResourceId,
+          details: {
+            new_base_price: newBasePrice,
+            effective_from: new Date(effectiveFromDateTime).toISOString(),
+            reason: basePriceReason,
+            severity: 'CRITICAL',
+          },
+        })
       }
 
       setShowBasePriceModal(false)
