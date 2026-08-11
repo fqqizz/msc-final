@@ -120,7 +120,8 @@ export default function BookNowPage() {
     loadVenues()
   }, [])
 
-  // 2. Parse Deep-link Search Parameters (e.g. ?venue=football-turf&date=2026-08-11&hour=21)
+  // 2. Parse Deep-link Search Parameters (e.g. ?venue=football-turf)
+  // Preserves preselected venue internally while ensuring the wizard ALWAYS starts cleanly at STEP 1: DATE
   useEffect(() => {
     if (typeof window === 'undefined' || venues.length === 0) return
 
@@ -128,7 +129,6 @@ export default function BookNowPage() {
       const params = new URLSearchParams(window.location.search)
       const venueParam = params.get('venue')
       const dateParam = params.get('date')
-      const hourParam = params.get('hour')
 
       if (venueParam) {
         const found = venues.find(
@@ -137,27 +137,18 @@ export default function BookNowPage() {
         )
         if (found) {
           setSelectedVenue(found)
-          if (dateParam) {
-            const parsedDate = new Date(dateParam)
-            if (!isNaN(parsedDate.getTime())) {
-              setSelectedDate(parsedDate)
-              setCurrentMonth(parsedDate)
-              setStage(3)
-            } else {
-              setStage(2)
-            }
-          } else {
-            setStage(2)
-          }
-        }
-      } else if (dateParam) {
-        const parsedDate = new Date(dateParam)
-        if (!isNaN(parsedDate.getTime())) {
-          setSelectedDate(parsedDate)
-          setCurrentMonth(parsedDate)
-          setStage(2)
         }
       }
+
+      if (dateParam) {
+        const parsedDate = new Date(dateParam)
+        if (!isNaN(parsedDate.getTime()) && !isBefore(parsedDate, startOfToday())) {
+          setCurrentMonth(parsedDate)
+        }
+      }
+
+      // STRICT REQUIREMENT: Always initialize wizard at Stage 1 (DATE SELECTION)
+      setStage(1)
     } catch (e) {
       console.error('Error parsing booking URL params:', e)
     }
