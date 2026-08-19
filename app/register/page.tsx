@@ -63,107 +63,75 @@ export default function RegisterPage() {
       }
 
       if (data.user) {
-        // 2. Insert/Upsert User Profile in public.user_profiles
-        const { error: profileErr } = await supabase
-          .from('user_profiles')
-          .upsert({
-            id: data.user.id,
-            full_name: fullName,
-            email: email,
-            phone: phone || null,
-            role: 'customer',
-            status: 'active',
-            is_guest: false,
-            metadata: {}
-          })
-
-        if (profileErr) {
-          console.error('Profile creation error:', profileErr)
-        }
-
-        // 3. Insert/Upsert Customer record in public.customers
-        const { error: custErr } = await supabase
-          .from('customers')
-          .upsert({
-            id: data.user.id,
-            tier: 'new',
-            hours_played: 0,
-            total_bookings: 0,
-            total_spend: 0,
-            tags: ['new_registration']
-          })
-
-        if (custErr) {
-          console.error('Customer record creation error:', custErr)
-        }
-
-        setSuccessMessage('Registration successful! Redirecting to dashboard...')
+        setSuccessMessage('Account created successfully! Redirecting to dashboard...')
         setTimeout(() => {
           router.push('/dashboard')
           router.refresh()
         }, 1500)
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'An unexpected error occurred during registration.')
-    } finally {
+      setErrorMessage(err.message || 'An error occurred during registration.')
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute top-6 left-6 z-10">
+    <div className="min-h-screen bg-[#061a12] text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Decorative Ambient Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#00A86B]/15 blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-[#005C43]/10 blur-[130px] pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 hover:text-slate-900 shadow-sm transition-all"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-300/80 hover:text-white mb-8 transition-colors px-3.5 py-2 rounded-xl bg-white/5 border border-emerald-500/20 hover:bg-white/10"
         >
-          <ArrowLeft size={16} />
-          Back to MSC
+          <ArrowLeft size={16} /> Back to MSC Home
         </Link>
-      </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
-        <div className="flex flex-col items-center text-center">
-          <div className="relative w-14 h-14 mb-3">
+        <div className="text-center">
+          <div className="relative w-16 h-16 mx-auto mb-4 drop-shadow-[0_4px_16px_rgba(0,168,107,0.35)]">
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png"
-              alt="Maqbool Sports Complex"
+              alt="Maqbool Sports Complex Logo"
               fill
               className="object-contain"
               priority
             />
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Create Player Identity
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Create Player Profile
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
-            Join Kashmir's premier sports community & unlock instant slot booking
+          <p className="mt-2 text-xs text-emerald-100/70 max-w-xs mx-auto">
+            Join Kashmir's premier sports complex operating system
           </p>
         </div>
+      </div>
 
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mt-8 bg-white py-8 px-6 shadow-xl border border-slate-200/80 rounded-2xl sm:px-10 text-slate-900"
+          className="bg-[#0e2419]/90 backdrop-blur-xl py-8 px-6 shadow-2xl border border-emerald-500/25 rounded-3xl sm:px-10 text-white"
         >
           {errorMessage && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-700 text-xs">
-              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 rounded-xl bg-red-950/80 border border-red-500/40 flex items-start gap-3 text-red-200 text-xs shadow-md">
+              <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-400" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 text-emerald-700 text-xs">
-              <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 rounded-xl bg-emerald-950/80 border border-emerald-500/40 flex items-start gap-3 text-emerald-200 text-xs shadow-md">
+              <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-[#00A86B]" />
               <span>{successMessage}</span>
             </div>
           )}
 
           <form className="space-y-4" onSubmit={handleRegister}>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-1.5">
                 Full Name *
               </label>
               <div className="relative">
@@ -175,15 +143,15 @@ export default function RegisterPage() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Tariq Ahmad"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                  placeholder="Player Name"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all text-xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Phone Number
+              <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-1.5">
+                Phone Number (Required for Booking WhatsApp Updates) *
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -191,16 +159,17 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type="tel"
+                  required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 99060 00000"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all text-xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-1.5">
                 Email Address *
               </label>
               <div className="relative">
@@ -212,14 +181,14 @@ export default function RegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tariq@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                  placeholder="player@example.com"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all text-xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-1.5">
                 Password *
               </label>
               <div className="relative">
@@ -231,13 +200,13 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all text-xs"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -245,7 +214,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-1.5">
                 Confirm Password *
               </label>
               <div className="relative">
@@ -257,8 +226,8 @@ export default function RegisterPage() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-xs"
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B] transition-all text-xs"
                 />
               </div>
             </div>
@@ -266,23 +235,23 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-4 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 bg-[#00A86B] hover:bg-[#007A52] text-white font-bold text-xs rounded-xl shadow-lg shadow-[#00A86B]/25 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
             >
               {isLoading ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Creating Identity...
+                  Creating Account...
                 </>
               ) : (
-                'Register Player Identity'
+                'Create MSC Account'
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500">
-            Already registered?{' '}
-            <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
-              Sign In
+          <div className="mt-8 text-center text-xs text-slate-400">
+            Already have an account?{' '}
+            <Link href="/login" className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors underline">
+              Sign In Here
             </Link>
           </div>
         </motion.div>

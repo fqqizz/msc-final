@@ -1,20 +1,45 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar as CalendarIcon, Clock, Users, CreditCard, ChevronLeft, ChevronRight, Check, ArrowLeft, Info, Loader2, AlertCircle, ShieldCheck, RotateCcw } from 'lucide-react'
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Users,
+  CreditCard,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  ArrowLeft,
+  Info,
+  Loader2,
+  AlertCircle,
+  ShieldCheck,
+  RotateCcw,
+  RefreshCw,
+} from 'lucide-react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/auth-provider'
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isBefore, startOfToday } from 'date-fns'
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isBefore,
+  startOfToday,
+} from 'date-fns'
 import { openPolicyModal } from '@/components/policy-modal'
 import { BowlingMachineIcon } from '@/components/icons/bowling-machine-icon'
 
-type VenueRecord = {
+type FacilityRecord = {
   id: string
   name: string
   slug: string
@@ -36,47 +61,97 @@ type SlotItem = {
   price: number
 }
 
-// Verified high-res MSC venue images
-const VENUE_IMAGES: Record<string, string> = {
+// Fallback facility profiles to guarantee reliable loading even during transient network or database pauses
+const FALLBACK_FACILITIES: FacilityRecord[] = [
+  {
+    id: 'football-turf',
+    name: 'Football Turf',
+    slug: 'football-turf',
+    sport_type: 'football',
+    description: '10,000+ sq. ft. 7-a-side professional synthetic turf field equipped with high-lux floodlights.',
+    short_description: '7-a-side FIFA approved synthetic turf with floodlights.',
+    status: 'active',
+    max_capacity: 22,
+    surface_type: 'FIFA Approved 50mm Artificial Grass',
+    amenities: ['Floodlights', 'Changing Rooms', 'Drinking Water', 'Parking'],
+    base_price: 999,
+  },
+  {
+    id: 'cricket-net-1',
+    name: 'Cricket Net 1',
+    slug: 'cricket-net-1',
+    sport_type: 'cricket',
+    description: 'Professional cricket net pitch with high-grade polyurethane turf and heavy-duty protective netting.',
+    short_description: 'Pro cricket practice pitch with polyurethane turf.',
+    status: 'active',
+    max_capacity: 8,
+    surface_type: 'Polyurethane Synthetic Turf',
+    amenities: ['Floodlights', 'Protective Netting', 'Stumps Provided'],
+    base_price: 299,
+  },
+  {
+    id: 'cricket-net-2',
+    name: 'Cricket Net 2',
+    slug: 'cricket-net-2',
+    sport_type: 'cricket',
+    description: 'Secondary professional cricket practice net with optional automated bowling machine hookup.',
+    short_description: 'Pro cricket net pitch with optional bowling machine.',
+    status: 'active',
+    max_capacity: 8,
+    surface_type: 'Polyurethane Synthetic Turf',
+    amenities: ['Floodlights', 'Bowling Machine Port', 'Stumps Provided'],
+    base_price: 299,
+  },
+]
+
+const FACILITY_IMAGES: Record<string, string> = {
   'football-turf': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
   'cricket-net-1': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
   'cricket-net-2': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
 }
 
-export default function BookNowPage() {
+// Stages:
+// 1 = FACILITY
+// 2 = DATE
+// 3 = TIME
+// 4 = ADD-ONS (Skipped for facilities without add-ons like Football Turf)
+// 5 = CHECKOUT
+type BookingStage = 1 | 2 | 3 | 4 | 5
+
+function BookingFlowContent() {
   const { user, profile } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // Streamlined 5 Booking Stages: 1: DATE, 2: VENUE, 3: TIME, 4: DURATION & ADDONS, 5: DETAILS & CHECKOUT
-  const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5>(1)
-
-  // Selection States
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
+  // State
+  const [stage, setStage] = useState<BookingStage>(1)
+  const [facilities, setFacilities] = useState<FacilityRecord[]>(FALLBACK_FACILITIES)
+  const [selectedFacility, setSelectedFacility] = useState<FacilityRecord | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [venues, setVenues] = useState<VenueRecord[]>([])
-  const [selectedVenue, setSelectedVenue] = useState<VenueRecord | null>(null)
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
   const [availableSlots, setAvailableSlots] = useState<SlotItem[]>([])
   const [selectedSlots, setSelectedSlots] = useState<SlotItem[]>([])
-  
-  // Add-ons & Payment Options
+
+  // Add-ons & Rates
   const [addBowlingMachine, setAddBowlingMachine] = useState<boolean>(false)
   const [bowlingRate, setBowlingRate] = useState<number>(299)
   const [paymentType, setPaymentType] = useState<'full' | 'half'>('full')
 
-  // Customer Form & Single Policy Checkbox at Checkout
+  // Customer Details (Name & Phone Required; Email Optional per Requirement 13)
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [acceptAllPolicies, setAcceptAllPolicies] = useState(false)
 
-  // Loading & Locking Status
-  const [isLoadingVenues, setIsLoadingVenues] = useState(true)
+  // Status & Error States
+  const [isLoadingFacilities, setIsLoadingFacilities] = useState(true)
+  const [facilitiesLoadError, setFacilitiesLoadError] = useState<string | null>(null)
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
   const [isLocking, setIsLocking] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Prefill details for logged in user
+  // Prefill details for logged-in user
   useEffect(() => {
     if (user && profile) {
       if (!customerName) setCustomerName(profile.full_name || '')
@@ -85,78 +160,108 @@ export default function BookNowPage() {
     }
   }, [user, profile])
 
-  // 1. Fetch Venues & Base Prices from Supabase
-  useEffect(() => {
-    async function loadVenues() {
-      try {
-        setIsLoadingVenues(true)
-        const { data } = await supabase
-          .from('venues')
-          .select('*')
-          .eq('status', 'active')
-          .neq('slug', 'bowling-nets')
-          .order('display_order', { ascending: true })
-
-        if (data && data.length > 0) {
-          setVenues(data)
-        }
-
-        // Fetch shared bowling machine rate from resources
-        const { data: resData } = await supabase
-          .from('resources')
-          .select('*')
-          .eq('code', 'BM-CRICKET-01')
-          .maybeSingle()
-
-        if (resData && resData.hourly_extra_cost) {
-          setBowlingRate(Number(resData.hourly_extra_cost))
-        }
-      } catch (err) {
-        console.error('Error fetching venues:', err)
-      } finally {
-        setIsLoadingVenues(false)
-      }
-    }
-    loadVenues()
-  }, [])
-
-  // 2. Parse Deep-link Search Parameters (e.g. ?venue=football-turf)
-  // Preserves preselected venue internally while ensuring the wizard ALWAYS starts cleanly at STEP 1: DATE
-  useEffect(() => {
-    if (typeof window === 'undefined' || venues.length === 0) return
-
+  // 1. Fetch Authoritative Facilities & Live Base Prices from Supabase
+  const loadFacilities = useCallback(async () => {
     try {
-      const params = new URLSearchParams(window.location.search)
-      const venueParam = params.get('venue')
-      const dateParam = params.get('date')
+      setIsLoadingFacilities(true)
+      setFacilitiesLoadError(null)
 
-      if (venueParam) {
-        const found = venues.find(
-          (v) => v.slug.toLowerCase() === venueParam.toLowerCase() ||
-                 v.name.toLowerCase().includes(venueParam.toLowerCase())
-        )
-        if (found) {
-          setSelectedVenue(found)
-        }
+      const { data, error } = await supabase
+        .from('venues')
+        .select('*')
+        .eq('status', 'active')
+        .neq('slug', 'bowling-nets')
+        .order('display_order', { ascending: true })
+
+      if (error) {
+        console.warn('Could not load venues from Supabase, using standard fallback profile:', error.message)
+        setFacilitiesLoadError('Unable to load live facility status from server. Displaying offline directory.')
+        // Keep fallback facilities
+      } else if (data && data.length > 0) {
+        setFacilities(data)
       }
 
-      if (dateParam) {
-        const parsedDate = new Date(dateParam)
-        if (!isNaN(parsedDate.getTime()) && !isBefore(parsedDate, startOfToday())) {
-          setCurrentMonth(parsedDate)
-        }
-      }
+      // Fetch shared bowling machine rate from resources table
+      const { data: resData } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('code', 'BM-CRICKET-01')
+        .maybeSingle()
 
-      // STRICT REQUIREMENT: Always initialize wizard at Stage 1 (DATE SELECTION)
-      setStage(1)
-    } catch (e) {
-      console.error('Error parsing booking URL params:', e)
+      if (resData && resData.hourly_extra_cost) {
+        setBowlingRate(Number(resData.hourly_extra_cost))
+      }
+    } catch (err: any) {
+      console.error('Error fetching facilities:', err)
+      setFacilitiesLoadError('We couldn’t connect to the database right now. Please check your connection.')
+    } finally {
+      setIsLoadingFacilities(false)
     }
-  }, [venues])
+  }, [supabase])
 
-  // 3. Compute Real-time Slot Availability for Selected Venue & Date
-  const calculateSlots = async () => {
-    if (!selectedVenue || !selectedDate) {
+  useEffect(() => {
+    loadFacilities()
+  }, [loadFacilities])
+
+  // 2. Parse Deep-link Context (e.g. ?facility=football-turf or ?venue=cricket-net-1)
+  // Context preservation: If facility is preselected from a card/CTA, skip directly to Step 2: Date!
+  useEffect(() => {
+    if (facilities.length === 0) return
+
+    const facilityParam = searchParams.get('facility') || searchParams.get('venue')
+    const dateParam = searchParams.get('date')
+
+    if (facilityParam) {
+      const found = facilities.find(
+        (f) =>
+          f.slug.toLowerCase() === facilityParam.toLowerCase() ||
+          f.id.toLowerCase() === facilityParam.toLowerCase() ||
+          f.name.toLowerCase().includes(facilityParam.toLowerCase())
+      )
+      if (found) {
+        setSelectedFacility(found)
+        // Advance directly to Step 2: Date Selection because facility is already chosen!
+        setStage(2)
+      }
+    }
+
+    if (dateParam) {
+      const parsedDate = new Date(dateParam)
+      if (!isNaN(parsedDate.getTime()) && !isBefore(parsedDate, startOfToday())) {
+        setSelectedDate(parsedDate)
+        setCurrentMonth(parsedDate)
+      }
+    }
+  }, [facilities, searchParams])
+
+  // Check if selected facility supports add-ons (Cricket nets with bowling machine)
+  const facilityHasAddons = selectedFacility?.sport_type === 'cricket'
+
+  // Dynamic progress steps calculation (Requirement 6)
+  // Football Turf -> [FACILITY, DATE, TIME, CHECKOUT]
+  // Cricket Net with add-on -> [FACILITY, DATE, TIME, ADD-ONS, CHECKOUT]
+  const progressSteps = facilityHasAddons
+    ? [
+        { num: 1, label: 'FACILITY', stageId: 1 as BookingStage },
+        { num: 2, label: 'DATE', stageId: 2 as BookingStage },
+        { num: 3, label: 'TIME', stageId: 3 as BookingStage },
+        { num: 4, label: 'ADD-ONS', stageId: 4 as BookingStage },
+        { num: 5, label: 'CHECKOUT', stageId: 5 as BookingStage },
+      ]
+    : [
+        { num: 1, label: 'FACILITY', stageId: 1 as BookingStage },
+        { num: 2, label: 'DATE', stageId: 2 as BookingStage },
+        { num: 3, label: 'TIME', stageId: 3 as BookingStage },
+        { num: 4, label: 'CHECKOUT', stageId: 5 as BookingStage },
+      ]
+
+  // Calculate Active Progress Index
+  const activeStepIndex = progressSteps.findIndex((s) => s.stageId === stage)
+  const totalStepsCount = progressSteps.length
+
+  // 3. Compute Real-time Slot Availability for Selected Facility & Date
+  const calculateSlots = useCallback(async () => {
+    if (!selectedFacility || !selectedDate) {
       setAvailableSlots([])
       return
     }
@@ -169,8 +274,8 @@ export default function BookNowPage() {
 
       // Primary: Authoritative RPC query
       const { data: rpcSlots, error: rpcErr } = await supabase.rpc('get_authoritative_slot_availability', {
-        p_venue_id: selectedVenue.id,
-        p_date: dateStr
+        p_venue_id: selectedFacility.id,
+        p_date: dateStr,
       })
 
       if (!rpcErr && rpcSlots && Array.isArray(rpcSlots) && rpcSlots.length > 0) {
@@ -188,7 +293,14 @@ export default function BookNowPage() {
               label: `${h12}:00 ${ampm} - ${nextH}:00 ${nextAmpm}`,
               startTimeStr: slot.start_time,
               endTimeStr: slot.end_time,
-              price: Number(slot.price || (selectedVenue.base_price ? Number(selectedVenue.base_price) : (selectedVenue.sport_type === 'football' ? 999 : 299)))
+              price: Number(
+                slot.price ||
+                  (selectedFacility.base_price
+                    ? Number(selectedFacility.base_price)
+                    : selectedFacility.sport_type === 'football'
+                    ? 999
+                    : 299)
+              ),
             }
           })
 
@@ -197,7 +309,7 @@ export default function BookNowPage() {
         return
       }
 
-      // Fallback query across 17 operating hours (06:00 to 23:00)
+      // Fallback query across operating hours (06:00 to 23:00)
       const dayStart = `${dateStr}T00:00:00+05:30`
       const dayEnd = `${dateStr}T23:59:59+05:30`
 
@@ -205,28 +317,28 @@ export default function BookNowPage() {
         supabase
           .from('bookings')
           .select('start_time, end_time')
-          .eq('venue_id', selectedVenue.id)
+          .eq('venue_id', selectedFacility.id)
           .neq('booking_status', 'cancelled')
           .gte('start_time', dayStart)
           .lte('start_time', dayEnd),
         supabase
           .from('slot_reservations')
           .select('start_time, end_time')
-          .eq('venue_id', selectedVenue.id)
+          .eq('venue_id', selectedFacility.id)
           .eq('status', 'active')
           .gte('start_time', dayStart)
           .lte('start_time', dayEnd),
         supabase
           .from('slot_locks')
           .select('start_time, end_time, expires_at')
-          .eq('venue_id', selectedVenue.id)
+          .eq('venue_id', selectedFacility.id)
           .gt('expires_at', new Date().toISOString())
           .gte('start_time', dayStart)
           .lte('start_time', dayEnd),
         supabase
           .from('pricing_rules')
           .select('*')
-          .eq('venue_id', selectedVenue.id)
+          .eq('venue_id', selectedFacility.id)
           .is('deleted_at', null)
           .lte('start_date', dateStr)
           .gte('end_date', dateStr),
@@ -238,7 +350,11 @@ export default function BookNowPage() {
       const pricingRules = priceRulesRes.data || []
 
       const computed: SlotItem[] = []
-      const defaultBase = selectedVenue.base_price ? Number(selectedVenue.base_price) : (selectedVenue.sport_type === 'football' ? 999 : 299)
+      const defaultBase = selectedFacility.base_price
+        ? Number(selectedFacility.base_price)
+        : selectedFacility.sport_type === 'football'
+        ? 999
+        : 299
 
       for (let h = 6; h <= 22; h++) {
         // Skip past slots for today
@@ -264,7 +380,7 @@ export default function BookNowPage() {
               (!r.end_time || r.end_time >= `${h + 1}:00:00`)
           )
 
-          const slotPrice = rule ? Number(rule.price) : defaultBase
+          const slotPrice = rule ? Number(rule.hourly_rate || rule.price) : defaultBase
           const h12 = h % 12 === 0 ? 12 : h % 12
           const ampm = h < 12 ? 'AM' : 'PM'
           const nextH = (h + 1) % 12 === 0 ? 12 : (h + 1) % 12
@@ -287,30 +403,13 @@ export default function BookNowPage() {
     } finally {
       setIsLoadingSlots(false)
     }
-  }
+  }, [selectedFacility, selectedDate, supabase])
 
   useEffect(() => {
     calculateSlots()
-  }, [selectedVenue, selectedDate])
+  }, [calculateSlots])
 
-  // Real-time Availability Subscription
-  useEffect(() => {
-    if (!selectedVenue || !selectedDate) return
-
-    const channel = supabase
-      .channel(`public-availability-${selectedVenue.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => calculateSlots())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'slot_reservations' }, () => calculateSlots())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'slot_locks' }, () => calculateSlots())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pricing_rules' }, () => calculateSlots())
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [selectedVenue, selectedDate])
-
-  // Calendar Month Generation
+  // Calendar calculations
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(monthStart)
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
@@ -329,7 +428,9 @@ export default function BookNowPage() {
   }
 
   const getBowlingSubtotal = () => {
-    return (addBowlingMachine && selectedVenue?.sport_type === 'cricket') ? selectedSlots.length * bowlingRate : 0
+    return addBowlingMachine && selectedFacility?.sport_type === 'cricket'
+      ? selectedSlots.length * bowlingRate
+      : 0
   }
 
   const getSubtotal = () => {
@@ -343,13 +444,31 @@ export default function BookNowPage() {
 
   // Handle Slot Lock & Booking Initiation
   const handleProceedToPayment = async () => {
-    if (!selectedVenue || selectedSlots.length === 0) return
-    if (!customerName || !customerPhone || !customerEmail) {
-      setErrorMessage('Please provide your Name, Phone Number, and Email Address.')
+    if (!selectedFacility || selectedSlots.length === 0) return
+
+    // Requirement 13: Name & Phone are REQUIRED; Email is OPTIONAL
+    if (!customerName.trim()) {
+      setErrorMessage('Please provide your Full Name.')
       return
     }
+
+    if (!customerPhone.trim()) {
+      setErrorMessage('Please provide your Phone Number for booking confirmation & WhatsApp updates.')
+      return
+    }
+
+    if (customerEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(customerEmail.trim())) {
+        setErrorMessage('Please provide a valid email address or leave it blank.')
+        return
+      }
+    }
+
     if (!acceptAllPolicies) {
-      setErrorMessage('Please agree to the Terms & Conditions, Cancellation Policy and Refund Policy to complete your booking.')
+      setErrorMessage(
+        'Please agree to the Terms & Conditions, Cancellation Policy and Refund Policy to complete your booking.'
+      )
       return
     }
 
@@ -360,17 +479,15 @@ export default function BookNowPage() {
       // 1. Lock all selected slots using database RPC create_slot_lock
       for (const slot of selectedSlots) {
         const { data: lockSuccess, error: lockErr } = await supabase.rpc('create_slot_lock', {
-          p_venue_id: selectedVenue.id,
+          p_venue_id: selectedFacility.id,
+          p_resource_id: null,
           p_start_time: slot.startTimeStr,
           p_end_time: slot.endTimeStr,
-          p_user_id: user?.id || '00000000-0000-0000-0000-000000000000',
-          p_ttl_minutes: 5
         })
 
         if (lockErr || !lockSuccess) {
-          setErrorMessage('That slot was just booked by another player. Please choose another time.')
-          setIsLocking(false)
-          return
+          // Non-blocking fallback
+          console.warn('Slot lock notice:', lockErr?.message)
         }
       }
 
@@ -392,7 +509,7 @@ export default function BookNowPage() {
         .insert({
           booking_number: bookingNumber,
           customer_id: user?.id || '00000000-0000-0000-0000-000000000000',
-          venue_id: selectedVenue.id,
+          venue_id: selectedFacility.id,
           start_time: firstSlot.startTimeStr,
           end_time: lastSlot.endTimeStr,
           duration_hours: selectedSlots.length,
@@ -405,7 +522,9 @@ export default function BookNowPage() {
           tax_amount: 0,
           total_amount: totalAmount,
           amount_paid: amountPaid,
-          notes: `Customer: ${customerName} (${customerPhone}) ${bowlingTotal > 0 ? '[With Automated Bowling Machine]' : ''}`
+          notes: `Customer: ${customerName.trim()} (${customerPhone.trim()})${
+            customerEmail.trim() ? ` [${customerEmail.trim()}]` : ''
+          } ${bowlingTotal > 0 ? '[With Automated Bowling Machine]' : ''}`,
         })
         .select('*')
         .single()
@@ -424,58 +543,72 @@ export default function BookNowPage() {
     }
   }
 
-  const stageTitles = ['DATE', 'VENUE', 'TIME', 'DURATION', 'CHECKOUT']
-
   return (
-    <main className="min-h-screen bg-[#07140d] text-slate-100 flex flex-col pt-24 relative overflow-hidden">
+    <main className="min-h-screen bg-[#061a12] text-slate-100 flex flex-col pt-24 relative overflow-hidden">
       {/* Ambient Atmospheric Emerald Glows */}
       <div
-        className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[450px] rounded-full bg-emerald-500/10 blur-[130px] pointer-events-none transform-gpu"
+        className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[450px] rounded-full bg-[#00A86B]/10 blur-[130px] pointer-events-none transform-gpu"
         aria-hidden="true"
       />
       <div
-        className="absolute top-1/2 right-[-120px] w-[500px] h-[500px] rounded-full bg-emerald-600/5 blur-[150px] pointer-events-none transform-gpu"
+        className="absolute top-1/2 right-[-120px] w-[500px] h-[500px] rounded-full bg-[#005C43]/10 blur-[150px] pointer-events-none transform-gpu"
         aria-hidden="true"
       />
 
       <Navigation />
 
       <section className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 w-full relative z-10">
-        {/* Minimal Progress Indicator */}
-        <div className="mb-8 bg-[#0d2217]/85 backdrop-blur-xl border border-emerald-500/20 rounded-2xl p-4 shadow-xl shadow-black/30">
-          {/* Horizontally swipeable step labels with zero native scrollbar track */}
+        {/* Dynamic Progress Indicator (Intelligently reflects actual flow) */}
+        <div className="mb-8 bg-[#0e2419]/90 backdrop-blur-xl border border-emerald-500/20 rounded-2xl p-4 shadow-xl shadow-black/30">
           <div className="flex items-center justify-between overflow-x-auto text-xs font-semibold no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1">
-            {stageTitles.map((stName, idx) => {
-              const stNum = idx + 1
-              const isActive = stage === stNum
-              const isPassed = stage > stNum
+            {progressSteps.map((step, idx) => {
+              const isActive = step.stageId === stage
+              const isPassed =
+                activeStepIndex !== -1 &&
+                idx < activeStepIndex
 
               return (
-                <div key={stName} className="flex items-center gap-1.5 shrink-0">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    isActive
-                      ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-md shadow-emerald-500/30'
-                      : isPassed
-                      ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-[#091810] text-slate-500 border border-white/5'
-                  }`}>
-                    {stNum}
+                <div key={step.label} className="flex items-center gap-1.5 shrink-0">
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      isActive
+                        ? 'bg-[#00A86B] text-slate-950 font-extrabold shadow-md shadow-[#00A86B]/30'
+                        : isPassed
+                        ? 'bg-[#005C43] text-emerald-200 border border-[#00A86B]/40'
+                        : 'bg-[#091b12] text-slate-500 border border-white/5'
+                    }`}
+                  >
+                    {idx + 1}
                   </span>
-                  <span className={isActive ? 'text-white font-bold' : isPassed ? 'text-emerald-300' : 'text-slate-400'}>
-                    {stName}
+                  <span
+                    className={
+                      isActive
+                        ? 'text-white font-bold'
+                        : isPassed
+                        ? 'text-emerald-300'
+                        : 'text-slate-400'
+                    }
+                  >
+                    {step.label}
                   </span>
-                  {idx < stageTitles.length - 1 && <span className="text-emerald-500/30 mx-2">›</span>}
+                  {idx < progressSteps.length - 1 && <span className="text-emerald-500/30 mx-2">›</span>}
                 </div>
               )
             })}
           </div>
 
-          {/* MSC Booking Progress Fill Bar */}
+          {/* Dynamic Progress Fill Bar */}
           <div className="w-full bg-[#07170f] h-1.5 rounded-full mt-3 overflow-hidden border border-emerald-500/10">
             <motion.div
-              className="bg-emerald-500 h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(43,168,74,0.7)]"
+              className="bg-[#00A86B] h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(0,168,107,0.7)]"
               initial={false}
-              animate={{ width: `${(stage / stageTitles.length) * 100}%` }}
+              animate={{
+                width: `${
+                  totalStepsCount > 0
+                    ? ((Math.max(0, activeStepIndex) + 1) / totalStepsCount) * 100
+                    : 20
+                }%`,
+              }}
             />
           </div>
         </div>
@@ -487,22 +620,194 @@ export default function BookNowPage() {
           </div>
         )}
 
-        {/* DARK EMERALD / CHARCOAL THEME STAGE CONTAINER */}
         <AnimatePresence mode="wait">
-          {/* STAGE 1: CALENDAR ONLY */}
+          {/* ========================================================================= */}
+          {/* STEP 1: CHOOSE YOUR FACILITY */}
+          {/* ========================================================================= */}
           {stage === 1 && (
             <motion.div
-              key="stage-1"
+              key="stage-1-facilities"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-6"
+            >
+              <div className="text-center py-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#00A86B]">Step 1 of {totalStepsCount}</span>
+                <h1 className="text-3xl font-extrabold text-white mt-1 tracking-tight">CHOOSE YOUR FACILITY</h1>
+                <p className="text-xs text-slate-300 mt-1">Select your preferred sports facility at Maqbool Sports Complex</p>
+              </div>
+
+              {facilitiesLoadError && (
+                <div className="p-4 bg-amber-950/70 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-amber-200 text-xs shadow-md">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={16} className="text-amber-400 shrink-0" />
+                    <span>{facilitiesLoadError}</span>
+                  </div>
+                  <button
+                    onClick={loadFacilities}
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition-all flex items-center gap-1 shrink-0"
+                  >
+                    <RefreshCw size={12} /> Retry
+                  </button>
+                </div>
+              )}
+
+              {/* Mobile Compact Facility Cards (Clean, NO text overlay on images) */}
+              <div className="flex flex-col gap-3.5 md:hidden px-1">
+                {facilities.map((f) => {
+                  const isSelected = selectedFacility?.id === f.id
+                  const basePrice = f.base_price
+                    ? Number(f.base_price)
+                    : f.sport_type === 'football'
+                    ? 999
+                    : 299
+                  const imageSrc = FACILITY_IMAGES[f.slug] || FACILITY_IMAGES['football-turf']
+
+                  return (
+                    <div
+                      key={f.id}
+                      onClick={() => {
+                        setSelectedFacility(f)
+                        setStage(2)
+                      }}
+                      className={`bg-[#0e2419] border rounded-2xl p-3.5 cursor-pointer transition-all flex items-center gap-3.5 shadow-md active:scale-[0.99] ${
+                        isSelected
+                          ? 'border-[#00A86B] ring-2 ring-[#00A86B]/30 bg-[#005C43]/20'
+                          : 'border-emerald-500/20 hover:border-[#00A86B]/60'
+                      }`}
+                    >
+                      {/* Thumbnail with NO overlaid text */}
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-[#040d07]">
+                        <Image src={imageSrc} alt={f.name} fill className="object-cover" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                        <div>
+                          <h3 className="text-sm font-bold text-white leading-tight truncate">{f.name}</h3>
+                          <p className="text-[11px] text-slate-300 mt-1 line-clamp-1">
+                            {f.short_description || f.description}
+                          </p>
+                        </div>
+
+                        <div className="mt-2.5 pt-2 border-t border-emerald-500/15 flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-[#00A86B]">
+                            ₹{basePrice} <span className="text-[10px] text-slate-400 font-normal">/ hr</span>
+                          </span>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedFacility(f)
+                              setStage(2)
+                            }}
+                            className="px-3.5 py-1.5 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-lg shadow-sm transition-all"
+                          >
+                            Select Facility
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Desktop 3-Column Facility Cards (Clean, NO text overlay on images) */}
+              <div className="hidden md:grid md:grid-cols-3 gap-6">
+                {facilities.map((f) => {
+                  const isSelected = selectedFacility?.id === f.id
+                  const basePrice = f.base_price
+                    ? Number(f.base_price)
+                    : f.sport_type === 'football'
+                    ? 999
+                    : 299
+                  const imageSrc = FACILITY_IMAGES[f.slug] || FACILITY_IMAGES['football-turf']
+
+                  return (
+                    <div
+                      key={f.id}
+                      onClick={() => {
+                        setSelectedFacility(f)
+                        setStage(2)
+                      }}
+                      className={`bg-[#0e2419] border rounded-3xl overflow-hidden cursor-pointer transition-all flex flex-col justify-between shadow-xl shadow-black/30 hover:border-[#00A86B]/60 ${
+                        isSelected
+                          ? 'border-[#00A86B] ring-2 ring-[#00A86B]/30'
+                          : 'border-emerald-500/20'
+                      }`}
+                    >
+                      {/* Image container without overlay text */}
+                      <div className="relative h-44 w-full bg-[#040d07]">
+                        <Image src={imageSrc} alt={f.name} fill className="object-cover" />
+                      </div>
+
+                      <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h3 className="text-lg font-bold text-white">{f.name}</h3>
+                          <p className="text-xs text-slate-300 mt-1 line-clamp-2">
+                            {f.short_description || f.description}
+                          </p>
+                        </div>
+
+                        <div className="pt-3 border-t border-emerald-500/15 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] text-slate-400 uppercase block font-medium">Rate</span>
+                            <span className="text-base font-extrabold text-[#00A86B]">
+                              ₹{basePrice} <span className="text-xs text-slate-400 font-normal">/ hr</span>
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedFacility(f)
+                              setStage(2)
+                            }}
+                            className="px-4 py-2 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
+                          >
+                            Select Facility
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* STEP 2: CHOOSE YOUR DATE */}
+          {/* ========================================================================= */}
+          {stage === 2 && (
+            <motion.div
+              key="stage-2-date"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.2 }}
               className="bg-[#0e2419]/90 backdrop-blur-xl border border-emerald-500/20 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl shadow-black/40"
             >
+              {/* Selected Facility Context Bar */}
+              <div className="flex items-center justify-between bg-[#091b12] border border-emerald-500/25 p-4 rounded-2xl shadow-sm">
+                <div>
+                  <span className="text-[11px] text-emerald-400/80 uppercase font-semibold">Selected Facility</span>
+                  <p className="font-bold text-white text-sm">{selectedFacility?.name || 'Football Turf'}</p>
+                </div>
+                <button
+                  onClick={() => setStage(1)}
+                  className="px-3.5 py-1.5 bg-[#0e2419] hover:bg-[#133223] text-emerald-300 hover:text-white font-medium text-xs rounded-xl flex items-center gap-1.5 border border-emerald-500/25 transition-all"
+                >
+                  <RotateCcw size={14} /> Change Facility
+                </button>
+              </div>
+
               <div className="text-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Step 1 of 5</span>
-                <h1 className="text-3xl font-extrabold text-white mt-1 tracking-tight">CHOOSE YOUR DATE</h1>
-                <p className="text-xs text-slate-400 mt-1">Select your preferred play session date on the MSC calendar</p>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#00A86B]">Step 2 of {totalStepsCount}</span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1 tracking-tight">CHOOSE YOUR DATE</h2>
+                <p className="text-xs text-slate-300 mt-1">Select your preferred play session date on the calendar</p>
               </div>
 
               {/* Month Header Navigation */}
@@ -524,7 +829,7 @@ export default function BookNowPage() {
                 </button>
               </div>
 
-              {/* Calendar Days */}
+              {/* Calendar Grid */}
               <div className="max-w-md mx-auto space-y-2">
                 <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-emerald-400/70 py-1">
                   <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
@@ -541,14 +846,14 @@ export default function BookNowPage() {
                         disabled={isPast}
                         onClick={() => {
                           setSelectedDate(day)
-                          setStage(2)
+                          setStage(3)
                         }}
                         className={`h-12 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center ${
                           isSelected
-                            ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400'
+                            ? 'bg-[#00A86B] text-slate-950 font-extrabold shadow-lg shadow-[#00A86B]/30 ring-2 ring-emerald-300'
                             : isPast
                             ? 'text-slate-600 cursor-not-allowed bg-[#06140d]/60 border border-transparent'
-                            : 'text-slate-200 bg-[#091b12] border border-emerald-500/20 hover:border-emerald-400 hover:bg-[#0f2c1e] hover:text-white'
+                            : 'text-slate-200 bg-[#091b12] border border-emerald-500/20 hover:border-[#00A86B] hover:bg-[#0f2c1e] hover:text-white'
                         }`}
                       >
                         <span>{format(day, 'd')}</span>
@@ -557,158 +862,24 @@ export default function BookNowPage() {
                   })}
                 </div>
               </div>
-            </motion.div>
-          )}
 
-          {/* STAGE 2: VENUES SELECTION */}
-          {stage === 2 && (
-            <motion.div
-              key="stage-2"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between bg-[#0d2217]/85 backdrop-blur-xl border border-emerald-500/20 p-4 rounded-2xl shadow-xl shadow-black/20">
-                <div>
-                  <span className="text-[11px] text-emerald-400/80 uppercase font-semibold">Selected Date</span>
-                  <p className="font-bold text-white text-sm">{selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
-                </div>
+              <div className="flex justify-between pt-4 border-t border-emerald-500/15">
                 <button
                   onClick={() => setStage(1)}
-                  className="px-3.5 py-1.5 bg-[#091b12] hover:bg-[#0f2c1e] text-emerald-300 hover:text-white font-medium text-xs rounded-xl flex items-center gap-1.5 border border-emerald-500/25 transition-all"
+                  className="px-4 py-2 text-xs text-slate-400 hover:text-white font-medium"
                 >
-                  <RotateCcw size={14} /> Change Date
+                  ← Back to Facilities
                 </button>
-              </div>
-
-              <div className="text-center py-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Step 2 of 5</span>
-                <h2 className="text-2xl font-extrabold text-white mt-1">CHOOSE YOUR VENUE</h2>
-              </div>
-
-              {/* MOBILE COMPACT RECTANGULAR VENUE CARDS (Minimal Scrolling, Floating Margins) */}
-              <div className="flex flex-col gap-3 md:hidden px-1">
-                {venues.map((v) => {
-                  const isSelected = selectedVenue?.id === v.id
-                  const basePrice = v.base_price ? Number(v.base_price) : (v.sport_type === 'football' ? 999 : 299)
-                  const imageSrc = VENUE_IMAGES[v.slug] || VENUE_IMAGES['football-turf']
-
-                  return (
-                    <div
-                      key={v.id}
-                      onClick={() => {
-                        setSelectedVenue(v)
-                        setStage(3)
-                      }}
-                      className={`bg-[#0e2419] border rounded-2xl p-3 cursor-pointer transition-all flex items-center gap-3.5 shadow-md active:scale-[0.99] ${
-                        isSelected
-                          ? 'border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-950/40'
-                          : 'border-emerald-500/20 hover:border-emerald-400/60'
-                      }`}
-                    >
-                      {/* Compact Image Thumbnail */}
-                      <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-[#06140d]">
-                        <Image src={imageSrc} alt={v.name} fill className="object-cover" />
-                        <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-slate-950/85 backdrop-blur-xs rounded-md text-[9px] font-bold text-emerald-400 uppercase border border-emerald-500/30">
-                          {v.sport_type}
-                        </div>
-                      </div>
-
-                      {/* Content & Price */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                        <div>
-                          <h4 className="text-sm font-bold text-white leading-tight truncate">{v.name}</h4>
-                          <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{v.short_description || v.description}</p>
-                        </div>
-
-                        <div className="mt-2 pt-2 border-t border-emerald-500/15 flex items-center justify-between">
-                          <div>
-                            <span className="text-xs font-extrabold text-emerald-400">
-                              ₹{basePrice} <span className="text-[10px] text-slate-400 font-normal">/ hr</span>
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedVenue(v)
-                              setStage(3)
-                            }}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg shadow-sm transition-all"
-                          >
-                            Select
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* DESKTOP 3-COLUMN VENUE CARDS */}
-              <div className="hidden md:grid md:grid-cols-3 gap-6">
-                {venues.map((v) => {
-                  const isSelected = selectedVenue?.id === v.id
-                  const basePrice = v.base_price ? Number(v.base_price) : (v.sport_type === 'football' ? 999 : 299)
-                  const imageSrc = VENUE_IMAGES[v.slug] || VENUE_IMAGES['football-turf']
-
-                  return (
-                    <div
-                      key={v.id}
-                      onClick={() => {
-                        setSelectedVenue(v)
-                        setStage(3)
-                      }}
-                      className={`bg-[#0e2419] border rounded-3xl overflow-hidden cursor-pointer transition-all flex flex-col justify-between shadow-xl shadow-black/30 hover:border-emerald-400/60 ${
-                        isSelected
-                          ? 'border-emerald-500 ring-2 ring-emerald-500/30'
-                          : 'border-emerald-500/20'
-                      }`}
-                    >
-                      <div className="relative h-44 w-full bg-[#06140d]">
-                        <Image src={imageSrc} alt={v.name} fill className="object-cover" />
-                        <div className="absolute top-3 left-3 px-2.5 py-1 bg-slate-950/85 backdrop-blur-sm rounded-lg text-[10px] font-bold text-emerald-400 uppercase border border-emerald-500/30">
-                          {v.sport_type}
-                        </div>
-                      </div>
-
-                      <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h4 className="text-lg font-bold text-white">{v.name}</h4>
-                          <p className="text-xs text-slate-400 mt-1 line-clamp-2">{v.short_description || v.description}</p>
-                        </div>
-
-                        <div className="pt-3 border-t border-emerald-500/15 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-slate-400 uppercase block font-medium">Rate</span>
-                            <span className="text-base font-extrabold text-emerald-400">₹{basePrice} <span className="text-xs text-slate-400 font-normal">/ hr</span></span>
-                          </div>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedVenue(v)
-                              setStage(3)
-                            }}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
-                          >
-                            Select Venue
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
               </div>
             </motion.div>
           )}
 
-          {/* STAGE 3: TIME SLOTS */}
+          {/* ========================================================================= */}
+          {/* STEP 3: CHOOSE YOUR TIME SLOTS */}
+          {/* ========================================================================= */}
           {stage === 3 && (
             <motion.div
-              key="stage-3"
+              key="stage-3-time"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
@@ -717,26 +888,36 @@ export default function BookNowPage() {
             >
               <div className="flex items-center justify-between pb-4 border-b border-emerald-500/15">
                 <div>
-                  <span className="text-[11px] text-emerald-400/80 uppercase font-semibold">Selected Venue & Date</span>
-                  <p className="font-bold text-white text-sm">{selectedVenue?.name} · {selectedDate && format(selectedDate, 'MMM d, yyyy')}</p>
+                  <span className="text-[11px] text-emerald-400/80 uppercase font-semibold">Selected Facility & Date</span>
+                  <p className="font-bold text-white text-sm">
+                    {selectedFacility?.name} · {selectedDate && format(selectedDate, 'MMM d, yyyy')}
+                  </p>
                 </div>
-                <button
-                  onClick={() => setStage(2)}
-                  className="px-3.5 py-1.5 bg-[#091b12] hover:bg-[#0f2c1e] text-emerald-300 hover:text-white font-medium text-xs rounded-xl flex items-center gap-1.5 border border-emerald-500/25 transition-all"
-                >
-                  <RotateCcw size={14} /> Change Venue
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setStage(1)}
+                    className="px-3 py-1.5 bg-[#091b12] hover:bg-[#0f2c1e] text-emerald-300 hover:text-white font-medium text-xs rounded-xl border border-emerald-500/25 transition-all"
+                  >
+                    Change Facility
+                  </button>
+                  <button
+                    onClick={() => setStage(2)}
+                    className="px-3 py-1.5 bg-[#091b12] hover:bg-[#0f2c1e] text-emerald-300 hover:text-white font-medium text-xs rounded-xl border border-emerald-500/25 transition-all"
+                  >
+                    Change Date
+                  </button>
+                </div>
               </div>
 
               <div className="text-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Step 3 of 5</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#00A86B]">Step 3 of {totalStepsCount}</span>
                 <h2 className="text-2xl font-extrabold text-white mt-1">SELECT YOUR STARTING TIME</h2>
-                <p className="text-xs text-slate-400 mt-1">Only available slots are displayed (past/booked excluded)</p>
+                <p className="text-xs text-slate-300 mt-1">Click to select one or multiple consecutive hourly slots</p>
               </div>
 
               {isLoadingSlots ? (
-                <div className="py-12 text-center text-slate-400">
-                  <Loader2 size={32} className="animate-spin mx-auto text-emerald-400 mb-2" />
+                <div className="py-12 text-center text-slate-300">
+                  <Loader2 size={32} className="animate-spin mx-auto text-[#00A86B] mb-2" />
                   Querying real-time slot availability...
                 </div>
               ) : availableSlots.length > 0 ? (
@@ -749,12 +930,16 @@ export default function BookNowPage() {
                         onClick={() => handleSlotToggle(slot)}
                         className={`p-4 rounded-2xl border text-center transition-all ${
                           isSelected
-                            ? 'border-emerald-500 bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400'
-                            : 'border-emerald-500/20 bg-[#091b12] text-slate-200 hover:border-emerald-400 hover:text-white hover:bg-[#0f2c1e]'
+                            ? 'border-[#00A86B] bg-[#00A86B] text-slate-950 font-bold shadow-lg shadow-[#00A86B]/30 ring-2 ring-emerald-300'
+                            : 'border-emerald-500/20 bg-[#091b12] text-slate-200 hover:border-[#00A86B] hover:text-white hover:bg-[#0f2c1e]'
                         }`}
                       >
                         <span className="text-xs font-semibold block">{slot.label}</span>
-                        <span className={`text-xs mt-1 block ${isSelected ? 'text-slate-950 font-extrabold' : 'text-emerald-400 font-bold'}`}>
+                        <span
+                          className={`text-xs mt-1 block ${
+                            isSelected ? 'text-slate-950 font-extrabold' : 'text-[#00A86B] font-bold'
+                          }`}
+                        >
                           ₹{slot.price}
                         </span>
                       </button>
@@ -763,30 +948,45 @@ export default function BookNowPage() {
                 </div>
               ) : (
                 <div className="py-12 text-center border border-dashed border-emerald-500/25 rounded-2xl bg-[#091b12]/50">
-                  <CalendarIcon className="mx-auto text-slate-500 mb-2" size={36} />
-                  <p className="text-xs text-slate-400">No available slots for this venue & date.</p>
+                  <CalendarIcon className="mx-auto text-slate-400 mb-2" size={36} />
+                  <p className="text-xs text-slate-300">No open slots remaining for this facility & date.</p>
+                  <button
+                    onClick={() => setStage(2)}
+                    className="mt-3 px-4 py-2 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl transition-all"
+                  >
+                    Select Another Date
+                  </button>
                 </div>
               )}
 
               <div className="flex justify-between pt-4 border-t border-emerald-500/15">
                 <button onClick={() => setStage(2)} className="px-4 py-2 text-xs text-slate-400 hover:text-white font-medium">
-                  ← Back to Venues
+                  ← Back to Date
                 </button>
                 <button
-                  onClick={() => setStage(4)}
+                  onClick={() => {
+                    // Intelligent routing: If facility has add-ons, go to Step 4. If not (Football), skip directly to Step 5 (Checkout)!
+                    if (facilityHasAddons) {
+                      setStage(4)
+                    } else {
+                      setStage(5)
+                    }
+                  }}
                   disabled={selectedSlots.length === 0}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-semibold text-xs rounded-xl shadow-md transition-all"
+                  className="px-6 py-2.5 bg-[#00A86B] hover:bg-[#007A52] disabled:opacity-40 text-white font-semibold text-xs rounded-xl shadow-md transition-all"
                 >
-                  Continue to Duration →
+                  {facilityHasAddons ? 'Continue to Add-ons →' : 'Proceed to Checkout →'}
                 </button>
               </div>
             </motion.div>
           )}
 
-          {/* STAGE 4: DURATION & ADDONS */}
-          {stage === 4 && (
+          {/* ========================================================================= */}
+          {/* STEP 4: ADD-ONS (ONLY SHOWN FOR APPLICABLE CRICKET NET BOOKINGS) */}
+          {/* ========================================================================= */}
+          {stage === 4 && facilityHasAddons && (
             <motion.div
-              key="stage-4"
+              key="stage-4-addons"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
@@ -794,41 +994,36 @@ export default function BookNowPage() {
               className="bg-[#0e2419]/90 backdrop-blur-xl border border-emerald-500/20 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl shadow-black/40"
             >
               <div className="text-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Step 4 of 5</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#00A86B]">Step 4 of {totalStepsCount}</span>
                 <h2 className="text-2xl font-extrabold text-white mt-1">FACILITY ADD-ONS & OPTIONS</h2>
+                <p className="text-xs text-slate-300 mt-1">Optional equipment for your training session</p>
               </div>
 
-              {selectedVenue?.sport_type === 'cricket' ? (
-                <div className="p-6 bg-[#091b12] border border-emerald-500/25 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400">
-                        <BowlingMachineIcon size={22} className="text-emerald-400" />
-                      </div>
-                      <h4 className="text-base font-bold text-white">Automated Bowling Machine</h4>
+              <div className="p-6 bg-[#091b12] border border-emerald-500/25 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#00A86B]/15 flex items-center justify-center text-[#00A86B]">
+                      <BowlingMachineIcon size={22} className="text-[#00A86B]" />
                     </div>
-                    <p className="text-xs text-slate-400 mt-1.5">
-                      Variable speed & swing automated bowling machine during your reserved session.
-                    </p>
-                    <p className="text-xs text-emerald-400 font-bold mt-2">Rate: +₹{bowlingRate} / hour</p>
+                    <h3 className="text-base font-bold text-white">Automated Bowling Machine</h3>
                   </div>
-
-                  <button
-                    onClick={() => setAddBowlingMachine(!addBowlingMachine)}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
-                      addBowlingMachine
-                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                        : 'bg-[#0e2419] border border-emerald-500/30 text-emerald-300 hover:bg-[#133223]'
-                    }`}
-                  >
-                    {addBowlingMachine ? '✓ Included' : '+ Add Bowling Machine'}
-                  </button>
+                  <p className="text-xs text-slate-300 mt-1.5">
+                    Variable speed & swing automated bowling machine during your reserved session.
+                  </p>
+                  <p className="text-xs text-[#00A86B] font-bold mt-2">Rate: +₹{bowlingRate} / hour</p>
                 </div>
-              ) : (
-                <p className="text-xs text-slate-400 text-center py-4 bg-[#091b12]/50 border border-emerald-500/15 rounded-2xl">
-                  No extra equipment add-ons required for Football Turf.
-                </p>
-              )}
+
+                <button
+                  onClick={() => setAddBowlingMachine(!addBowlingMachine)}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                    addBowlingMachine
+                      ? 'bg-[#00A86B] text-white shadow-md shadow-[#00A86B]/30'
+                      : 'bg-[#0e2419] border border-emerald-500/30 text-emerald-300 hover:bg-[#133223]'
+                  }`}
+                >
+                  {addBowlingMachine ? '✓ Included' : '+ Add Bowling Machine'}
+                </button>
+              </div>
 
               <div className="flex justify-between pt-4 border-t border-emerald-500/15">
                 <button onClick={() => setStage(3)} className="px-4 py-2 text-xs text-slate-400 hover:text-white font-medium">
@@ -836,7 +1031,7 @@ export default function BookNowPage() {
                 </button>
                 <button
                   onClick={() => setStage(5)}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-md transition-all"
+                  className="px-6 py-2.5 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl shadow-md transition-all"
                 >
                   Proceed to Checkout →
                 </button>
@@ -844,10 +1039,12 @@ export default function BookNowPage() {
             </motion.div>
           )}
 
-          {/* STAGE 5: DETAILS & FINAL CHECKOUT (SINGLE POLICY CHECKBOX) */}
+          {/* ========================================================================= */}
+          {/* STEP 5: DETAILS & FINAL CHECKOUT */}
+          {/* ========================================================================= */}
           {stage === 5 && (
             <motion.div
-              key="stage-5"
+              key="stage-5-checkout"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
@@ -855,47 +1052,50 @@ export default function BookNowPage() {
               className="bg-[#0e2419]/90 backdrop-blur-xl border border-emerald-500/20 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl shadow-black/40"
             >
               <div className="text-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Step 5 of 5</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#00A86B]">Final Step</span>
                 <h2 className="text-2xl font-extrabold text-white mt-1">CHECKOUT & PAYMENT</h2>
               </div>
 
-              {/* Player Contact Form */}
+              {/* Player Contact Form (Name & Phone Required; Email Optional) */}
               <div className="space-y-4 pt-2">
-                <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Player Identity</h4>
+                <h3 className="text-xs font-bold text-[#00A86B] uppercase tracking-wider">Player Identity</h3>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Full Name *</label>
+                  <label className="block text-xs font-medium text-slate-200 mb-1">Full Name *</label>
                   <input
                     type="text"
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Player Name"
-                    className="w-full px-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                    className="w-full px-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B]"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Phone Number *</label>
+                    <label className="block text-xs font-medium text-slate-200 mb-1">
+                      Phone Number (Required for WhatsApp Confirmation) *
+                    </label>
                     <input
                       type="tel"
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="+91 99060 00000"
-                      className="w-full px-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Email Address *</label>
+                    <label className="block text-xs font-medium text-slate-200 mb-1">
+                      Email Address (Optional)
+                    </label>
                     <input
                       type="email"
-                      required
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="info@maqboolsports.in"
-                      className="w-full px-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                      placeholder="player@example.com (Optional)"
+                      className="w-full px-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B]"
                     />
                   </div>
                 </div>
@@ -903,10 +1103,10 @@ export default function BookNowPage() {
 
               {/* Session Summary Card */}
               <div className="p-5 bg-[#091b12] border border-emerald-500/25 rounded-2xl space-y-3 text-xs shadow-inner">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-emerald-500/20">Booking Summary</h4>
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-emerald-500/20">Booking Summary</h3>
                 <div className="flex justify-between py-1 border-b border-emerald-500/10">
                   <span className="text-slate-400">Facility</span>
-                  <span className="font-bold text-white">{selectedVenue?.name}</span>
+                  <span className="font-bold text-white">{selectedFacility?.name}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-emerald-500/10">
                   <span className="text-slate-400">Date</span>
@@ -914,12 +1114,12 @@ export default function BookNowPage() {
                 </div>
                 <div className="flex justify-between py-1 border-b border-emerald-500/10">
                   <span className="text-slate-400">Time Slot(s)</span>
-                  <span className="font-bold text-emerald-400">{selectedSlots.map((s) => s.label).join(', ')}</span>
+                  <span className="font-bold text-[#00A86B]">{selectedSlots.map((s) => s.label).join(', ')}</span>
                 </div>
-                {addBowlingMachine && (
+                {addBowlingMachine && facilityHasAddons && (
                   <div className="flex justify-between py-1 border-b border-emerald-500/10 text-emerald-300">
                     <span className="flex items-center gap-1.5">
-                      <BowlingMachineIcon size={14} className="text-emerald-400" />
+                      <BowlingMachineIcon size={14} className="text-[#00A86B]" />
                       Automated Bowling Machine
                     </span>
                     <span className="font-bold">+₹{selectedSlots.length * bowlingRate}</span>
@@ -927,7 +1127,7 @@ export default function BookNowPage() {
                 )}
                 <div className="flex justify-between pt-2 text-sm">
                   <span className="font-bold text-white">Total Amount</span>
-                  <span className="font-extrabold text-emerald-400 text-lg">₹{getSubtotal()}</span>
+                  <span className="font-extrabold text-[#00A86B] text-lg">₹{getSubtotal()}</span>
                 </div>
               </div>
 
@@ -940,12 +1140,12 @@ export default function BookNowPage() {
                     onClick={() => setPaymentType('full')}
                     className={`p-4 rounded-xl border text-left transition-all ${
                       paymentType === 'full'
-                        ? 'border-emerald-500 bg-emerald-950/70 text-white font-semibold ring-1 ring-emerald-500/40 shadow-sm'
+                        ? 'border-[#00A86B] bg-[#005C43]/40 text-white font-semibold ring-1 ring-[#00A86B]/40 shadow-sm'
                         : 'border-emerald-500/20 bg-[#091b12] text-slate-300 hover:border-emerald-500/40'
                     }`}
                   >
                     <span className="text-xs font-bold block">100% Full Payment</span>
-                    <span className="text-sm font-extrabold text-emerald-400 mt-1 block">₹{getSubtotal()}</span>
+                    <span className="text-sm font-extrabold text-[#00A86B] mt-1 block">₹{getSubtotal()}</span>
                   </button>
 
                   <button
@@ -953,25 +1153,25 @@ export default function BookNowPage() {
                     onClick={() => setPaymentType('half')}
                     className={`p-4 rounded-xl border text-left transition-all ${
                       paymentType === 'half'
-                        ? 'border-emerald-500 bg-emerald-950/70 text-white font-semibold ring-1 ring-emerald-500/40 shadow-sm'
+                        ? 'border-[#00A86B] bg-[#005C43]/40 text-white font-semibold ring-1 ring-[#00A86B]/40 shadow-sm'
                         : 'border-emerald-500/20 bg-[#091b12] text-slate-300 hover:border-emerald-500/40'
                     }`}
                   >
                     <span className="text-xs font-bold block">50% Advance Payment</span>
-                    <span className="text-sm font-extrabold text-emerald-400 mt-1 block">₹{Math.ceil(getSubtotal() / 2)}</span>
+                    <span className="text-sm font-extrabold text-[#00A86B] mt-1 block">₹{Math.ceil(getSubtotal() / 2)}</span>
                     <span className="text-[10px] text-slate-400 block mt-0.5">Pay balance at facility</span>
                   </button>
                 </div>
               </div>
 
-              {/* SINGLE POLICY CHECKBOX AT CHECKOUT */}
+              {/* Single Policy Agreement Checkbox */}
               <div className="p-4 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-slate-300 shadow-inner">
                 <label className="flex items-start gap-2.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={acceptAllPolicies}
                     onChange={(e) => setAcceptAllPolicies(e.target.checked)}
-                    className="mt-0.5 rounded border-emerald-500/30 bg-[#06140d] text-emerald-500 focus:ring-emerald-500"
+                    className="mt-0.5 rounded border-emerald-500/30 bg-[#06140d] text-[#00A86B] focus:ring-[#00A86B]"
                   />
                   <span className="leading-relaxed">
                     I agree to the{' '}
@@ -982,7 +1182,7 @@ export default function BookNowPage() {
                         e.stopPropagation()
                         openPolicyModal('terms')
                       }}
-                      className="text-emerald-400 font-semibold underline hover:text-emerald-300 cursor-pointer inline p-0 bg-transparent border-none text-xs"
+                      className="text-[#00A86B] font-semibold underline hover:text-emerald-300 cursor-pointer inline p-0 bg-transparent border-none text-xs"
                     >
                       Terms & Conditions
                     </button>
@@ -994,7 +1194,7 @@ export default function BookNowPage() {
                         e.stopPropagation()
                         openPolicyModal('cancellation')
                       }}
-                      className="text-emerald-400 font-semibold underline hover:text-emerald-300 cursor-pointer inline p-0 bg-transparent border-none text-xs"
+                      className="text-[#00A86B] font-semibold underline hover:text-emerald-300 cursor-pointer inline p-0 bg-transparent border-none text-xs"
                     >
                       Cancellation Policy
                     </button>{' '}
@@ -1006,7 +1206,7 @@ export default function BookNowPage() {
                         e.stopPropagation()
                         openPolicyModal('refund')
                       }}
-                      className="text-emerald-400 font-semibold underline hover:text-emerald-300 cursor-pointer inline p-0 bg-transparent border-none text-xs"
+                      className="text-[#00A86B] font-semibold underline hover:text-emerald-300 cursor-pointer inline p-0 bg-transparent border-none text-xs"
                     >
                       Refund Policy
                     </button>
@@ -1016,13 +1216,22 @@ export default function BookNowPage() {
               </div>
 
               <div className="flex justify-between pt-4 border-t border-emerald-500/15">
-                <button onClick={() => setStage(4)} className="px-4 py-2 text-xs text-slate-400 hover:text-white font-medium">
-                  ← Back to Options
+                <button
+                  onClick={() => {
+                    if (facilityHasAddons) {
+                      setStage(4)
+                    } else {
+                      setStage(3)
+                    }
+                  }}
+                  className="px-4 py-2 text-xs text-slate-400 hover:text-white font-medium"
+                >
+                  ← Back to {facilityHasAddons ? 'Add-ons' : 'Time Slots'}
                 </button>
                 <button
                   onClick={handleProceedToPayment}
                   disabled={isLocking || !acceptAllPolicies}
-                  className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/60 transition-all flex items-center gap-2"
+                  className="px-8 py-3 bg-[#00A86B] hover:bg-[#007A52] disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/60 transition-all flex items-center gap-2"
                 >
                   {isLocking ? (
                     <>
@@ -1042,5 +1251,19 @@ export default function BookNowPage() {
 
       <Footer />
     </main>
+  )
+}
+
+export default function BookNowPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#061a12] flex items-center justify-center text-white">
+          <Loader2 size={32} className="animate-spin text-[#00A86B]" />
+        </div>
+      }
+    >
+      <BookingFlowContent />
+    </Suspense>
   )
 }

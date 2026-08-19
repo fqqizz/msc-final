@@ -10,6 +10,7 @@ import Footer from '@/components/footer'
 import { useAuth } from '@/components/providers/auth-provider'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
+import PlayerAvatar from '@/components/ui/player-avatar'
 
 export default function ProfilePage() {
   const { user, profile, customer, role, isLoading: authLoading } = useAuth()
@@ -122,13 +123,13 @@ export default function ProfilePage() {
         >
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
             {/* Avatar */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-emerald-600 border-2 border-emerald-400/50 flex items-center justify-center text-4xl text-white font-bold shadow-md overflow-hidden shrink-0">
-              {profile?.avatar_url ? (
-                <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" />
-              ) : (
-                (profile?.full_name || user.email || 'P').charAt(0).toUpperCase()
-              )}
-            </div>
+            <PlayerAvatar
+              name={profile?.full_name}
+              email={user.email}
+              avatarUrl={profile?.avatar_url}
+              size={96}
+              className="rounded-3xl shadow-md border-2 border-emerald-500/30"
+            />
 
             <div className="flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">

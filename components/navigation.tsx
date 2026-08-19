@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, User as UserIcon, LayoutDashboard, Shield, LogOut, Trophy, CalendarCheck } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
+import PlayerAvatar from '@/components/ui/player-avatar'
 
 const navItems = [
   { name: 'Home', href: '/' },
@@ -21,6 +22,7 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const { user, profile, role, logout, isLoading } = useAuth()
 
@@ -33,6 +35,21 @@ export default function Navigation() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Close profile dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false)
+      }
+    }
+    if (profileDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [profileDropdownOpen])
 
   // Body scroll lock on mobile drawer open
   useEffect(() => {
@@ -48,36 +65,36 @@ export default function Navigation() {
 
   return (
     <>
-      {/* FLOATING EMERALD GLASS NAVBAR */}
+      {/* FLOATING EMERALD GLASS NAVBAR (High z-index to stay above hero and video) */}
       <motion.nav
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-4 sm:px-6 lg:px-8 ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-4 sm:px-6 lg:px-8 ${
           scrolled ? 'py-3' : 'py-5'
         }`}
       >
         <div className="max-w-7xl mx-auto">
-          {/* Premium emerald glass panel — lighter, more translucent, natural emerald */}
+          {/* Main navbar container (No overflow-hidden on outer to allow dropdown to float over hero) */}
           <div
-            className="flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 relative overflow-hidden"
+            className="flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 relative"
             style={{
-              background: 'linear-gradient(135deg, rgba(16,78,42,0.52) 0%, rgba(10,55,28,0.60) 100%)',
-              backdropFilter: 'blur(18px)',
-              WebkitBackdropFilter: 'blur(18px)',
-              border: '1px solid rgba(52,211,153,0.18)',
-              boxShadow: '0 8px 32px rgba(10,50,24,0.28), inset 0 1px 0 rgba(110,231,183,0.10)',
+              background: 'linear-gradient(135deg, rgba(0, 92, 67, 0.65) 0%, rgba(6, 37, 29, 0.85) 100%)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0, 168, 107, 0.25)',
+              boxShadow: '0 10px 35px rgba(6, 37, 29, 0.45), inset 0 1px 0 rgba(221, 245, 234, 0.12)',
             }}
           >
-            {/* Glass highlight reflection strip — top-left diagonal gleam */}
+            {/* Top highlight strip (contained in pseudo rounded overlay) */}
             <div
-              className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+              className="absolute top-0 left-4 right-4 h-px pointer-events-none rounded-full"
               style={{
-                background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.22) 30%, rgba(110,231,183,0.10) 70%, transparent 100%)',
+                background: 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 107, 0.4) 30%, rgba(221, 245, 234, 0.25) 70%, transparent 100%)',
               }}
             />
 
-            {/* Logo ONLY — No text beside the logo */}
+            {/* Logo */}
             <Link href="/" className="flex items-center group shrink-0 relative z-10" title="Maqbool Sports Complex">
               <div className="relative w-10 h-10 overflow-hidden transition-transform duration-200 group-hover:scale-105">
                 <Image
@@ -105,7 +122,7 @@ export default function Navigation() {
                     }`}
                   >
                     {item.name}
-                    <span className={`absolute bottom-1.5 left-3.5 right-3.5 h-0.5 bg-emerald-400 rounded-full transition-transform duration-200 origin-left ${
+                    <span className={`absolute bottom-1.5 left-3.5 right-3.5 h-0.5 bg-[#00A86B] rounded-full transition-transform duration-200 origin-left ${
                       isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                     }`} />
                   </Link>
@@ -118,7 +135,7 @@ export default function Navigation() {
               {/* BOOK NOW CTA */}
               <Link
                 href="/book-now"
-                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs sm:text-xs rounded-xl transition-all duration-200 shadow-lg shadow-sky-500/30 hover:shadow-sky-400/40 hover:scale-[1.02] active:scale-[0.98]"
+                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-lg shadow-[#00A86B]/25 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Book Now
               </Link>
@@ -134,7 +151,7 @@ export default function Navigation() {
                   </Link>
                   <Link
                     href="/register"
-                    className="px-3.5 py-2 text-xs font-semibold text-emerald-200 bg-emerald-800/50 border border-emerald-400/25 hover:bg-emerald-700/50 rounded-xl transition-all"
+                    className="px-3.5 py-2 text-xs font-semibold text-[#DDF5EA] bg-[#007A52]/60 border border-[#00A86B]/30 hover:bg-[#005C43]/80 rounded-xl transition-all"
                   >
                     Register
                   </Link>
@@ -143,40 +160,48 @@ export default function Navigation() {
 
               {/* Logged In Avatar Dropdown */}
               {user && (
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors border border-emerald-400/25"
+                    className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-[#00A86B]/50 transition-all border border-emerald-500/30"
+                    aria-label="User Profile Menu"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs overflow-hidden relative">
-                      {profile?.avatar_url ? (
-                        <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" />
-                      ) : (
-                        (profile?.full_name || user.email || 'P').charAt(0).toUpperCase()
-                      )}
-                    </div>
+                    <PlayerAvatar
+                      name={profile?.full_name}
+                      email={user.email}
+                      avatarUrl={profile?.avatar_url}
+                      size={32}
+                    />
                   </button>
 
                   <AnimatePresence>
                     {profileDropdownOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-56 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden z-50 text-white py-2"
+                        className="absolute right-0 mt-3 w-56 backdrop-blur-2xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden z-[110] text-white py-2"
                         style={{
-                          background: 'linear-gradient(135deg, rgba(10,40,22,0.97) 0%, rgba(7,30,16,0.98) 100%)',
-                          boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.12)',
+                          background: 'linear-gradient(145deg, rgba(6, 37, 29, 0.98) 0%, rgba(16, 20, 18, 0.98) 100%)',
+                          boxShadow: '0 25px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(0, 168, 107, 0.25)',
                         }}
                       >
-                        <div className="px-4 py-3 border-b border-emerald-500/15">
-                          <p className="text-xs font-semibold text-white truncate">
-                            {profile?.full_name || 'MSC Player'}
-                          </p>
-                          <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                            {user.email}
-                          </p>
+                        <div className="px-4 py-3 border-b border-emerald-500/15 flex items-center gap-3">
+                          <PlayerAvatar
+                            name={profile?.full_name}
+                            email={user.email}
+                            avatarUrl={profile?.avatar_url}
+                            size={34}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-white truncate">
+                              {profile?.full_name || 'MSC Player'}
+                            </p>
+                            <p className="text-[11px] text-emerald-300/70 truncate mt-0.5">
+                              {user.email}
+                            </p>
+                          </div>
                         </div>
 
                         <div className="py-1">
@@ -185,7 +210,7 @@ export default function Navigation() {
                             onClick={() => setProfileDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
                           >
-                            <LayoutDashboard size={15} className="text-emerald-400" />
+                            <LayoutDashboard size={15} className="text-[#00A86B]" />
                             Dashboard
                           </Link>
                           <Link
@@ -193,7 +218,7 @@ export default function Navigation() {
                             onClick={() => setProfileDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
                           >
-                            <UserIcon size={15} className="text-sky-400" />
+                            <UserIcon size={15} className="text-[#34D399]" />
                             Player Profile
                           </Link>
                           <Link
@@ -217,7 +242,7 @@ export default function Navigation() {
                             <Link
                               href="/admin"
                               onClick={() => setProfileDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-emerald-300 font-semibold bg-emerald-950/60 hover:bg-emerald-900/60 transition-colors border-t border-b border-emerald-500/20 my-1"
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-emerald-300 font-semibold bg-[#005C43]/60 hover:bg-[#007A52]/60 transition-colors border-t border-b border-emerald-500/20 my-1"
                             >
                               <Shield size={15} className="text-emerald-400" />
                               MSC OS Owner Access
@@ -264,11 +289,11 @@ export default function Navigation() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 md:hidden"
+            className="fixed inset-0 z-[105] md:hidden"
           >
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black/55 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/65 backdrop-blur-sm"
               onClick={() => setMobileMenuOpen(false)}
             />
 
@@ -280,18 +305,18 @@ export default function Navigation() {
               transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               className="absolute right-0 top-0 bottom-0 w-[285px] flex flex-col justify-between p-6 overflow-hidden"
               style={{
-                background: 'linear-gradient(160deg, rgba(18,82,44,0.72) 0%, rgba(8,46,24,0.82) 60%, rgba(5,30,15,0.90) 100%)',
+                background: 'linear-gradient(160deg, rgba(6, 37, 29, 0.95) 0%, rgba(0, 92, 67, 0.85) 60%, rgba(16, 20, 18, 0.98) 100%)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
-                borderLeft: '1px solid rgba(52,211,153,0.18)',
-                boxShadow: '-8px 0 40px rgba(0,0,0,0.45), inset 1px 0 0 rgba(110,231,183,0.08)',
+                borderLeft: '1px solid rgba(0, 168, 107, 0.25)',
+                boxShadow: '-10px 0 45px rgba(0,0,0,0.55)',
               }}
             >
               {/* Top highlight strip */}
               <div
                 className="absolute top-0 left-0 right-0 h-px pointer-events-none"
                 style={{
-                  background: 'linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.18) 50%, transparent 100%)',
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 107, 0.35) 50%, transparent 100%)',
                 }}
               />
 
@@ -327,8 +352,8 @@ export default function Navigation() {
                             : 'text-emerald-100/80 hover:text-white hover:bg-white/10'
                         }`}
                         style={isActive ? {
-                          background: 'rgba(52,211,153,0.15)',
-                          border: '1px solid rgba(52,211,153,0.22)',
+                          background: 'rgba(0, 168, 107, 0.25)',
+                          border: '1px solid rgba(0, 168, 107, 0.35)',
                         } : {}}
                       >
                         {item.name}
@@ -354,8 +379,8 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                       className="block w-full py-2.5 text-center font-semibold text-xs rounded-xl text-white shadow-md transition-all hover:opacity-90"
                       style={{
-                        background: 'linear-gradient(135deg, rgba(34,197,94,0.85) 0%, rgba(16,144,64,0.90) 100%)',
-                        boxShadow: '0 4px 16px rgba(34,197,94,0.25)',
+                        background: 'linear-gradient(135deg, #00A86B 0%, #007A52 100%)',
+                        boxShadow: '0 4px 16px rgba(0, 168, 107, 0.35)',
                       }}
                     >
                       Register

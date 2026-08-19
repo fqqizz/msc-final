@@ -11,13 +11,18 @@
   --foreground: #0A0A0C;
   --foreground-muted: rgba(10, 10, 12, 0.6);
   
-  /* Brand Colors */
-  --turf-green: #2BA84A;
-  --turf-green-dark: #146B3A;
-  --turf-green-light: #E8F5EC;
-  --sky-blue: #7DD3FC;
-  --sky-blue-light: #E0F2FE;
-  --emerald: #10B981;
+  /* Brand Colors - MSC Emerald Palette */
+  --primary-msc-emerald: #00A86B;
+  --deep-emerald: #007A52;
+  --dark-emerald: #005C43;
+  --emerald-black: #06251D;
+  --soft-emerald: #DDF5EA;
+  --off-white: #F7F9F7;
+  --carbon: #101412;
+  --turf-green: #00A86B;
+  --turf-green-dark: #007A52;
+  --turf-green-light: #DDF5EA;
+  --emerald: #00A86B;
   
   /* UI Colors */
   --card: #FFFFFF;

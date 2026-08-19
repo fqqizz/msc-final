@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateBookingReceiptPDF } from '@/lib/receipt-generator'
+import { isBefore, subDays } from 'date-fns'
+
+// Configurable secure receipt download retention period (90 days)
+const RECEIPT_EXPIRY_DAYS = 90
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -14,12 +18,25 @@ export async function GET(req: NextRequest) {
 
   const { data: booking, error } = await supabase
     .from('bookings')
-    .select('*, venues(name)')
+    .select('*, venues(name), user_profiles(full_name, phone, email)')
     .eq('id', bookingId)
     .maybeSingle()
 
   if (error || !booking) {
     return NextResponse.json({ error: 'Booking record not found' }, { status: 404 })
+  }
+
+  // Secure Expiry Check: Receipts for bookings created beyond the retention window expire
+  const bookingCreatedAt = new Date(booking.created_at || booking.start_time)
+  const expiryThreshold = subDays(new Date(), RECEIPT_EXPIRY_DAYS)
+
+  if (isBefore(bookingCreatedAt, expiryThreshold)) {
+    return NextResponse.json(
+      {
+        error: `Receipt download access for Booking #${booking.booking_number} has expired (${RECEIPT_EXPIRY_DAYS}-day security lifecycle). Please contact reception at info@maqboolsports.in for historical audit statements.`,
+      },
+      { status: 410 }
+    )
   }
 
   const pdfBuffer = generateBookingReceiptPDF(booking)
@@ -28,7 +45,8 @@ export async function GET(req: NextRequest) {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="MSC-Receipt-${booking.booking_number}.pdf"`
-    }
+      'Content-Disposition': `attachment; filename="MSC-Receipt-${booking.booking_number}.pdf"`,
+      'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+    },
   })
 }

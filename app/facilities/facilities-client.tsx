@@ -101,14 +101,14 @@ export default function FacilitiesClient() {
       try {
         const { data: dbVenues } = await supabase
           .from('venues')
-          .select('slug, base_price')
+          .select('id, slug, base_price')
           .eq('status', 'active')
           .neq('slug', 'bowling-nets')
 
         if (dbVenues && dbVenues.length > 0) {
           setFacilitiesList((prev) =>
             prev.map((f) => {
-              const match = dbVenues.find((v) => v.slug === f.id)
+              const match = dbVenues.find((v) => v.slug === f.id || v.id === f.id)
               if (match && match.base_price) {
                 return { ...f, price: Number(match.base_price) }
               }
@@ -124,7 +124,7 @@ export default function FacilitiesClient() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[#061009] text-white">
+    <main className="min-h-screen bg-[#06140d] text-white">
       <Navigation />
 
       {/* Hero Section */}
@@ -136,8 +136,8 @@ export default function FacilitiesClient() {
             fill
             className="object-cover opacity-20"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#040d07]/60 via-[#040d07]/90 to-[#061009]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-emerald-500/10 rounded-full blur-[130px] transform-gpu" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#040d07]/60 via-[#040d07]/90 to-[#06140d]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#00A86B]/10 rounded-full blur-[130px] transform-gpu" />
         </div>
 
         <motion.div
@@ -146,12 +146,12 @@ export default function FacilitiesClient() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10"
         >
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-6 shadow-sm backdrop-blur-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005C43]/70 border border-emerald-500/25 text-emerald-300 text-xs font-semibold uppercase tracking-widest rounded-full mb-6 shadow-sm backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
             Our Facilities
           </span>
           <h1 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl text-white tracking-wide uppercase leading-tight">
-            WORLD-CLASS <span className="text-[#2BA84A]">SPORTS FACILITIES</span>
+            WORLD-CLASS <span className="text-[#00A86B]">SPORTS FACILITIES</span>
           </h1>
           <p className="mt-5 text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
             Premium synthetic turf and professional cricket nets engineered for exceptional athletic performance in Baramulla.
@@ -170,7 +170,7 @@ export default function FacilitiesClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.6, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-[#0e2419]/90 border border-emerald-500/20 hover:border-emerald-400/50 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl shadow-black/40 transition-all duration-300"
+                className="bg-[#0e2419]/90 border border-emerald-500/20 hover:border-[#00A86B]/50 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl shadow-black/40 transition-all duration-300"
               >
                 <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center ${
                   index % 2 === 1 ? 'lg:grid-flow-dense' : ''
@@ -187,7 +187,7 @@ export default function FacilitiesClient() {
                       />
                     </div>
                     {/* Live Authoritative Price Badge */}
-                    <div className="absolute -bottom-3 -right-3 px-5 py-2.5 bg-[#2BA84A] text-white font-extrabold text-base sm:text-lg rounded-xl shadow-xl shadow-emerald-950/60 border border-emerald-300/30">
+                    <div className="absolute -bottom-3 -right-3 px-5 py-2.5 bg-[#00A86B] text-white font-extrabold text-base sm:text-lg rounded-xl shadow-xl shadow-[#06251D]/60 border border-emerald-300/30">
                       ₹{facility.price}{facility.unit}
                     </div>
                   </div>
@@ -205,8 +205,8 @@ export default function FacilitiesClient() {
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-8">
                       {facility.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-2.5">
-                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                            <Check size={12} className="text-emerald-400" />
+                          <div className="w-5 h-5 rounded-full bg-[#00A86B]/20 border border-[#00A86B]/30 flex items-center justify-center shrink-0">
+                            <Check size={12} className="text-[#00A86B]" />
                           </div>
                           <span className="text-slate-200 text-xs sm:text-sm">{feature}</span>
                         </li>
@@ -214,8 +214,8 @@ export default function FacilitiesClient() {
                     </ul>
 
                     <Link
-                      href={`/book-now?venue=${facility.id}`}
-                      className="inline-flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-950/50 transition-all duration-200"
+                      href={`/book-now?facility=${facility.id}`}
+                      className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#00A86B] hover:bg-[#007A52] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#06251D]/50 transition-all duration-200"
                     >
                       <span>Book Your Session</span>
                       <ArrowRight size={16} />
@@ -232,11 +232,11 @@ export default function FacilitiesClient() {
       <section className="py-20 sm:py-24 bg-[#040d07] border-t border-emerald-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14 sm:mb-16">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-950/70 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-widest rounded-full mb-4 shadow-sm">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005C43]/70 border border-emerald-500/25 text-emerald-300 text-xs font-semibold uppercase tracking-widest rounded-full mb-4 shadow-sm">
               Standard Amenities
             </span>
             <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-5xl text-white uppercase tracking-wide">
-              ADDITIONAL <span className="text-[#2BA84A]">HIGHLIGHTS</span>
+              FACILITY <span className="text-[#00A86B]">HIGHLIGHTS</span>
             </h2>
             <p className="mt-3 text-slate-300 text-sm sm:text-base max-w-xl mx-auto">
               Premium facility amenities engineered for an unmatched sporting experience in Kashmir.
@@ -249,7 +249,7 @@ export default function FacilitiesClient() {
                 key={highlight.title}
                 className="bg-[#0e2419]/90 border border-emerald-500/20 p-6 rounded-2xl backdrop-blur-xl shadow-lg shadow-black/30 flex flex-col"
               >
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mb-4 text-emerald-400">
+                <div className="w-12 h-12 rounded-xl bg-[#00A86B]/15 border border-[#00A86B]/25 flex items-center justify-center mb-4 text-[#00A86B]">
                   <highlight.icon size={22} />
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-white mb-1.5">{highlight.title}</h3>
