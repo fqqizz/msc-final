@@ -10,6 +10,7 @@ import Footer from '@/components/footer'
 import { useAuth } from '@/components/providers/auth-provider'
 import { createClient } from '@/lib/supabase/client'
 import { format, formatDistanceToNow, isAfter, isBefore } from 'date-fns'
+import PlayerAvatar from '@/components/ui/player-avatar'
 
 export default function CustomerDashboardPage() {
   const { user, profile, customer, role, isLoading: authLoading } = useAuth()
@@ -127,15 +128,24 @@ export default function CustomerDashboardPage() {
       <Navigation />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {/* Welcome Header */}
+        {/* Welcome Header with Circular Profile Picture */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              Customer Dashboard
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Welcome back, <span className="text-slate-900 font-semibold">{profile?.full_name || 'MSC Player'}</span>
-            </p>
+          <div className="flex items-center gap-3.5">
+            <PlayerAvatar
+              name={profile?.full_name}
+              email={user.email}
+              avatarUrl={profile?.avatar_url || '/images/pfp.jpeg'}
+              size={48}
+              className="rounded-full shadow-md"
+            />
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+                Customer Dashboard
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                Welcome back, <span className="text-slate-900 font-semibold">{profile?.full_name || 'MSC Player'}</span>
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 
 interface PlayerAvatarProps {
@@ -11,14 +11,6 @@ interface PlayerAvatarProps {
   className?: string
 }
 
-// Deterministic color variation based on name/email
-const PALETTES = [
-  { bg: 'from-[#007A52] to-[#005C43]', accent: '#00A86B', iconBg: 'rgba(0, 168, 107, 0.25)' },
-  { bg: 'from-[#005C43] to-[#06251D]', accent: '#34D399', iconBg: 'rgba(52, 211, 153, 0.25)' },
-  { bg: 'from-[#06251D] to-[#101412]', accent: '#6EE7B7', iconBg: 'rgba(110, 231, 183, 0.25)' },
-  { bg: 'from-[#082F24] to-[#004D36]', accent: '#10B981', iconBg: 'rgba(16, 185, 129, 0.25)' },
-]
-
 export default function PlayerAvatar({
   name,
   email,
@@ -26,58 +18,61 @@ export default function PlayerAvatar({
   size = 36,
   className = '',
 }: PlayerAvatarProps) {
-  if (avatarUrl) {
+  const [imageError, setImageError] = useState(false)
+
+  // Primary profile image path (prefers user-provided avatar or provided pfp.jpeg asset)
+  const imageSource = avatarUrl || '/images/pfp.jpeg'
+
+  if (!imageError) {
     return (
       <div
-        className={`relative rounded-full overflow-hidden border border-emerald-500/30 shrink-0 ${className}`}
-        style={{ width: size, height: size }}
+        className={`relative rounded-full overflow-hidden shrink-0 select-none bg-[#06251D] ${className}`}
+        style={{
+          width: size,
+          height: size,
+        }}
       >
-        <Image src={avatarUrl} alt={name || 'Player'} fill className="object-cover" />
+        <Image
+          src={imageSource}
+          alt={name || 'Player'}
+          fill
+          sizes={`${size}px`}
+          priority
+          className="object-cover object-center rounded-full"
+          onError={() => setImageError(true)}
+        />
       </div>
     )
   }
 
-  // Deterministic seed
-  const identifier = (name || email || 'MSC Player').trim()
-  let hash = 0
-  for (let i = 0; i < identifier.length; i++) {
-    hash = identifier.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const paletteIndex = Math.abs(hash) % PALETTES.length
-  const palette = PALETTES[paletteIndex]
-
+  // Minimal cinematic two-tone MSC generated fallback
   return (
     <div
-      className={`relative rounded-full shrink-0 flex items-center justify-center overflow-hidden border border-emerald-500/30 bg-gradient-to-br ${palette.bg} shadow-xs select-none ${className}`}
+      className={`relative rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#007A52] to-[#06251D] select-none ${className}`}
       style={{
         width: size,
         height: size,
-        boxShadow: '0 2px 8px rgba(0, 37, 29, 0.35)',
       }}
-      title={identifier}
+      title={name || email || 'MSC Player'}
     >
-      {/* Subtle athletic geometric vector emblem */}
       <svg
         viewBox="0 0 40 40"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full p-1.5 opacity-90"
       >
-        {/* Soft radial background gleam */}
-        <circle cx="20" cy="20" r="16" fill={palette.iconBg} />
-        {/* Sleek MSC Shield / Crest Motif */}
+        <circle cx="20" cy="20" r="16" fill="rgba(0, 168, 107, 0.25)" />
         <path
           d="M20 7L29 11V19.5C29 25.5 25.2 31 20 33C14.8 31 11 25.5 11 19.5V11L20 7Z"
-          stroke={palette.accent}
+          stroke="#00A86B"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
         />
-        {/* Inner geometric sports star / velocity mark */}
         <path
           d="M20 13L21.5 17.5H26L22.5 20.2L23.8 24.5L20 22L16.2 24.5L17.5 20.2L14 17.5H18.5L20 13Z"
-          fill={palette.accent}
+          fill="#00A86B"
           opacity="0.9"
         />
       </svg>

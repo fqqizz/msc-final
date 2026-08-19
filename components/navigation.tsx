@@ -51,6 +51,12 @@ export default function Navigation() {
     }
   }, [profileDropdownOpen])
 
+  // Close dropdown on route change
+  useEffect(() => {
+    setProfileDropdownOpen(false)
+    setMobileMenuOpen(false)
+  }, [pathname])
+
   // Body scroll lock on mobile drawer open
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -65,30 +71,30 @@ export default function Navigation() {
 
   return (
     <>
-      {/* FLOATING EMERALD GLASS NAVBAR (High z-index to stay above hero and video) */}
+      {/* FLOATING EMERALD GLASS NAVBAR (Elevated z-index to render cleanly above Hero, video, and cards) */}
       <motion.nav
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-4 sm:px-6 lg:px-8 ${
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className={`fixed top-0 left-0 right-0 z-[150] transition-all duration-300 px-4 sm:px-6 lg:px-8 ${
           scrolled ? 'py-3' : 'py-5'
         }`}
       >
         <div className="max-w-7xl mx-auto">
-          {/* Main navbar container (No overflow-hidden on outer to allow dropdown to float over hero) */}
+          {/* Main navbar bar (No overflow-hidden on outer wrapper to prevent clipping the floating dropdown) */}
           <div
             className="flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 relative"
             style={{
               background: 'linear-gradient(135deg, rgba(0, 92, 67, 0.65) 0%, rgba(6, 37, 29, 0.85) 100%)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0, 168, 107, 0.25)',
+              border: '1px solid rgba(0, 168, 107, 0.22)',
               boxShadow: '0 10px 35px rgba(6, 37, 29, 0.45), inset 0 1px 0 rgba(221, 245, 234, 0.12)',
             }}
           >
-            {/* Top highlight strip (contained in pseudo rounded overlay) */}
+            {/* Top highlight subtle gleam */}
             <div
-              className="absolute top-0 left-4 right-4 h-px pointer-events-none rounded-full"
+              className="absolute top-0 left-6 right-6 h-px pointer-events-none rounded-full"
               style={{
                 background: 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 107, 0.4) 30%, rgba(221, 245, 234, 0.25) 70%, transparent 100%)',
               }}
@@ -122,9 +128,11 @@ export default function Navigation() {
                     }`}
                   >
                     {item.name}
-                    <span className={`absolute bottom-1.5 left-3.5 right-3.5 h-0.5 bg-[#00A86B] rounded-full transition-transform duration-200 origin-left ${
-                      isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                    }`} />
+                    <span
+                      className={`absolute bottom-1.5 left-3.5 right-3.5 h-0.5 bg-[#00A86B] rounded-full transition-transform duration-200 origin-left ${
+                        isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                      }`}
+                    />
                   </Link>
                 )
               })}
@@ -132,10 +140,10 @@ export default function Navigation() {
 
             {/* CTAs & User Profile */}
             <div className="flex items-center gap-2 sm:gap-3 relative z-10">
-              {/* BOOK NOW CTA */}
+              {/* RESTORED SIGNATURE BLUE BOOK NOW CTA (Requirement 4) */}
               <Link
                 href="/book-now"
-                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-lg shadow-[#00A86B]/25 hover:scale-[1.02] active:scale-[0.98]"
+                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-lg shadow-sky-500/30 hover:shadow-sky-400/40 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Book Now
               </Link>
@@ -158,52 +166,56 @@ export default function Navigation() {
                 </div>
               )}
 
-              {/* Logged In Avatar Dropdown */}
+              {/* Logged In Single-Boundary Circular Profile Avatar (Requirement 1) */}
               {user && (
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-[#00A86B]/50 transition-all border border-emerald-500/30"
+                    className="flex items-center rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 focus:outline-none cursor-pointer"
                     aria-label="User Profile Menu"
                   >
                     <PlayerAvatar
                       name={profile?.full_name}
                       email={user.email}
-                      avatarUrl={profile?.avatar_url}
-                      size={32}
+                      avatarUrl={profile?.avatar_url || '/images/pfp.jpeg'}
+                      size={36}
                     />
                   </button>
 
+                  {/* PREMIUM DYNAMIC PROFILE DROPDOWN (Requirement 2 & 3) */}
                   <AnimatePresence>
                     {profileDropdownOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        initial={{ opacity: 0, y: -4, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-3 w-56 backdrop-blur-2xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden z-[110] text-white py-2"
+                        exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute right-0 mt-3 w-60 max-w-[calc(100vw-32px)] backdrop-blur-2xl rounded-2xl shadow-2xl overflow-hidden z-[160] text-white py-2"
                         style={{
-                          background: 'linear-gradient(145deg, rgba(6, 37, 29, 0.98) 0%, rgba(16, 20, 18, 0.98) 100%)',
-                          boxShadow: '0 25px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(0, 168, 107, 0.25)',
+                          background: 'linear-gradient(145deg, rgba(6, 37, 29, 0.96) 0%, rgba(16, 20, 18, 0.97) 100%)',
+                          border: '1px solid rgba(0, 168, 107, 0.20)',
+                          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(221, 245, 234, 0.10)',
                         }}
                       >
+                        {/* User Identity Header */}
                         <div className="px-4 py-3 border-b border-emerald-500/15 flex items-center gap-3">
                           <PlayerAvatar
                             name={profile?.full_name}
                             email={user.email}
-                            avatarUrl={profile?.avatar_url}
-                            size={34}
+                            avatarUrl={profile?.avatar_url || '/images/pfp.jpeg'}
+                            size={38}
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-white truncate">
+                            <p className="text-xs font-bold text-white truncate">
                               {profile?.full_name || 'MSC Player'}
                             </p>
-                            <p className="text-[11px] text-emerald-300/70 truncate mt-0.5">
+                            <p className="text-[11px] text-emerald-300/70 truncate mt-0.5 font-medium">
                               {user.email}
                             </p>
                           </div>
                         </div>
 
+                        {/* Navigation Links */}
                         <div className="py-1">
                           <Link
                             href="/dashboard"
@@ -211,14 +223,14 @@ export default function Navigation() {
                             className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
                           >
                             <LayoutDashboard size={15} className="text-[#00A86B]" />
-                            Dashboard
+                            My Dashboard
                           </Link>
                           <Link
                             href="/profile"
                             onClick={() => setProfileDropdownOpen(false)}
                             className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
                           >
-                            <UserIcon size={15} className="text-[#34D399]" />
+                            <UserIcon size={15} className="text-sky-400" />
                             Player Profile
                           </Link>
                           <Link
@@ -250,13 +262,14 @@ export default function Navigation() {
                           )}
                         </div>
 
+                        {/* Sign Out */}
                         <div className="pt-1 border-t border-emerald-500/15">
                           <button
                             onClick={() => {
                               setProfileDropdownOpen(false)
                               logout()
                             }}
-                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
                           >
                             <LogOut size={15} />
                             Sign Out
@@ -268,7 +281,7 @@ export default function Navigation() {
                 </div>
               )}
 
-              {/* Mobile Drawer Button */}
+              {/* Mobile Drawer Toggle */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="md:hidden p-2 text-white/90 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/10"
@@ -289,7 +302,7 @@ export default function Navigation() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[105] md:hidden"
+            className="fixed inset-0 z-[170] md:hidden"
           >
             {/* Backdrop */}
             <div
@@ -351,10 +364,14 @@ export default function Navigation() {
                             ? 'text-white font-bold'
                             : 'text-emerald-100/80 hover:text-white hover:bg-white/10'
                         }`}
-                        style={isActive ? {
-                          background: 'rgba(0, 168, 107, 0.25)',
-                          border: '1px solid rgba(0, 168, 107, 0.35)',
-                        } : {}}
+                        style={
+                          isActive
+                            ? {
+                                background: 'rgba(0, 168, 107, 0.25)',
+                                border: '1px solid rgba(0, 168, 107, 0.35)',
+                              }
+                            : {}
+                        }
                       >
                         {item.name}
                       </Link>

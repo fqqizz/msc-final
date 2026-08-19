@@ -122,13 +122,13 @@ export default function ProfilePage() {
           className="relative bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 overflow-hidden shadow-xl"
         >
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
-            {/* Avatar */}
+            {/* Perfectly Circular Clean Avatar */}
             <PlayerAvatar
               name={profile?.full_name}
               email={user.email}
-              avatarUrl={profile?.avatar_url}
+              avatarUrl={profile?.avatar_url || '/images/pfp.jpeg'}
               size={96}
-              className="rounded-3xl shadow-md border-2 border-emerald-500/30"
+              className="rounded-full shadow-lg"
             />
 
             <div className="flex-1 text-center sm:text-left">
