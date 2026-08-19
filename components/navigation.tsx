@@ -129,7 +129,7 @@ export default function Navigation() {
                   >
                     {item.name}
                     <span
-                      className={`absolute bottom-1.5 left-3.5 right-3.5 h-0.5 bg-[#00A86B] rounded-full transition-transform duration-200 origin-left ${
+                      className={`absolute bottom-1.5 left-3.5 right-3.5 h-0.5 bg-[#2BA84A] rounded-full transition-transform duration-200 origin-left ${
                         isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                       }`}
                     />
@@ -140,10 +140,10 @@ export default function Navigation() {
 
             {/* CTAs & User Profile */}
             <div className="flex items-center gap-2 sm:gap-3 relative z-10">
-              {/* RESTORED SIGNATURE BLUE BOOK NOW CTA (Requirement 4) */}
+              {/* RESTORED SIGNATURE BLUE BOOK NOW CTA (Tactile Clay Depth) */}
               <Link
                 href="/book-now"
-                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold text-xs rounded-xl transition-all duration-200 shadow-lg shadow-sky-500/30 hover:shadow-sky-400/40 hover:scale-[1.02] active:scale-[0.98]"
+                className="clay-button-blue px-4 py-2 sm:px-5 sm:py-2.5 text-white font-bold text-xs rounded-xl"
               >
                 Book Now
               </Link>

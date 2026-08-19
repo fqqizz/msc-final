@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, Check, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -35,9 +35,9 @@ export default function BookingSection() {
   }, [])
 
   return (
-    <section className="relative py-28 bg-[#06140d] overflow-hidden border-t border-emerald-500/10" id="booking">
-      {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#00A86B]/10 rounded-full blur-3xl pointer-events-none" />
+    <section className="relative py-28 bg-[#06140D] overflow-hidden border-t border-emerald-500/10" id="booking">
+      {/* Background Depth Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#00A86B]/8 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
@@ -47,24 +47,32 @@ export default function BookingSection() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1.5 bg-[#005C43]/70 border border-emerald-500/25 rounded-full text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-4">
+          <span className="inline-block px-4 py-1.5 bg-[#005C43]/70 border border-emerald-500/25 rounded-full text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-4 shadow-sm backdrop-blur-md">
             Instant Facility Reservation
           </span>
           <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-white tracking-tight">
-            RESERVE YOUR SESSION
+            RESERVE YOUR <span className="text-[#2BA84A]">SESSION</span>
           </h2>
           <p className="mt-4 text-slate-300 text-sm sm:text-base max-w-xl mx-auto">
-            Experience Kashmir's first FIFA-grade synthetic turf & pro cricket net pitches with real-time slot availability.
+            Experience Kashmir&apos;s first FIFA-grade synthetic turf & pro cricket net pitches with real-time slot availability.
           </p>
         </motion.div>
 
-        {/* Feature Cards Grid (Clean layout without redundant overlay tags) */}
+        {/* Feature Cards Grid (Tactile Clay Surfaces) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="p-8 rounded-3xl bg-[#0e2419]/90 border border-emerald-500/20 shadow-2xl flex flex-col justify-between"
+            whileHover={{ y: -5, scale: 1.012 }}
+            whileTap={{ scale: 0.98 }}
+            className="p-8 rounded-3xl flex flex-col justify-between transition-all duration-300"
+            style={{
+              background: 'linear-gradient(150deg, rgba(14, 36, 25, 0.85) 0%, rgba(6, 25, 18, 0.92) 55%, rgba(16, 20, 18, 0.96) 100%)',
+              backdropFilter: 'blur(18px)',
+              border: '1px solid rgba(0, 168, 107, 0.18)',
+              boxShadow: '0 18px 45px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35)',
+            }}
           >
             <div>
               <h3 className="text-2xl font-bold font-display text-white">Football Turf</h3>
@@ -73,10 +81,10 @@ export default function BookingSection() {
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-emerald-500/15 flex items-center justify-between">
-              <span className="text-lg font-extrabold text-[#00A86B]">₹{turfPrice}/hr</span>
+              <span className="text-lg font-extrabold text-[#2BA84A]">₹{turfPrice}/hr</span>
               <Link
                 href="/book-now?facility=football-turf"
-                className="px-4 py-2 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-900/30 transition-all inline-flex items-center gap-1.5"
+                className="clay-button-green px-4 py-2 text-white font-bold text-xs rounded-xl inline-flex items-center gap-1.5"
               >
                 Book Turf <ArrowRight size={14} />
               </Link>
@@ -88,7 +96,15 @@ export default function BookingSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="p-8 rounded-3xl bg-[#0e2419]/90 border border-emerald-500/20 shadow-2xl flex flex-col justify-between"
+            whileHover={{ y: -5, scale: 1.012 }}
+            whileTap={{ scale: 0.98 }}
+            className="p-8 rounded-3xl flex flex-col justify-between transition-all duration-300"
+            style={{
+              background: 'linear-gradient(150deg, rgba(14, 36, 25, 0.85) 0%, rgba(6, 25, 18, 0.92) 55%, rgba(16, 20, 18, 0.96) 100%)',
+              backdropFilter: 'blur(18px)',
+              border: '1px solid rgba(0, 168, 107, 0.18)',
+              boxShadow: '0 18px 45px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35)',
+            }}
           >
             <div>
               <h3 className="text-2xl font-bold font-display text-white">Cricket Net 1</h3>
@@ -97,10 +113,10 @@ export default function BookingSection() {
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-emerald-500/15 flex items-center justify-between">
-              <span className="text-lg font-extrabold text-[#00A86B]">₹{net1Price}/hr</span>
+              <span className="text-lg font-extrabold text-[#2BA84A]">₹{net1Price}/hr</span>
               <Link
                 href="/book-now?facility=cricket-net-1"
-                className="px-4 py-2 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-900/30 transition-all inline-flex items-center gap-1.5"
+                className="clay-button-green px-4 py-2 text-white font-bold text-xs rounded-xl inline-flex items-center gap-1.5"
               >
                 Book Net 1 <ArrowRight size={14} />
               </Link>
@@ -112,7 +128,15 @@ export default function BookingSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="p-8 rounded-3xl bg-[#0e2419]/90 border border-emerald-500/20 shadow-2xl flex flex-col justify-between"
+            whileHover={{ y: -5, scale: 1.012 }}
+            whileTap={{ scale: 0.98 }}
+            className="p-8 rounded-3xl flex flex-col justify-between transition-all duration-300"
+            style={{
+              background: 'linear-gradient(150deg, rgba(14, 36, 25, 0.85) 0%, rgba(6, 25, 18, 0.92) 55%, rgba(16, 20, 18, 0.96) 100%)',
+              backdropFilter: 'blur(18px)',
+              border: '1px solid rgba(0, 168, 107, 0.18)',
+              boxShadow: '0 18px 45px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35)',
+            }}
           >
             <div>
               <h3 className="text-2xl font-bold font-display text-white">Cricket Net 2</h3>
@@ -121,10 +145,10 @@ export default function BookingSection() {
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-emerald-500/15 flex items-center justify-between">
-              <span className="text-lg font-extrabold text-[#00A86B]">₹{net2Price}/hr</span>
+              <span className="text-lg font-extrabold text-[#2BA84A]">₹{net2Price}/hr</span>
               <Link
                 href="/book-now?facility=cricket-net-2"
-                className="px-4 py-2 bg-[#00A86B] hover:bg-[#007A52] text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-900/30 transition-all inline-flex items-center gap-1.5"
+                className="clay-button-green px-4 py-2 text-white font-bold text-xs rounded-xl inline-flex items-center gap-1.5"
               >
                 Book Net 2 <ArrowRight size={14} />
               </Link>
@@ -136,7 +160,7 @@ export default function BookingSection() {
         <div className="text-center">
           <Link
             href="/book-now"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-[#00A86B] hover:bg-[#007A52] text-white font-extrabold text-base rounded-2xl shadow-xl shadow-[#00A86B]/25 transition-all hover:scale-[1.02]"
+            className="clay-button-green inline-flex items-center gap-3 px-8 py-4 text-white font-extrabold text-base rounded-2xl"
           >
             Choose Your Facility & Book <ArrowRight size={18} />
           </Link>

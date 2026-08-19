@@ -322,15 +322,15 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
       >
         <Link
           href="/book-now"
-          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-[#2BA84A] text-white font-semibold rounded-lg hover:bg-[#239B40] transition-colors duration-200 text-center shadow-lg shadow-[#2BA84A]/20"
+          className="clay-button-green px-7 sm:px-9 py-3.5 sm:py-4 text-white font-bold text-sm sm:text-base rounded-xl text-center"
         >
           Book Your Slot
         </Link>
         <Link
           href="/facilities"
-          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white/10 md:bg-white/5 md:backdrop-blur-sm border border-white/10 text-white font-medium rounded-lg hover:bg-white/15 transition-colors duration-200 flex items-center justify-center gap-2"
+          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white/10 md:bg-white/5 md:backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-medium text-sm sm:text-base rounded-xl hover:bg-white/15 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-black/40 active:scale-[0.98]"
         >
-          <Play size={16} className="fill-current" />
+          <Play size={16} className="fill-current text-[#2BA84A]" />
           Explore Arena
         </Link>
       </motion.div>

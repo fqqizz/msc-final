@@ -147,11 +147,11 @@ export default function FacilitiesClient() {
           className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10"
         >
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005C43]/70 border border-emerald-500/25 text-emerald-300 text-xs font-semibold uppercase tracking-widest rounded-full mb-6 shadow-sm backdrop-blur-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2BA84A] animate-pulse" />
             Our Facilities
           </span>
           <h1 className="font-[family-name:var(--font-anton)] text-4xl sm:text-6xl md:text-7xl text-white tracking-wide uppercase leading-tight">
-            WORLD-CLASS <span className="text-[#00A86B]">SPORTS FACILITIES</span>
+            WORLD-CLASS <span className="text-[#2BA84A]">SPORTS FACILITIES</span>
           </h1>
           <p className="mt-5 text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
             Premium synthetic turf and professional cricket nets engineered for exceptional athletic performance in Baramulla.
@@ -170,7 +170,14 @@ export default function FacilitiesClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.6, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-[#0e2419]/90 border border-emerald-500/20 hover:border-[#00A86B]/50 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl shadow-black/40 transition-all duration-300"
+                className="rounded-3xl p-6 sm:p-10 transition-all duration-300"
+                style={{
+                  background: 'linear-gradient(150deg, rgba(14, 36, 25, 0.85) 0%, rgba(6, 25, 18, 0.92) 55%, rgba(16, 20, 18, 0.96) 100%)',
+                  backdropFilter: 'blur(18px)',
+                  WebkitBackdropFilter: 'blur(18px)',
+                  border: '1px solid rgba(0, 168, 107, 0.18)',
+                  boxShadow: '0 18px 45px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35)',
+                }}
               >
                 <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center ${
                   index % 2 === 1 ? 'lg:grid-flow-dense' : ''
@@ -187,7 +194,13 @@ export default function FacilitiesClient() {
                       />
                     </div>
                     {/* Live Authoritative Price Badge */}
-                    <div className="absolute -bottom-3 -right-3 px-5 py-2.5 bg-[#00A86B] text-white font-extrabold text-base sm:text-lg rounded-xl shadow-xl shadow-[#06251D]/60 border border-emerald-300/30">
+                    <div
+                      className="absolute -bottom-3 -right-3 px-5 py-2.5 text-white font-extrabold text-base sm:text-lg rounded-xl shadow-xl border border-emerald-300/30"
+                      style={{
+                        background: 'linear-gradient(135deg, #00A86B 0%, #007A52 100%)',
+                        boxShadow: '0 8px 24px rgba(0, 168, 107, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                      }}
+                    >
                       ₹{facility.price}{facility.unit}
                     </div>
                   </div>
@@ -206,7 +219,7 @@ export default function FacilitiesClient() {
                       {facility.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-2.5">
                           <div className="w-5 h-5 rounded-full bg-[#00A86B]/20 border border-[#00A86B]/30 flex items-center justify-center shrink-0">
-                            <Check size={12} className="text-[#00A86B]" />
+                            <Check size={12} className="text-[#2BA84A]" />
                           </div>
                           <span className="text-slate-200 text-xs sm:text-sm">{feature}</span>
                         </li>
@@ -215,7 +228,7 @@ export default function FacilitiesClient() {
 
                     <Link
                       href={`/book-now?facility=${facility.id}`}
-                      className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#00A86B] hover:bg-[#007A52] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#06251D]/50 transition-all duration-200"
+                      className="clay-button-green inline-flex items-center gap-2 px-6 py-3.5 text-white font-bold text-xs sm:text-sm rounded-xl"
                     >
                       <span>Book Your Session</span>
                       <ArrowRight size={16} />

@@ -49,11 +49,11 @@ export default function HowItWorks() {
           className="text-center mb-14 sm:mb-16"
         >
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005C43]/70 border border-emerald-500/25 text-emerald-300 text-xs font-semibold uppercase tracking-widest rounded-full mb-4 shadow-sm backdrop-blur-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2BA84A] animate-pulse" />
             Simple 3-Step Flow
           </span>
           <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-5xl md:text-6xl text-white tracking-wide uppercase leading-tight">
-            SIMPLIFYING THE <span className="text-[#00A86B]">BOOKING PROCESS</span>
+            SIMPLIFYING THE <span className="text-[#2BA84A]">BOOKING PROCESS</span>
           </h2>
           <p className="mt-4 text-slate-300 text-sm sm:text-base md:text-lg max-w-xl mx-auto leading-relaxed font-normal">
             Three streamlined steps to get your team onto the pitch without waiting or double-booking conflicts.

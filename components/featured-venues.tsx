@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Clock, Users, Zap, Check } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 import { createClient } from '@/lib/supabase/client'
 
@@ -84,24 +84,16 @@ export default function FeaturedVenues() {
     loadLiveFacilityPrices()
   }, [])
 
-  const cardHover = isMobile
-    ? {}
-    : {
-        y: -6,
-        scale: 1.015,
-        transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
-      }
-
   return (
-    <section className="py-20 sm:py-28 bg-[#06140d] relative overflow-hidden text-white border-t border-emerald-500/10">
-      {/* Soft Ambient Radial Atmosphere */}
+    <section className="py-20 sm:py-28 bg-[#06140D] relative overflow-hidden text-white border-t border-emerald-500/10">
+      {/* Soft Ambient Depth Atmosphere */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[650px] sm:w-[800px] h-[350px] sm:h-[450px] bg-[#00A86B]/10 rounded-full blur-[130px] transform-gpu" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,168,107,0.06)_0%,rgba(6,20,13,0.95)_75%)]" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[650px] sm:w-[850px] h-[350px] sm:h-[450px] bg-[#00A86B]/8 rounded-full blur-[140px] transform-gpu" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,168,107,0.05)_0%,rgba(6,20,13,0.96)_75%)]" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section header */}
+        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -110,18 +102,18 @@ export default function FeaturedVenues() {
           className="text-center mb-14 sm:mb-16"
         >
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005C43]/70 border border-emerald-500/25 text-emerald-300 text-xs font-semibold uppercase tracking-widest rounded-full mb-4 shadow-sm backdrop-blur-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2BA84A] animate-pulse" />
             Featured Facilities
           </span>
           <h2 className="font-[family-name:var(--font-anton)] text-3xl sm:text-5xl md:text-6xl text-white tracking-wide uppercase leading-tight">
-            PREMIUM SPORTS <span className="text-[#00A86B]">FACILITIES & TURFS</span>
+            PREMIUM SPORTS <span className="text-[#2BA84A]">FACILITIES & TURFS</span>
           </h2>
           <p className="mt-4 text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
             FIFA-grade synthetic turf and professional cricket nets with floodlights, nestled amidst the scenic mountain landscapes of Baramulla.
           </p>
         </motion.div>
 
-        {/* Facility cards (Clean presentation with NO physical text overlays on the image) */}
+        {/* Facility Cards (Tactile Claymorphism + Spatial 2.5D Lift) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {facilities.map((facility, index) => (
             <motion.div
@@ -130,12 +122,32 @@ export default function FeaturedVenues() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.08, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={cardHover}
-              whileTap={isMobile ? { scale: 0.98 } : { scale: 0.99 }}
-              className="group relative transform-gpu will-change-transform"
+              whileHover={
+                isMobile
+                  ? {}
+                  : {
+                      y: -6,
+                      scale: 1.012,
+                      transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+                    }
+              }
+              whileTap={{ scale: 0.98 }}
+              className="group relative transform-gpu will-change-transform h-full"
             >
-              <div className="bg-[#0e2419]/90 border border-emerald-500/20 hover:border-[#00A86B]/60 rounded-3xl overflow-hidden h-full flex flex-col backdrop-blur-xl shadow-2xl shadow-black/40 transition-all duration-300">
-                {/* Image — Clean with NO redundant sport text overlay badges */}
+              {/* Physical Clay Surface Card */}
+              <div
+                className="rounded-3xl overflow-hidden h-full flex flex-col transition-all duration-300"
+                style={{
+                  background:
+                    'linear-gradient(150deg, rgba(14, 36, 25, 0.85) 0%, rgba(6, 25, 18, 0.92) 55%, rgba(16, 20, 18, 0.96) 100%)',
+                  backdropFilter: 'blur(18px)',
+                  WebkitBackdropFilter: 'blur(18px)',
+                  border: '1px solid rgba(0, 168, 107, 0.18)',
+                  boxShadow:
+                    '0 18px 45px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35)',
+                }}
+              >
+                {/* Image Surface */}
                 <div className="relative h-56 w-full overflow-hidden bg-[#040d07]">
                   <Image
                     src={facility.image}
@@ -145,11 +157,18 @@ export default function FeaturedVenues() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   {facility.popular && (
-                    <div className="absolute top-4 right-4 px-3 py-1 bg-[#00A86B] text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-md shadow-[#06251D]/60">
+                    <div
+                      className="absolute top-4 right-4 px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg"
+                      style={{
+                        background: 'linear-gradient(135deg, #00A86B 0%, #007A52 100%)',
+                        boxShadow: '0 4px 14px rgba(0, 168, 107, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                        border: '1px solid rgba(221, 245, 234, 0.2)',
+                      }}
+                    >
                       Popular
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0e2419] via-transparent to-transparent opacity-60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0e2419] via-transparent to-transparent opacity-60 pointer-events-none" />
                 </div>
 
                 {/* Content */}
@@ -168,24 +187,28 @@ export default function FeaturedVenues() {
                     {facility.features.map((feature) => (
                       <span
                         key={feature}
-                        className="px-2.5 py-1 bg-[#07170f] border border-emerald-500/15 text-emerald-300 text-[11px] font-medium rounded-lg"
+                        className="px-2.5 py-1 text-emerald-300 text-[11px] font-medium rounded-lg"
+                        style={{
+                          background: 'rgba(6, 37, 29, 0.7)',
+                          border: '1px solid rgba(0, 168, 107, 0.2)',
+                        }}
                       >
                         {feature}
                       </span>
                     ))}
                   </div>
 
-                  {/* Authoritative Live Price and CTA (Pre-selects facility into Date step) */}
+                  {/* Authoritative Live Price and Tactile CTA */}
                   <div className="flex items-center justify-between pt-4 border-t border-emerald-500/15 mt-auto">
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Rate</span>
-                      <span className="text-2xl font-extrabold text-[#00A86B]">
+                      <span className="text-2xl font-extrabold text-[#2BA84A]">
                         ₹{facility.price} <span className="text-xs text-slate-400 font-normal">{facility.unit}</span>
                       </span>
                     </div>
                     <Link
                       href={`/book-now?facility=${facility.id}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#00A86B] hover:bg-[#007A52] text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-950/50 transition-all duration-200"
+                      className="clay-button-green inline-flex items-center gap-1.5 px-4 py-2.5 text-white text-xs font-bold rounded-xl"
                     >
                       Book Session
                       <ArrowRight size={14} />
@@ -197,7 +220,7 @@ export default function FeaturedVenues() {
           ))}
         </div>
 
-        {/* View all link */}
+        {/* View All Facilities Link */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -207,7 +230,12 @@ export default function FeaturedVenues() {
         >
           <Link
             href="/facilities"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0e2419]/80 hover:bg-[#133324] border border-emerald-500/25 hover:border-emerald-500/40 text-emerald-100 hover:text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md backdrop-blur-md transition-all duration-200"
+            className="inline-flex items-center gap-2 px-6 py-3 text-emerald-100 hover:text-white font-semibold text-xs sm:text-sm rounded-xl transition-all duration-200"
+            style={{
+              background: 'linear-gradient(145deg, rgba(14, 36, 25, 0.8) 0%, rgba(6, 25, 18, 0.9) 100%)',
+              border: '1px solid rgba(0, 168, 107, 0.25)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+            }}
           >
             View All Facilities
             <ArrowRight size={16} />
