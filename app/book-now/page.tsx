@@ -1077,13 +1077,13 @@ function BookingFlowContent() {
 
                   <div>
                     <label className="block text-xs font-medium text-slate-200 mb-1">
-                      Email Address (Optional)
+                      Email Address
                     </label>
                     <input
                       type="email"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="player@example.com (Optional)"
+                      placeholder="player@example.com"
                       className="w-full px-4 py-2.5 bg-[#091b12] border border-emerald-500/25 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#00A86B] focus:ring-1 focus:ring-[#00A86B]"
                     />
                   </div>
