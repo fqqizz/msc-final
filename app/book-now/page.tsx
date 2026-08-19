@@ -886,26 +886,15 @@ function BookingFlowContent() {
               transition={{ duration: 0.2 }}
               className="bg-[#0e2419]/90 backdrop-blur-xl border border-emerald-500/20 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl shadow-black/40"
             >
-              <div className="flex items-center justify-between pb-4 border-b border-emerald-500/15">
+              {/* Clean Static Context (Selected Facility & Date) */}
+              <div className="flex items-center justify-between bg-[#091b12] border border-emerald-500/20 px-5 py-3.5 rounded-2xl shadow-inner">
                 <div>
-                  <span className="text-[11px] text-emerald-400/80 uppercase font-semibold">Selected Facility & Date</span>
-                  <p className="font-bold text-white text-sm">
-                    {selectedFacility?.name} · {selectedDate && format(selectedDate, 'MMM d, yyyy')}
-                  </p>
+                  <span className="text-[10px] text-emerald-400/80 uppercase font-bold tracking-wider">Selected Facility</span>
+                  <p className="font-bold text-white text-sm mt-0.5">{selectedFacility?.name}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setStage(1)}
-                    className="px-3 py-1.5 bg-[#091b12] hover:bg-[#0f2c1e] text-emerald-300 hover:text-white font-medium text-xs rounded-xl border border-emerald-500/25 transition-all"
-                  >
-                    Change Facility
-                  </button>
-                  <button
-                    onClick={() => setStage(2)}
-                    className="px-3 py-1.5 bg-[#091b12] hover:bg-[#0f2c1e] text-emerald-300 hover:text-white font-medium text-xs rounded-xl border border-emerald-500/25 transition-all"
-                  >
-                    Change Date
-                  </button>
+                <div className="text-right">
+                  <span className="text-[10px] text-emerald-400/80 uppercase font-bold tracking-wider">Selected Date</span>
+                  <p className="font-bold text-white text-sm mt-0.5">{selectedDate && format(selectedDate, 'EEEE, MMM d, yyyy')}</p>
                 </div>
               </div>
 

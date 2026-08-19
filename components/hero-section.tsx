@@ -271,7 +271,7 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
 
   return (
     <div 
-      className="relative z-20 h-full flex flex-col items-center justify-center px-4 sm:px-6 transform-gpu"
+      className="relative z-20 h-full flex flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-0 transform-gpu max-w-4xl mx-auto"
       style={GPU_ACCELERATED}
     >
       {/* Main heading */}
@@ -280,12 +280,12 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
         animate={isVisible ? 'visible' : 'hidden'}
         variants={fadeUpVariants}
         custom={0.1}
-        className="text-center transform-gpu"
+        className="text-center transform-gpu max-w-full"
       >
-        <h1 className="font-[family-name:var(--font-anton)] text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-white leading-[0.9]">
+        <h1 className="font-[family-name:var(--font-anton)] text-5xl xs:text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tight text-white leading-[0.92] select-none">
           MAQBOOL
         </h1>
-        <h2 className="font-[family-name:var(--font-anton)] text-5xl sm:text-6xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-[#2BA84A] leading-[0.9] mt-1 sm:mt-2">
+        <h2 className="font-[family-name:var(--font-anton)] text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-[#2BA84A] leading-[0.92] mt-1.5 sm:mt-2.5 select-none">
           SPORTS COMPLEX
         </h2>
       </motion.div>
@@ -296,7 +296,7 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
         animate={isVisible ? 'visible' : 'hidden'}
         variants={fadeUpVariants}
         custom={0.2}
-        className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-white/80 font-light tracking-wide text-center max-w-xl px-4 transform-gpu"
+        className="mt-4 sm:mt-6 text-sm sm:text-base md:text-lg text-white/85 font-normal tracking-wide text-center max-w-lg px-2 transform-gpu leading-snug"
       >
         Community-centric premier sports hub offering facilities for football, cricket, and more.
       </motion.p>
@@ -307,30 +307,30 @@ const HeroContent = memo(function HeroContent({ isVisible }: { isVisible: boolea
         animate={isVisible ? 'visible' : 'hidden'}
         variants={fadeUpVariants}
         custom={0.25}
-        className="mt-3 text-sm sm:text-base text-white/50 max-w-md text-center transform-gpu"
+        className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-white/55 max-w-md text-center transform-gpu"
       >
         Baramulla&apos;s first elite 10,000+ sq. ft. synthetic turf facility
       </motion.p>
 
-      {/* CTAs */}
+      {/* CTAs (Compact, centered, max-width constrained on mobile per Requirement 2 & 5) */}
       <motion.div
         initial="hidden"
         animate={isVisible ? 'visible' : 'hidden'}
         variants={fadeUpVariants}
         custom={0.3}
-        className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0 transform-gpu"
+        className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-[280px] xs:max-w-[310px] sm:max-w-none px-2 sm:px-0 transform-gpu"
       >
         <Link
           href="/book-now"
-          className="clay-button-green px-7 sm:px-9 py-3.5 sm:py-4 text-white font-bold text-sm sm:text-base rounded-xl text-center"
+          className="clay-button-green w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 text-white font-bold text-xs sm:text-sm rounded-xl text-center shadow-lg transition-transform duration-200 active:scale-[0.98]"
         >
           Book Your Slot
         </Link>
         <Link
           href="/facilities"
-          className="px-6 sm:px-8 py-3.5 sm:py-4 bg-white/10 md:bg-white/5 md:backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-medium text-sm sm:text-base rounded-xl hover:bg-white/15 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-black/40 active:scale-[0.98]"
+          className="w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 bg-white/10 md:bg-white/5 md:backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-medium text-xs sm:text-sm rounded-xl hover:bg-white/15 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-black/40 active:scale-[0.98]"
         >
-          <Play size={16} className="fill-current text-[#2BA84A]" />
+          <Play size={14} className="fill-current text-[#2BA84A]" />
           Explore Arena
         </Link>
       </motion.div>
