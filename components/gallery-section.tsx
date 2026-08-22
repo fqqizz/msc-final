@@ -8,38 +8,38 @@ import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 const galleryImages = [
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-ZqzcvzltRL7HSNeJ3IYVgSVuOd6b5R.webp',
-    alt: 'Night match at MSC',
+    src: '/images/facilities/turf-1.webp',
+    alt: 'Night floodlit turf at MSC',
     span: 'col-span-2 row-span-2',
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/contact-fsgvfbe8149b7d7aaf60a37248cac104cff70-nopehSpkqvMqC7oJJY6RAFFztOHa5x.png',
-    alt: 'Turf with mountain view',
+    src: '/images/facilities/cricket-net-1-1.webp',
+    alt: 'Cricket Net 1 pitch and run-up',
     span: 'col-span-1 row-span-1',
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
-    alt: 'Safety netting detail',
+    src: '/images/facilities/cricket-net-2-1.webp',
+    alt: 'Cricket Net 2 practice enclosure',
     span: 'col-span-1 row-span-1',
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
-    alt: 'Active match',
+    src: '/images/facilities/turf-2.webp',
+    alt: '10,000+ sq. ft. synthetic turf field',
     span: 'col-span-1 row-span-2',
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%281%29-cTfRT8gpqovQtI1n8tjmfmQjPApiM5.webp',
-    alt: 'Turf installation',
+    src: '/images/facilities/bowling-machine-1.webp',
+    alt: 'Automated bowling machine training',
     span: 'col-span-1 row-span-1',
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/categoryww-11-5SQXOQi5VinDcWf4sCttNRzzVlb0gC.png',
-    alt: 'Panoramic view',
+    src: '/images/facilities/turf-3.webp',
+    alt: 'Panoramic stadium turf view',
     span: 'col-span-2 row-span-1',
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
-    alt: 'Multiple views collage',
+    src: '/images/facilities/cricket-net-1-2.webp',
+    alt: 'Cricket practice netting and pitch',
     span: 'col-span-2 row-span-2',
   },
 ]

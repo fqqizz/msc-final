@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Check } from 'lucide-react'
 import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 import { createClient } from '@/lib/supabase/client'
+import FacilityCarousel from '@/components/ui/facility-carousel'
 
 type FacilityDisplay = {
   id: string
@@ -15,6 +15,7 @@ type FacilityDisplay = {
   price: number
   unit: string
   image: string
+  images: string[]
   features: string[]
   popular?: boolean
 }
@@ -26,7 +27,13 @@ const DEFAULT_FACILITIES: FacilityDisplay[] = [
     description: 'Professional practice net with high-quality netting for solo batting and bowling drills.',
     price: 299,
     unit: '/hour',
-    image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
+    image: '/images/facilities/cricket-net-1-1.webp',
+    images: [
+      '/images/facilities/cricket-net-1-1.webp',
+      '/images/facilities/cricket-net-1-2.webp',
+      '/images/facilities/cricket-net-1-3.webp',
+      '/images/facilities/cricket-net-1-4.webp',
+    ],
     features: ['Professional pitch', 'Heavy-duty netting', 'Adequate run-up'],
   },
   {
@@ -35,7 +42,13 @@ const DEFAULT_FACILITIES: FacilityDisplay[] = [
     description: 'Pro cricket net pitch with optional automated speed-variable bowling machine hookup.',
     price: 299,
     unit: '/hour',
-    image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
+    image: '/images/facilities/cricket-net-2-1.webp',
+    images: [
+      '/images/facilities/cricket-net-2-1.webp',
+      '/images/facilities/cricket-net-2-2.webp',
+      '/images/facilities/cricket-net-2-3.webp',
+      '/images/facilities/cricket-net-2-4.webp',
+    ],
     features: ['Bowling machine hookup', 'Pace & swing controls', 'Protective cage'],
   },
   {
@@ -44,7 +57,13 @@ const DEFAULT_FACILITIES: FacilityDisplay[] = [
     description: '10,000+ sq. ft. premium FIFA-grade synthetic turf for football and box cricket with floodlights.',
     price: 999,
     unit: '/hour',
-    image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
+    image: '/images/facilities/turf-1.webp',
+    images: [
+      '/images/facilities/turf-1.webp',
+      '/images/facilities/turf-2.webp',
+      '/images/facilities/turf-3.webp',
+      '/images/facilities/turf-4.webp',
+    ],
     features: ['10,000+ sq. ft. field', 'LED Floodlights', 'Shock-absorbing infill'],
     popular: true,
   },
@@ -113,7 +132,7 @@ export default function FeaturedVenues() {
           </p>
         </motion.div>
 
-        {/* Facility Cards (Tactile Claymorphism + Spatial 2.5D Lift) */}
+        {/* Facility Cards (Tactile Claymorphism + Swipeable Instagram-style Carousel) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {facilities.map((facility, index) => (
             <motion.div
@@ -147,18 +166,18 @@ export default function FeaturedVenues() {
                     '0 18px 45px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35)',
                 }}
               >
-                {/* Image Surface */}
+                {/* Swipeable Image Carousel Surface */}
                 <div className="relative h-56 w-full overflow-hidden bg-[#040d07]">
-                  <Image
-                    src={facility.image}
-                    alt={facility.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  <FacilityCarousel
+                    images={facility.images || [facility.image]}
+                    facilityName={facility.name}
+                    aspectRatioClass="h-56 w-full"
+                    priorityFirst={index === 0}
                   />
+
                   {facility.popular && (
                     <div
-                      className="absolute top-4 right-4 px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg"
+                      className="absolute top-4 right-4 px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg z-20"
                       style={{
                         background: 'linear-gradient(135deg, #00A86B 0%, #007A52 100%)',
                         boxShadow: '0 4px 14px rgba(0, 168, 107, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
@@ -168,7 +187,6 @@ export default function FeaturedVenues() {
                       Popular
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0e2419] via-transparent to-transparent opacity-60 pointer-events-none" />
                 </div>
 
                 {/* Content */}
@@ -208,7 +226,7 @@ export default function FeaturedVenues() {
                     </div>
                     <Link
                       href={`/book-now?facility=${facility.id}`}
-                      className="clay-button-green inline-flex items-center gap-1.5 px-4 py-2.5 text-white text-xs font-bold rounded-xl"
+                      className="clay-button-green inline-flex items-center gap-1.5 px-4 py-2.5 text-white font-bold text-xs rounded-xl"
                     >
                       Book Session
                       <ArrowRight size={14} />

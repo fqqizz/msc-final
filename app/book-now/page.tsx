@@ -105,9 +105,9 @@ const FALLBACK_FACILITIES: FacilityRecord[] = [
 ]
 
 const FACILITY_IMAGES: Record<string, string> = {
-  'football-turf': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
-  'cricket-net-1': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
-  'cricket-net-2': 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
+  'football-turf': '/images/facilities/turf-1.webp',
+  'cricket-net-1': '/images/facilities/cricket-net-1-1.webp',
+  'cricket-net-2': '/images/facilities/cricket-net-2-1.webp',
 }
 
 // Stages:

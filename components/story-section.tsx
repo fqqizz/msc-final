@@ -139,7 +139,7 @@ export default function StorySection() {
             className="relative aspect-[4/3] rounded-3xl overflow-hidden transform-gpu"
           >
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-ZqzcvzltRL7HSNeJ3IYVgSVuOd6b5R.webp"
+              src="/images/facilities/turf-1.webp"
               alt="Night football match at MSC"
               fill
               className="object-cover"
@@ -159,8 +159,8 @@ export default function StorySection() {
               className="relative aspect-square rounded-2xl overflow-hidden transform-gpu"
             >
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/contact-fsgvfbe8149b7d7aaf60a37248cac104cff70-nopehSpkqvMqC7oJJY6RAFFztOHa5x.png"
-                alt="MSC football turf daytime"
+                src="/images/facilities/cricket-net-1-1.webp"
+                alt="MSC cricket practice net"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 50vw, 25vw"
@@ -172,7 +172,7 @@ export default function StorySection() {
               className="relative aspect-square rounded-2xl overflow-hidden transform-gpu"
             >
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp"
+                src="/images/facilities/turf-2.webp"
                 alt="Players on MSC turf"
                 fill
                 className="object-cover"
@@ -185,7 +185,7 @@ export default function StorySection() {
               className="relative aspect-square rounded-2xl overflow-hidden col-span-2 transform-gpu"
             >
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/categoryww-11-5SQXOQi5VinDcWf4sCttNRzzVlb0gC.png"
+                src="/images/facilities/turf-3.webp"
                 alt="MSC panoramic view"
                 fill
                 className="object-cover"

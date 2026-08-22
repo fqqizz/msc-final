@@ -8,9 +8,9 @@ import Image from 'next/image'
 import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 
 // High-performance MSC media assets
-const VIDEO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/0525%282%29-pUzzUSjX4PhlTrZBiXyQf40jenLSbJ.mp4'
+const VIDEO_URL = '/videos/msc-hero.mp4'
 const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo78-jfpuDJgxyeQ2YTcXCbJ1AZG7dKQWzo.png'
-const POSTER_IMAGE = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp'
+const POSTER_IMAGE = '/images/hero-poster.webp'
 
 // GPU-accelerated styles
 const GPU_ACCELERATED = {

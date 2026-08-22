@@ -42,9 +42,10 @@ export default function AboutPage() {
       <section className="relative pt-32 pb-20 bg-[#040d07] overflow-hidden border-b border-emerald-500/10">
         <div className="absolute inset-0 pointer-events-none">
           <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp"
+            src="/images/facilities/turf-1.webp"
             alt="MSC About"
             fill
+            priority
             className="object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#040d07]/60 via-[#040d07]/90 to-[#061009]" />
@@ -111,7 +112,7 @@ export default function AboutPage() {
             <div className="relative">
               <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border border-emerald-500/20 bg-[#040d07]">
                 <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%281%29-cTfRT8gpqovQtI1n8tjmfmQjPApiM5.webp"
+                  src="/images/facilities/turf-2.webp"
                   alt="MSC Turf"
                   fill
                   className="object-cover"

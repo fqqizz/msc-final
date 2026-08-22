@@ -9,57 +9,67 @@ import { X, Play } from 'lucide-react'
 
 const images = [
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-9yWOKvvBNNBK6xIquOyQsdI5jRibpr.webp',
-    alt: 'Night match under floodlights at MSC',
+    src: '/images/facilities/turf-1.webp',
+    alt: 'Night match under floodlights at MSC Turf',
     category: 'matches'
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/contact-fsgvfbe8149b7d7aaf60a37248cac104cff70-nopehSpkqvMqC7oJJY6RAFFztOHa5x.png',
-    alt: 'MSC Turf Complex Overview',
+    src: '/images/facilities/turf-2.webp',
+    alt: '10,000+ sq. ft. synthetic turf arena overview',
     category: 'facility'
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
-    alt: 'Football action on synthetic turf',
-    category: 'matches'
-  },
-  {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%281%29-cTfRT8gpqovQtI1n8tjmfmQjPApiM5.webp',
-    alt: 'Turf surface close-up',
+    src: '/images/facilities/cricket-net-1-1.webp',
+    alt: 'Cricket Net 1 professional turf pitch',
     category: 'facility'
   },
   {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
-    alt: 'Cricket Net 1 pitch & batting enclosure',
-    category: 'facility'
-  },
-  {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/categoryww-11-5SQXOQi5VinDcWf4sCttNRzzVlb0gC.png',
-    alt: 'Full turf perspective',
-    category: 'facility'
-  },
-  {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
+    src: '/images/facilities/cricket-net-2-1.webp',
     alt: 'Cricket Net 2 training enclosure',
     category: 'facility'
+  },
+  {
+    src: '/images/facilities/bowling-machine-1.webp',
+    alt: 'Speed & swing automated bowling machine setup',
+    category: 'facility'
+  },
+  {
+    src: '/images/facilities/turf-3.webp',
+    alt: 'Scenic mountain landscape turf view',
+    category: 'facility'
+  },
+  {
+    src: '/images/facilities/cricket-net-1-2.webp',
+    alt: 'Batting crease and heavy-duty safety netting',
+    category: 'facility'
+  },
+  {
+    src: '/images/facilities/cricket-net-2-2.webp',
+    alt: 'Cricket Net 2 pitch and bowler run-up',
+    category: 'facility'
+  },
+  {
+    src: '/images/facilities/turf-4.webp',
+    alt: 'Evening training session on artificial grass',
+    category: 'matches'
   },
 ]
 
 const videos = [
   {
+    src: '/videos/msc-hero.mp4',
+    thumbnail: '/images/facilities/turf-1.webp',
+    title: 'Match Day & Arena Cinematic Tour'
+  },
+  {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Video-5-08jxiUsvLXQoXpwyclfGOZPc6dWfP9.mp4',
-    thumbnail: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
+    thumbnail: '/images/facilities/turf-2.webp',
     title: 'Match Day at MSC'
   },
   {
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Video-151-w98Mi9ESSOejKPO4Dk6V8scjnpApbH.mp4',
-    thumbnail: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed%20%282%29-9yWOKvvBNNBK6xIquOyQsdI5jRibpr.webp',
+    thumbnail: '/images/facilities/turf-3.webp',
     title: 'Night Football under Lights'
-  },
-  {
-    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Video-627-O0kafdXukxbEpiMjpg2FYJuT9PE5GQ.mp4',
-    thumbnail: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/categoryww-11-5SQXOQi5VinDcWf4sCttNRzzVlb0gC.png',
-    title: 'Complex Aerial Overview'
   },
 ]
 

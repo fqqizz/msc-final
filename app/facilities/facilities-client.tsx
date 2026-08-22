@@ -9,17 +9,23 @@ import { ArrowRight, Check, Sun, Shield, Users, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useMobilePerformance } from '@/hooks/use-mobile-performance'
 import { createClient } from '@/lib/supabase/client'
+import FacilityCarousel from '@/components/ui/facility-carousel'
 
 const INITIAL_FACILITIES = [
   {
     id: 'football-turf',
-    name: 'Football / Cricket Turf',
+    name: 'Football / Box Cricket Turf',
     description:
       '10,000+ sq. ft. premium synthetic turf perfect for football matches and box cricket. Features high-quality artificial grass providing exceptional ball roll, player cushioning, and floodlights for evening games.',
     price: 999,
     unit: '/hour',
-    image:
-      'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/unnamed-BtTMVUoxdbTwOFbHQOpW9cgbrN0bWX.webp',
+    image: '/images/facilities/turf-1.webp',
+    images: [
+      '/images/facilities/turf-1.webp',
+      '/images/facilities/turf-2.webp',
+      '/images/facilities/turf-3.webp',
+      '/images/facilities/turf-4.webp',
+    ],
     features: [
       '10,000+ sq. ft. playing area',
       'FIFA-grade synthetic turf',
@@ -36,8 +42,13 @@ const INITIAL_FACILITIES = [
       'Professional cricket net designed for intensive batting and bowling practice. Features heavy-duty safety netting, consistent pitch bounce, and adequate run-up space.',
     price: 299,
     unit: '/hour',
-    image:
-      'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/slider-63-8ZRY8fIdPrLsfKen4dce4zLwO9bLAz.png',
+    image: '/images/facilities/cricket-net-1-1.webp',
+    images: [
+      '/images/facilities/cricket-net-1-1.webp',
+      '/images/facilities/cricket-net-1-2.webp',
+      '/images/facilities/cricket-net-1-3.webp',
+      '/images/facilities/cricket-net-1-4.webp',
+    ],
     features: [
       'Professional-grade heavy netting',
       'True bounce synthetic pitch',
@@ -54,8 +65,13 @@ const INITIAL_FACILITIES = [
       'Second professional cricket net ideal for team practice, group drills, and automated bowling machine sessions with pace, swing, and spin controls.',
     price: 299,
     unit: '/hour',
-    image:
-      'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/page1-abaabcfaf969a251f4be6e6a07a4bf9f-c9bzGg4YvT0qLkYYpQgk98G8M46NPD.png',
+    image: '/images/facilities/cricket-net-2-1.webp',
+    images: [
+      '/images/facilities/cricket-net-2-1.webp',
+      '/images/facilities/cricket-net-2-2.webp',
+      '/images/facilities/cricket-net-2-3.webp',
+      '/images/facilities/cricket-net-2-4.webp',
+    ],
     features: [
       'Automated bowling machine hookup',
       'Team practice & group training',
@@ -131,9 +147,10 @@ export default function FacilitiesClient() {
       <section className="relative pt-32 pb-20 bg-[#040d07] overflow-hidden border-b border-emerald-500/10">
         <div className="absolute inset-0 pointer-events-none">
           <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/categoryww-11-5SQXOQi5VinDcWf4sCttNRzzVlb0gC.png"
+            src="/images/facilities/turf-1.webp"
             alt="MSC Facilities"
             fill
+            priority
             className="object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#040d07]/60 via-[#040d07]/90 to-[#06140d]" />
@@ -182,20 +199,19 @@ export default function FacilitiesClient() {
                 <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center ${
                   index % 2 === 1 ? 'lg:grid-flow-dense' : ''
                 }`}>
-                  {/* Image */}
+                  {/* Swipeable Image Carousel */}
                   <div className={`relative ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
                     <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden shadow-xl shadow-black/40 bg-[#040d07]">
-                      <Image
-                        src={facility.image}
-                        alt={facility.name}
-                        fill
-                        className="object-cover transition-transform duration-500 hover:scale-105"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
+                      <FacilityCarousel
+                        images={facility.images || [facility.image]}
+                        facilityName={facility.name}
+                        aspectRatioClass="aspect-[16/10] sm:aspect-[4/3] w-full"
+                        priorityFirst={index === 0}
                       />
                     </div>
                     {/* Live Authoritative Price Badge */}
                     <div
-                      className="absolute -bottom-3 -right-3 px-5 py-2.5 text-white font-extrabold text-base sm:text-lg rounded-xl shadow-xl border border-emerald-300/30"
+                      className="absolute -bottom-3 -right-3 px-5 py-2.5 text-white font-extrabold text-base sm:text-lg rounded-xl shadow-xl border border-emerald-300/30 z-20"
                       style={{
                         background: 'linear-gradient(135deg, #00A86B 0%, #007A52 100%)',
                         boxShadow: '0 8px 24px rgba(0, 168, 107, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
